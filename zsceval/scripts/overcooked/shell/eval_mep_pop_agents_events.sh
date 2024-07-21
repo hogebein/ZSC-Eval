@@ -16,7 +16,7 @@ path=../../policy_pool
 
 export POLICY_POOL=${path}
 
-policy_version="mep-S1-s10"
+policy_version="mep-S1-s5"
 
 echo "env is ${env}, layout is ${layout}, eval"
 n=$(find ${path}/${layout}/mep/s1/${policy_version} -name "*_final_actor.pt" | wc -l)
@@ -38,12 +38,14 @@ do
     echo "########################################"
     echo "evaluate ${agent0_policy_name}-${agent1_policy_name}"
     python eval/eval.py --env_name ${env} --algorithm_name ${algo} --experiment_name ${exp} --layout_name ${layout} \
-    --num_agents ${num_agents} --seed 1 --episode_length 400 --n_eval_rollout_threads 80 --eval_episodes 80 --eval_stochastic --dummy_batch_size 2 \
+    --num_agents ${num_agents} --seed 1 --episode_length 400 --n_eval_rollout_threads 40 --eval_episodes 80 --eval_stochastic --dummy_batch_size 2 \
     --use_proper_time_limits \
     --use_wandb \
-    --store_traj --use_render \
+    --use_render \
     --population_yaml_path ${yml} --population_size 2 \
     --agent0_policy_name ${agent0_policy_name} \
     --agent1_policy_name ${agent1_policy_name} --overcooked_version ${version} --eval_result_path eval/results/${layout}/mep/${exp}.json
+
+    #--store_traj --use_render \
     echo "########################################"
 done

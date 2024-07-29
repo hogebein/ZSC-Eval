@@ -18,6 +18,7 @@ if __name__ == "__main__":
             "random3_m",
             "academy_3_vs_1_with_keeper",
             "subobjective",
+            "random3_l_m",
             "inverse_marshmallow_experiment",
         ]
     else:

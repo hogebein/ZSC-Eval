@@ -109,6 +109,7 @@ if __name__ == "__main__":
         "forced_coordination_tomato",
         "inverse_marshmallow_experiment",
         "subobjective",
+"random3_l_m",
         "cramped_room",
         "all",
     ], layout

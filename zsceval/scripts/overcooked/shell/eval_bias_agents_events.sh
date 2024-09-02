@@ -16,7 +16,7 @@ path=../../policy_pool
 
 export POLICY_POOL=${path}
 
-policy_version="hsp"
+policy_version="hsp-"
 
 echo "env is ${env}, layout is ${layout}, eval"
 n=$(find ${path}/${layout}/hsp/s1/${policy_version} -name "*_final_w0_actor.pt" | wc -l)

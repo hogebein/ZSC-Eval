@@ -107,6 +107,7 @@ if __name__ == "__main__":
         "random3_m",
         "inverse_marshmallow_experiment",
         "subobjective",
+        "random3_l_m",
         "academy_3_vs_1_with_keeper",
         "all",
     ], layout
@@ -129,7 +130,7 @@ if __name__ == "__main__":
     algo_exp_names = [
 
         #("mep", "mep-S1-s510"),
-        ("mep", "mep-S1-s5"),
+        ("mep", "mep-S1-s30-entropy_alpha=0.1"),
         # ("traj", "traj-S1-s10"),
         #("traj", "traj-S1-s15"),
 

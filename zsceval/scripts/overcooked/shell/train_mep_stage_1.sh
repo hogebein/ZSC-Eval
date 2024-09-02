@@ -22,7 +22,7 @@ num_env_steps="1e7"
 num_agents=2
 algo="mep"
 stage="S1"
-exp="mep-${stage}-s${population_size}"
+exp="mep-${stage}-s${population_size}-entropy_alpha=0.001"
 seed=1
 
 train_batch=100
@@ -40,7 +40,7 @@ python train/train_mep.py --env_name ${env} --algorithm_name ${algo} --experimen
 --ppo_epoch 15 --entropy_coefs ${entropy_coefs} --entropy_coef_horizons ${entropy_coef_horizons} \
 --save_interval 25 --log_interval 1 --use_eval --eval_interval 20 --n_eval_rollout_threads $((population_size * 2)) --eval_episodes 10 \
 --stage 1 \
---mep_entropy_alpha 0.01 \
+--mep_entropy_alpha 0.001 \
 --population_yaml_path ${path}/${layout}/mep/s1/train-s${population_size}.yml \
 --population_size ${population_size} --adaptive_agent_name mep_adaptive \
 --use_proper_time_limits \

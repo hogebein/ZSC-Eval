@@ -16,7 +16,7 @@ path=../../policy_pool
 
 export POLICY_POOL=${path}
 
-policy_version="mep-S1-s5"
+policy_version="mep-S1-s30-entropy_alpha=0.1"
 
 echo "env is ${env}, layout is ${layout}, eval"
 n=$(find ${path}/${layout}/mep/s1/${policy_version} -name "*_final_actor.pt" | wc -l)

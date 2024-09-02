@@ -147,6 +147,6 @@ if __name__ == "__main__":
     # logger.info(f"hostname: {hostname}")
     for l in layout:
         #exp = exp_names[l]
-        exp = "hsp-S1"
+        exp = "hsp-S1-util*5"
         logger.info(f"Extracting {exp} for {l}")
         extract_sp_S1_models(l, exp, env)

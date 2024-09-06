@@ -1011,7 +1011,6 @@ class Overcooked(gym.Env):
         else:
             next_state, sparse_reward, done, info = self.base_env.step(joint_action, display_phi=False)
             if self.use_hsp:
-
                 if self.use_expectation:
                     shaped_info = info["shaped_info_by_agent"]
                     vec_shaped_info = np.array(
@@ -1023,8 +1022,8 @@ class Overcooked(gym.Env):
                         hidden_reward = (
                             np.dot(self.w0[:-1], vec_shaped_info[0]) + sparse_reward * self.w0[-1],
                             np.dot(self.w1[:-1], vec_shaped_info[1]) + sparse_reward * self.w1[-1],
-                            np.dot(self.we0[:-1], vec_shaped_info[0]) + sparse_reward * self.we0[-1],
-                            np.dot(self.we1[:-1], vec_shaped_info[1]) + sparse_reward * self.we1[-1],
+                            np.dot(self.we0[:-1], vec_shaped_info[1]) + sparse_reward * self.we0[-1],
+                            np.dot(self.we1[:-1], vec_shaped_info[0]) + sparse_reward * self.we1[-1],
                         )
                         shaped_reward_p0 = hidden_reward[0] + hidden_reward[2]
                         shaped_reward_p1 = hidden_reward[1] + hidden_reward[3] +self.reward_shaping_factor * dense_reward[1]
@@ -1032,8 +1031,8 @@ class Overcooked(gym.Env):
                         hidden_reward = (
                             np.dot(self.w1[:-1], vec_shaped_info[0]) + sparse_reward * self.w1[-1],
                             np.dot(self.w0[:-1], vec_shaped_info[1]) + sparse_reward * self.w0[-1],
-                            np.dot(self.we1[:-1], vec_shaped_info[0]) + sparse_reward * self.we1[-1],
-                            np.dot(self.we0[:-1], vec_shaped_info[1]) + sparse_reward * self.we0[-1],
+                            np.dot(self.we1[:-1], vec_shaped_info[1]) + sparse_reward * self.we1[-1],
+                            np.dot(self.we0[:-1], vec_shaped_info[0]) + sparse_reward * self.we0[-1],
                         )
                         shaped_reward_p0 = hidden_reward[0] + hidden_reward[2] + self.reward_shaping_factor * dense_reward[0]
                         shaped_reward_p1 = hidden_reward[1] + hidden_reward[3]

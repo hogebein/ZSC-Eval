@@ -104,7 +104,8 @@ def extract_sp_S1_models(layout, exp, env="Overcooked"):
 
 if __name__ == "__main__":
     layout = sys.argv[1]
-    env = sys.argv[2]
+    exp = sys.argv[2]
+    env = sys.argv[3]
     assert layout in [
         "random0",
         "random0_medium",
@@ -138,15 +139,15 @@ if __name__ == "__main__":
 
     hostname = socket.gethostname()
     exp_names = {
-        "random3_m": "hsp-S1",
-        "small_corridor": "hsp-S1",
+        "plate": "hsp_plate-S1",
+        "adp_plate" : "adaptive_hsp_plate-S1",
+        "small_corridor" : "hsp-S1",
         "random0" : "hsp-S1",
     }
 
     # logger.add(f"./extract_log/extract_{layout}_hsp_S1_models.log")
     # logger.info(f"hostname: {hostname}")
     for l in layout:
-        #exp = exp_names[l]
-        exp = "hsp-S1-util*5"
+        exp_trans = exp_names[exp]
         logger.info(f"Extracting {exp} for {l}")
-        extract_sp_S1_models(l, exp, env)
+        extract_sp_S1_models(l, exp_trans, env)

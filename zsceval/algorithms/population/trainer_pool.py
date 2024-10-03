@@ -135,7 +135,6 @@ class TrainerPool:
         obs: np.ndarray,
         available_actions: np.ndarray = None,
     ):
-        print(f"init {share_obs.shape}")
 
         assert self.__initialized
         for trainer_name in self.active_trainers:

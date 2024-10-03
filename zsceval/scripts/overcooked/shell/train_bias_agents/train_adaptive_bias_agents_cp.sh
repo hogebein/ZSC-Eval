@@ -2,6 +2,9 @@
 env="Overcooked"
 
 layout=$1
+weight_pattern=$2
+population_size=$3
+opponent=$4
 
 entropy_coefs="0.2 0.05 0.001"
 entropy_coef_horizons="0 6e6 1e7"
@@ -14,10 +17,14 @@ reward_shaping_horizon="1e7"
 num_env_steps="1e7"
 
 num_agents=2
-algo="mappo"
-stage="S1"
-exp="adaptive_hsp_plate-${stage}"
+algo="mappo_cp"
+stage="cp"
+pop=hsp_plate_shared
+exp="adaptive_${pop}-${opponent}_cross_play-s${population_size}-${stage}"
+path=../../policy_pool
 
+export POLICY_POOL=${path}
+n_training_threads=200
 
 if [[ "${layout}" == "random0" || "${layout}" == "random0_medium" || "${layout}" == "random1" || "${layout}" == "random3" || "${layout}" == "small_corridor" || "${layout}" == "unident_s" ]]; then
     version="old"
@@ -93,26 +100,46 @@ else
     # 27 "IDLE_MOVEMENT", 0
     # 28 "IDLE_INTERACT",  0
     # 29 sparse_reward  1
-    
+
+    if [[ "${weight_pattern}" == "plate" ]]; then
+        w0="0,0,[-5:0:5],0,0,0,0,0,[-5:0:5],0,0,3,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
+        we0="0,0,[-5:0:5],0,0,0,0,0,[-5:0:5],0,0,3,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
+        seed_begin=1
+        seed_max=30
+    elif [[ "${weight_pattern}" == "random0_medium" ]]; then
+        w0="0,0,0,[-20:0],[-20:0:10],0,[0:10],[-20:0],3,5,3,0,[-0.1:0:0.1],0,0,0,0,[0.1:1]"
+        we0="0,0,0,0,0,0,0,0,0,0,0,3,5,3,0,0,0,0,[-20:0],[-20:0],0,0,[-5:0:20],[-15:0:10],0,[-0.1:0:0.1],0,0,0,1"
+        seed_begin=1
+        seed_max=54
+    elif [[ "${weight_pattern}" == "all" ]]; then
+        w0="0,0,[-5:0:5],0,0,0,0,0,[-5:0:5],0,0,3,5,3,0,0,0,0,[-20:0],[-20:0],0,0,[-5:0:20],[-15:0:10],0,[-0.1:0:0.1],0,0,0,1"
+        seed_begin=1
+        seed_max=124
+    else
+        w0="0,0,0,0,[-20:0:10],0,[-20:0:10],0,3,5,3,[-20:0],[-0.1:0:0.1],0,0,0,0,[0.1:1]"
+        seed_begin=1
+        seed_max=72
+    fi
 
     w1="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
-    w0="0,0,[-5:0:5],0,0,0,0,0,[-5:0:5],0,0,3,5,3,0,0,0,0,[-20:0],[-20:0],0,0,[-5:0:20],[-15:0:10],0,[-0.1:0:0.1],0,0,0,1"
-    we1="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
-    we0="0,0,[-5:0:5],0,0,0,0,0,[-5:0:5],0,0,3,5,3,0,0,0,0,[-20:0],[-20:0],0,0,[-5:0:20],[-15:0:10],0,[-0.1:0:0.1],0,0,0,1"
-    seed_begin=21
-    seed_max=72
+    we1="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
+
 fi
 
+echo "env is ${env}, layout is ${layout}, algo is ${algo}, exp is ${exp}, seed from ${seed_begin} to ${seed_max}"
 for seed in $(seq ${seed_begin} ${seed_max});
 do
     echo "seed is ${seed}:"
     python train/train_adaptive_bias_agent.py --env_name ${env} --algorithm_name ${algo} --experiment_name "${exp}" --layout_name ${layout} --num_agents ${num_agents} \
-    --seed ${seed} --n_training_threads 1 --n_rollout_threads 400 --dummy_batch_size 2 --num_mini_batch 1 --episode_length 400 --num_env_steps ${num_env_steps} --reward_shaping_horizon ${reward_shaping_horizon} \
+    --seed ${seed} --n_training_threads 1 --num_mini_batch 1 --episode_length 400 --num_env_steps ${num_env_steps} --reward_shaping_horizon ${reward_shaping_horizon} \
     --overcooked_version ${version} \
+    --n_rollout_threads ${n_training_threads} --dummy_batch_size 1 \
     --ppo_epoch 15 --entropy_coefs ${entropy_coefs} --entropy_coef_horizons ${entropy_coef_horizons} \
-    --use_hsp --use_expectation --w0 ${w0} --w1 ${w1} --we0 ${we0} --we0_offset 1 --we1 ${we1} --share_policy --random_index \
     --cnn_layers_params "32,3,1,1 64,3,1,1 32,3,1,1" --use_recurrent_policy \
+    --save_interval 25 --log_interval 10 --use_eval --eval_interval 20 --n_eval_rollout_threads $((population_size * 2)) --eval_episodes 5 \
+    --population_yaml_path ${path}/${layout}/hsp/cp/train-s${population_size}-${pop}-${seed}.yml \
+    --population_size ${population_size} --adaptive_agent_name hsp_cp --use_agent_policy_id \
     --use_proper_time_limits \
-    --save_interval 25 --log_interval 10 --use_eval --eval_interval 20 --n_eval_rollout_threads 20 \
+    --use_hsp --use_expectation --w0 ${w0} --w1 ${w1} --we0 ${we0} --we0_offset 1 --we1 ${we1} --random_index \
     --wandb_name "hogebein"
 done

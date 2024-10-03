@@ -68,6 +68,7 @@ def get_overcooked_args(parser: argparse.ArgumentParser) -> argparse.ArgumentPar
     parser.add_argument("--random_index", default=False, action="store_true")
     parser.add_argument("--use_hsp", default=False, action="store_true")
     parser.add_argument("--use_expectation", default=False, action="store_true")
+    parser.add_argument("--cross-play", default=False, action="store_true")
     parser.add_argument("--w0_offset", default=0, type=int)
     parser.add_argument("--we0_offset", default=0, type=int)
     parser.add_argument(

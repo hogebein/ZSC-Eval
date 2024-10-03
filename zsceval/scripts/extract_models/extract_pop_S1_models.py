@@ -130,7 +130,7 @@ if __name__ == "__main__":
     algo_exp_names = [
 
         #("mep", "mep-S1-s510"),
-        ("mep", "mep-S1-s30-entropy_alpha=0.1"),
+        ("mep", "mep-S1-s10"),
         # ("traj", "traj-S1-s10"),
         #("traj", "traj-S1-s15"),
 

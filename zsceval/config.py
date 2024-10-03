@@ -28,6 +28,8 @@ def get_config() -> argparse.ArgumentParser:
             "adaptive",
             "cole",
             "e3t",
+            "mappo_cp",
+            "rmappo_cp",
         ],
     )
 

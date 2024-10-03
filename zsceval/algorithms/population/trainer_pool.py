@@ -47,6 +47,7 @@ class TrainerPool:
             policy_train,
         ) in self.policy_pool.all_policies():
             # use the same name for trainer and policy
+
             trainer_name = policy_name
             trainer_cls, _ = make_trainer_policy_cls(
                 policy_config[0].algorithm_name,  # mappo or rmappo
@@ -134,6 +135,8 @@ class TrainerPool:
         obs: np.ndarray,
         available_actions: np.ndarray = None,
     ):
+        print(f"init {share_obs.shape}")
+
         assert self.__initialized
         for trainer_name in self.active_trainers:
             # extract corresponding (e, a) and add num_agent=1 dimension

@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 import os
+import pprint
 import socket
 import sys
 from argparse import Namespace
 from pprint import pformat, pprint
 from itertools import product
 from pathlib import Path
-import pickle
 
 import numpy as np
 import setproctitle
@@ -22,7 +22,6 @@ from zsceval.envs.overcooked_new.Overcooked_Env import Overcooked as Overcooked_
 from zsceval.overcooked_config import get_overcooked_args
 from zsceval.utils.train_util import get_base_run_dir, setup_seed
 from zsceval.envs.wrappers.env_policy import PartialPolicyEnv
-from zsceval.algorithms.r_mappo.algorithm.rMAPPOPolicy import R_MAPPOPolicy
 
 
 def make_train_env(all_args, run_dir):
@@ -33,7 +32,6 @@ def make_train_env(all_args, run_dir):
                     env = Overcooked(all_args, run_dir)
                 else:
                     env = Overcooked_new(all_args, run_dir)
-                env = PartialPolicyEnv(all_args, env)
             else:
                 print("Can not support the " + all_args.env_name + "environment.")
                 raise NotImplementedError
@@ -71,11 +69,11 @@ def make_eval_env(all_args, run_dir):
         return init_env
 
     if all_args.n_eval_rollout_threads == 1:
-        return ChooseSubprocVecEnv([get_env_fn(0)])
+        return ShareDummyVecEnv([get_env_fn(0)])
     else:
         return ShareSubprocDummyBatchVecEnv(
             [get_env_fn(i) for i in range(all_args.n_eval_rollout_threads)],
-            2,
+            all_args.dummy_batch_size,
         )
         # return ShareSubprocVecEnv(
         #     [get_env_fn(i) for i in range(all_args.n_eval_rollout_threads)]
@@ -92,78 +90,6 @@ def parse_args(args, parser):
     )
 
     parser.add_argument("--use_task_v_out", default=False, action="store_true")
-    parser.add_argument("--policy_group_normalization", default=False, action="store_true")
-    parser.add_argument("--use_advantage_prioritized_sampling", default=False, action="store_true")
-    parser.add_argument("--uniform_preference", default=False, action="store_true")
-    parser.add_argument("--uniform_sampling_repeat", default=0, type=int)
-
-    # mep
-    parser.add_argument(
-        "--stage",
-        type=int,
-        default=1,
-        help="Stages of MEP training. 1 for Maximum-Entropy PBT. 2 for FCP-like training.",
-    )
-    parser.add_argument(
-        "--mep_use_prioritized_sampling",
-        default=False,
-        action="store_true",
-        help="Use prioritized sampling in MEP stage 2.",
-    )
-    parser.add_argument(
-        "--mep_prioritized_alpha",
-        type=float,
-        default=3.0,
-        help="Alpha used in softing prioritized sampling probability.",
-    )
-
-    # population
-    parser.add_argument(
-        "--population_yaml_path",
-        type=str,
-        help="Path to yaml file that stores the population info.",
-    )
-    parser.add_argument(
-        "--population_size",
-        type=int,
-        default=5,
-        help="Population size involved in training.",
-    )
-    parser.add_argument(
-        "--adaptive_agent_name",
-        type=str,
-        required=True,
-        help="Name of training policy at pop cross-play.",
-    )
-
-    # train and eval batching
-    parser.add_argument(
-        "--train_env_batch",
-        type=int,
-        default=1,
-        help="Number of parallel threads a policy holds",
-    )
-    parser.add_argument(
-        "--eval_env_batch",
-        type=int,
-        default=1,
-        help="Number of parallel threads a policy holds",
-    )
-
-    # fixed policy actions inside env threads
-    parser.add_argument(
-        "--use_policy_in_env",
-        default=True,
-        action="store_false",
-        help="Use loaded policy to move in env threads.",
-    )
-
-    # eval with fixed policy
-    parser.add_argument("--eval_policy", default="", type=str)
-    parser.add_argument("--eval_result_path", default=None, type=str)
-
-
-
     # all_args = parser.parse_known_args(args)[0]
     all_args = parser.parse_args(args)
 
@@ -174,16 +100,15 @@ def parse_args(args, parser):
     else:
         all_args.old_dynamics = False
     return all_args
-    
 
 
 def main(args):
     parser = get_config()
     all_args = parse_args(args, parser)
 
-    if "rmappo" in all_args.algorithm_name:
+    if all_args.algorithm_name == "rmappo":
         assert all_args.use_recurrent_policy or all_args.use_naive_recurrent_policy, "check recurrent policy!"
-    elif "mappo" in all_args.algorithm_name or all_args.algorithm_name == "mep":
+    elif all_args.algorithm_name == "mappo":
         assert (
             all_args.use_recurrent_policy == False and all_args.use_naive_recurrent_policy == False
         ), "check recurrent policy!"
@@ -234,7 +159,7 @@ def main(args):
         for s in w0:
             all_args.w0 += str(s) + ","
         all_args.w0 = all_args.w0[:-1]
-        logger.debug(f"w0:\n {pformat(all_args.w0, compact=True, width=200)}")
+        logger.debug(f"w0:\n {pprint.pformat(all_args.w0, compact=True, width=200)}")
 
         w1 = []
         for s in all_args.w1.split(","):
@@ -246,7 +171,7 @@ def main(args):
         for s in w1:
             all_args.w1 += str(s) + ","
         all_args.w1 = all_args.w1[:-1]
-        logger.debug(f"w1:\n {pformat(all_args.w1, compact=True, width=200)}")
+        logger.debug(f"w1:\n {pprint.pformat(all_args.w1, compact=True, width=200)}")
 
 
         if all_args.use_expectation:
@@ -274,7 +199,7 @@ def main(args):
             for s in we0:
                 all_args.we0 += str(s) + ","
             all_args.we0 = all_args.we0[:-1]
-            logger.debug(f"we0:\n {pformat(all_args.we0, compact=True, width=200)}")
+            logger.debug(f"we0:\n {pprint.pformat(all_args.we0, compact=True, width=200)}")
 
             we1 = []
             for s in all_args.we1.split(","):
@@ -286,7 +211,7 @@ def main(args):
             for s in we1:
                 all_args.we1 += str(s) + ","
             all_args.we1 = all_args.we1[:-1]
-            logger.debug(f"we1:\n {pformat(all_args.we1, compact=True, width=200)}")
+            logger.debug(f"we1:\n {pprint.pformat(all_args.we1, compact=True, width=200)}")
 
     # cuda
     if all_args.cuda and torch.cuda.is_available():
@@ -357,6 +282,8 @@ def main(args):
         + str(all_args.user_name)
     )
 
+    
+
     # seed
     # torch.manual_seed(all_args.seed)
     # torch.cuda.manual_seed_all(all_args.seed)
@@ -368,7 +295,7 @@ def main(args):
     eval_envs = make_eval_env(all_args, run_dir) if all_args.use_eval else None
     num_agents = all_args.num_agents
 
-    logger.info(pformat(all_args.__dict__, compact=True))
+    logger.info(pprint.pformat(all_args.__dict__, compact=True))
     config = {
         "all_args": all_args,
         "envs": envs,
@@ -387,57 +314,7 @@ def main(args):
         )
 
     runner = Runner(config)
-
-
-    # load population
-    # print("population_yaml_path: ", all_args.population_yaml_path)
-    logger.info("population_yaml_path: ", all_args.population_yaml_path)
-
-    #  override policy config
-    population_config = yaml.load(open(all_args.population_yaml_path), yaml.Loader)
-    logger.info("population_config: {}".format(pformat(population_config)))
-
-    override_policy_config = {}
-    agent_name = all_args.adaptive_agent_name
-    override_policy_config[agent_name] = (
-        Namespace(
-            use_agent_policy_id=all_args.use_agent_policy_id,
-            num_v_out=all_args.num_v_out,
-            use_task_v_out=all_args.use_task_v_out,
-            use_policy_vhead=all_args.use_policy_vhead,
-            use_proper_time_limits=all_args.use_proper_time_limits,
-            entropy_coefs=all_args.entropy_coefs,
-            entropy_coef_horizons=all_args.entropy_coef_horizons,
-            use_peb=all_args.use_peb,
-            data_parallel=all_args.data_parallel,
-        ),
-        *runner.policy_config[1:],
-    )
-    for policy_name in population_config:
-        if policy_name != agent_name:
-            override_policy_config[policy_name] = (
-                Namespace(
-                    entropy_coefs=all_args.entropy_coefs,
-                    entropy_coef_horizons=all_args.entropy_coef_horizons,
-                    use_proper_time_limits=all_args.use_proper_time_limits,
-                    use_peb=all_args.use_peb,
-                    data_parallel=all_args.data_parallel,
-                ),
-                None,
-                runner.policy_config[2],
-                None,
-            )  # only override share_obs_space
-
-    
-    # Add yaml pops to pool
-    runner.policy.load_population(
-        all_args.population_yaml_path,
-        evaluation=False,
-        override_policy_config=override_policy_config,
-    )
-    runner.trainer.init_population()
-
-    runner.train_adaptive_population()
+    runner.run()
 
     # post process
     envs.close()
@@ -456,3 +333,35 @@ if __name__ == "__main__":
     logger.add(sys.stdout, level="DEBUG")
     # logger.add(sys.stdout, level="INFO")
     main(sys.argv[1:])
+
+
+# Add initial bias agent to pool
+    policy_config_path = os.path.join(
+        os.environ["POLICY_POOL"],
+        f"{all_args.layout_name}/policy_config/mlp_policy_config.pkl"
+    )
+    policy_config = list(
+        pickle.load(open(policy_config_path, "rb"))
+    )
+    share_observation_space = (
+        config["envs"].share_observation_space[0] if config["all_args"].use_centralized_V else config["envs"].observation_space[0]
+    )
+    print(f"1st {share_observation_space.shape}")
+    model_config = {
+        "policy_config_path" : policy_config_path,
+        "featurize_type" : "ppo",
+        "train" : True,
+    }
+    runner.policy.register_policy(
+        policy_name="hsp_cp",
+        policy=R_MAPPOPolicy(
+            config["all_args"],
+            config["envs"].observation_space[0],
+            share_observation_space,
+            config["envs"].action_space[0],
+            config["device"],
+        ), 
+        policy_config=policy_config,
+        policy_train=True,
+        policy_info=["hsp_cp", model_config]
+    )

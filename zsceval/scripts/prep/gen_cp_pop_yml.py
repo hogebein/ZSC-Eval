@@ -11,7 +11,7 @@ S1_POP_EXPS = {
 }
 
 
-N_REPEAT = 5
+N_REPEAT = 30
 
 
 if __name__ == "__main__":

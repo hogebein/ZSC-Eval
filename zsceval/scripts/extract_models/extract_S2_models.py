@@ -195,7 +195,7 @@ if __name__ == "__main__":
             "fcp-S2-s36",
         ],
         "mep": [
-            "mep-S2-s12",
+            "mep-S2-s10",
             "mep-S2-s24",
             "mep-S2-s36",
         ],

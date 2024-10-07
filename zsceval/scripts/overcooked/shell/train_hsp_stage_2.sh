@@ -46,9 +46,11 @@ elif [[ ${population_size} == 36 ]]; then
     mep_exp="mep-S1-s15"
 fi
 
+
+
 num_agents=2
 algo="adaptive"
-exp="hsp-S2-s${population_size}"
+exp="hsp_plate-S2-s${population_size}"
 stage="S2"
 seed_begin=1
 seed_max=5
@@ -56,7 +58,7 @@ path=../../policy_pool
 
 export POLICY_POOL=${path}
 
-n_training_threads=100
+n_training_threads=80
 
 ulimit -n 65536
 

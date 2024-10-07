@@ -25,8 +25,9 @@ S1_POP_EXPS = {
 }
 
 # Overcooked
-TOTAL_SIZE_LIST = [5]
-POP_SIZE_LIST = [12, 8, 4]
+TOTAL_SIZE_LIST = [10]
+POP_SIZE_LIST = [8]
+#POP_SIZE_LIST = [12, 8, 4]
 # TOTAL_SIZE_LIST = [10, 5]
 # POP_SIZE_LIST = [8, 4]
 

@@ -85,8 +85,11 @@ def extract_sp_S1_models(layout, exp, env="Overcooked"):
                         version = actor_version
                 logger.info(f"hsp{i}: {tag} Expected: {exp_version} {sparse_r_dict[tag]} Found: {version}")
                 actor_pts = []
-                for a_i in range(run.config["num_agents"]):
-                    actor_pts.append(run.file(f"actor_agent{a_i}_periodic_{version}.pt"))
+                if(run.config["share_policy"]):
+                    actor_pts.append(run.file(f"actor_periodic_{version}.pt"))
+                else:
+                    for a_i in range(run.config["num_agents"]):
+                        actor_pts.append(run.file(f"actor_agent{a_i}_periodic_{version}.pt"))
 
                 tmp_dir = f"tmp/{layout}/{exp}"
                 for pt in actor_pts:
@@ -94,17 +97,25 @@ def extract_sp_S1_models(layout, exp, env="Overcooked"):
 
                 hsp_s1_dir = f"{POLICY_POOL_PATH}/{layout}/hsp/s1/{exp.replace('-S1', '')}"
                 os.makedirs(hsp_s1_dir, exist_ok=True)
-                for a_i in range(run.config["num_agents"]):
-                    pt_path = f"{hsp_s1_dir}/hsp{i}_{tag}_w{a_i}_actor.pt"
-                    logger.info(f"pt {a_i} store in {pt_path}")
-                    os.system(f"mv {tmp_dir}/actor_agent{a_i}_periodic_{version}.pt {pt_path}")
+
+                if(run.config["share_policy"]):
+                    
+                    pt_path = f"{hsp_s1_dir}/hsp{i}_{tag}_actor.pt"
+                    logger.info(f"pt store in {pt_path}")
+                    os.system(f"mv {tmp_dir}/actor_periodic_{version}.pt {pt_path}")
+                else:
+                    for a_i in range(run.config["num_agents"]):
+                        pt_path = f"{hsp_s1_dir}/hsp{i}_{tag}_w{a_i}_actor.pt"
+                        logger.info(f"pt {a_i} store in {pt_path}")
+                        os.system(f"mv {tmp_dir}/actor_agent{a_i}_periodic_{version}.pt {pt_path}")
 
     logger.success(f"Extracted {len(seeds)} models for {layout}")
 
 
 if __name__ == "__main__":
     layout = sys.argv[1]
-    env = sys.argv[2]
+    exp = sys.argv[2]
+    env = sys.argv[3]
     assert layout in [
         "random0",
         "random0_medium",
@@ -138,15 +149,15 @@ if __name__ == "__main__":
 
     hostname = socket.gethostname()
     exp_names = {
-        "random3_m": "hsp-S1",
-        "small_corridor": "hsp-S1",
+        "plate": "hsp_plate_cross_play-S1",
+        "adp_plate" : "adaptive_hsp_plate-S1",
+        "small_corridor" : "hsp-S1",
         "random0" : "hsp-S1",
     }
 
     # logger.add(f"./extract_log/extract_{layout}_hsp_S1_models.log")
     # logger.info(f"hostname: {hostname}")
     for l in layout:
-        #exp = exp_names[l]
-        exp = "hsp-S1"
+        exp_trans = exp_names[exp]
         logger.info(f"Extracting {exp} for {l}")
-        extract_sp_S1_models(l, exp, env)
+        extract_sp_S1_models(l, exp_trans, env)

@@ -71,12 +71,13 @@ def parse_args():
     parser.add_argument("-e", "--env", type=str, default="Overcooked")
     parser.add_argument("--num_agents", type=int, default=2)
     parser.add_argument("-l", "--layout", type=str, required=True, help="layout name")
-    parser.add_argument("-k", type=int, default=6, help="number of selected policies")
-    parser.add_argument("-s", type=int, default=5, help="population size of S1")
+    parser.add_argument("-k", type=int, default=6, help="number of selected bias policies")
+    parser.add_argument("-s", type=int, default=5, help="population size of MEP S1")
     parser.add_argument("-S", type=int, default=12, help="population size of training")
     parser.add_argument("--eval_result_dir", type=str, default="eval/results")
     parser.add_argument("--policy_pool_path", type=str, default="../policy_pool")
-    parser.add_argument("--bias_agent_version", type=str, default="hsp")
+    parser.add_argument("-V", "--bias_agent_version", type=str, default="hsp")
+    parser.add_argument("--policy_pool_version", type=str, default=None)
 
     args = parser.parse_args()
     return args
@@ -158,7 +159,7 @@ if __name__ == "__main__":
         ]
 
     events = dict()
-    eval_result_dir = os.path.join(args.env.lower(), args.eval_result_dir, layout, "bias")
+    eval_result_dir = os.path.join(args.env.lower(), args.eval_result_dir, layout, "bias_cp")
     logger.info(f"eval result dir {eval_result_dir}")
     logfiles = glob.glob(f"{eval_result_dir}/eval*{policy_version}*.json")
     logfiles = [l_f for l_f in logfiles if "mid" not in l_f]
@@ -186,12 +187,11 @@ if __name__ == "__main__":
             exp_name = f"{hsp_exp_name}"
             full_exp_name = "-".join(agents)
             
-            if eval_result[f"{full_exp_name}-eval_ep_sparse_r"] <= 0.1:
-                logger.warning(f"exp {exp_name} has 0 sparse reward")
-                exclude.add(hsp_exp_name)
-                continue
+            #if eval_result[f"{full_exp_name}-eval_ep_sparse_r"] <= 0.1:
+            #    logger.warning(f"exp {exp_name} has 0 sparse reward")
+            #    exclude.add(hsp_exp_name)
+            #    continue
             event_dict = defaultdict(list)
-            
             for k in event_types:
                 
                 # only the events of the biased agent are recorded
@@ -206,7 +206,6 @@ if __name__ == "__main__":
                             w0_i = a_i
                             break
                     for a_i, a_name in enumerate(pair):
-                        print(f"{a_i}, {a_name}")
                         if "w0" in a_name:
                             continue
                         event_dict[f"{w0_i}-{k}_by_agent{a_i}"].append(
@@ -233,7 +232,9 @@ if __name__ == "__main__":
     # generate HSP training config
     os.makedirs(f"{args.policy_pool_path}/{layout}/hsp/s2", exist_ok=True)
     mep_exp = MEP_EXPS[args.s]
+    policy_pool_version = args.policy_pool_version if args.policy_pool_version != None else policy_version
     for seed in range(1, 6):
+        logger.info(f"Writing {args.policy_pool_path}/{layout}/hsp/s2/train-s{args.S}-{args.bias_agent_version}_{mep_exp}-{seed}.yml")
         with open(
             f"{args.policy_pool_path}/{layout}/hsp/s2/train-s{args.S}-{args.bias_agent_version}_{mep_exp}-{seed}.yml",
             "w",
@@ -281,5 +282,5 @@ hsp{i+1}_final:
     featurize_type: ppo
     train: False
     model_path:
-        actor: {layout}/hsp/s1/{policy_version}/hsp{run_i}_final_w0_actor.pt\n"""
+        actor: {layout}/hsp/s1/{policy_pool_version}/hsp{run_i}_final_actor.pt\n"""
                 )

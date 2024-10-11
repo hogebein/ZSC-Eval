@@ -44,8 +44,18 @@ elif [[ ${population_size} == 36 ]]; then
     num_env_steps="1e8"
     pop="hsp"
     mep_exp="mep-S1-s15"
+else
+    entropy_coefs="0.2 0.05 0.01"
+    entropy_coef_horizons="0 5e7 1e8"
+    if [[ "${layout}" == "small_corridor" ]]; then
+        entropy_coefs="0.2 0.05 0.01"
+        entropy_coef_horizons="0 8e7 1e8"
+    fi
+    reward_shaping_horizon="1e8"
+    num_env_steps="1e8"
+    pop="hsp"
+    mep_exp="mep-S1-s10"
 fi
-
 
 
 num_agents=2

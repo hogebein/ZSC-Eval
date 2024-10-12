@@ -12,6 +12,17 @@ S1_POP_EXPS = {
     "hsp_S2" : "hsp/s2/hsp-S2-s36",
 }
 
+PT_NUM = {
+    "hsp-S1": 2,
+    "mep-S2" : 1,
+    "hsp_S2" : 1,
+}
+
+PT_CONFIG = {
+    "hsp-S1": "mlp",
+    "mep-S2" : "rnn",
+    "hsp_S2" : "rnn",
+}
 
 N_REPEAT = 30
 
@@ -48,24 +59,23 @@ if __name__ == "__main__":
         pt_lst = os.listdir(source_dir)
         logger.debug(pt_lst)
         pop_alg = args.alg if args.alg != "fcp" else "sp"
-        pt_lst.sort(key=lambda pt: int(pt.split("_", 1)[0][len(pop_alg) :]))
+        #pt_lst.sort(key=lambda pt: int(pt.split("_", 1)[0][len(pop_alg) :]))
+        pt_lst.sort()
         if args.alg == "fcp":
-            pt_lst = pt_lst[: args.total * 2]
+            pt_lst = pt_lst[: args.total * PT_NUM[args.alg]]
             logger.info(f"pop size {len(pt_lst)}: {pt_lst}")
         yml_dir = osp.join(
             policy_pool_dir,
             layout,
-            args.alg,
-            "cp",
+            "hsp/cp",
+            exp.split("/")[-1]
         )
+        # logger.debug(exp.split("/")[-1])
         os.makedirs(yml_dir, exist_ok=True)
         for n_r in range(N_REPEAT):
             yml_path = osp.join(
-                policy_pool_dir,
-                layout,
-                args.alg,
-                "cp",
-                f"train-s{args.pop * 2}-{exp}-{n_r+1}.yml",
+                yml_dir,
+                f"train-s{args.pop * PT_NUM[args.alg]}-{n_r+1}.yml",
             )
             logger.info(f"Writing cross-play yml for {exp} seed {n_r} in {yml_path}")
             yml = open(
@@ -75,7 +85,7 @@ if __name__ == "__main__":
             )
             yml.write(
                 f"""\
-{pop_alg}_cp:
+hsp_cp:
     policy_config_path: {layout}/policy_config/mlp_policy_config.pkl
     featurize_type: ppo
     train: True
@@ -83,28 +93,53 @@ if __name__ == "__main__":
             )
             for p_i in range(1, args.pop + 1):
                 pt_i = (args.total // N_REPEAT * n_r + p_i - 1) % args.total + 1
-                actor_names = [
-                #    f"{pop_alg}{pt_i}_init_actor.pt",
-                    f"{pop_alg}{pt_i}_mid_actor.pt",
-                    f"{pop_alg}{pt_i}_final_actor.pt",
-                ]
-                for actor_name in actor_names:
-                    print(actor_name)
-                    assert actor_name in pt_lst, (actor_name, pt_lst)
-                yml.write(
-                    f"""\
-{pop_alg}{p_i}_1:
-    policy_config_path: {layout}/policy_config/mlp_policy_config.pkl
+
+                if PT_NUM[args.alg] == 2:
+                    actor_names = [
+                    #    f"{pop_alg}{pt_i}_init_actor.pt",
+                        f"{pop_alg}{pt_i}_mid_actor.pt",
+                        f"{pop_alg}{pt_i}_final_actor.pt",
+                    ]
+
+                    for actor_name in actor_names:
+                        print(actor_name)
+                        assert actor_name in pt_lst, (actor_name, pt_lst)
+                    yml.write(
+                        f"""\
+hsp{p_i}_1:
+    policy_config_path: {layout}/policy_config/{PT_CONFIG[args.alg]}_policy_config.pkl
     featurize_type: ppo
     train: False
     model_path:
         actor: {os.path.join(layout, exp, actor_names[0])}
-{pop_alg}{p_i}_2:
-    policy_config_path: {layout}/policy_config/mlp_policy_config.pkl
+hsp{p_i}_2:
+    policy_config_path: {layout}/policy_config/{PT_CONFIG[args.alg]}_policy_config.pkl
     featurize_type: ppo
     train: False
     model_path:
         actor: {os.path.join(layout, exp, actor_names[1])}
 """
-                )
+                    )
+                    
+
+                elif PT_NUM[args.alg] == 1:
+                    actor_names = [
+                        f"{pt_i}.pt",
+                    ]
+
+                    for actor_name in actor_names:
+                        print(actor_name)
+                        assert actor_name in pt_lst, (actor_name, pt_lst)
+                    yml.write(
+                        f"""\
+hsp{p_i}:
+    policy_config_path: {layout}/policy_config/{PT_CONFIG[args.alg]}_policy_config.pkl
+    featurize_type: ppo
+    train: False
+    model_path:
+        actor: {os.path.join(layout, exp, actor_names[0])}
+"""
+                    )
+
+                
             yml.close()

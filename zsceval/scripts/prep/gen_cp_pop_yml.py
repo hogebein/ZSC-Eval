@@ -98,13 +98,13 @@ if __name__ == "__main__":
     featurize_type: ppo
     train: False
     model_path:
-        actor: {os.path.join(layout, args.alg, "s1", exp, actor_names[0])}
+        actor: {os.path.join(layout, exp, actor_names[0])}
 {pop_alg}{p_i}_2:
     policy_config_path: {layout}/policy_config/mlp_policy_config.pkl
     featurize_type: ppo
     train: False
     model_path:
-        actor: {os.path.join(layout, args.alg, "s1", exp, actor_names[1])}
+        actor: {os.path.join(layout, exp, actor_names[1])}
 """
                 )
             yml.close()

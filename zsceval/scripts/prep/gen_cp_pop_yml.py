@@ -7,7 +7,9 @@ from loguru import logger
 policy_pool_dir = "../policy_pool"
 
 S1_POP_EXPS = {
-    "hsp": "hsp_plate_shared"
+    "hsp-S1": "hsp/s1/hsp_plate_shared",
+    "mep-S2" : "mep/s2/mep-S2-s36",
+    "hsp_S2" : "hsp/s2/hsp-S2-s36",
 }
 
 
@@ -42,7 +44,7 @@ if __name__ == "__main__":
     for layout in layouts:
         
         exp = S1_POP_EXPS[args.alg]
-        source_dir = osp.join(policy_pool_dir, layout, args.alg, "s1", exp)
+        source_dir = osp.join(policy_pool_dir, layout, exp)
         pt_lst = os.listdir(source_dir)
         logger.debug(pt_lst)
         pop_alg = args.alg if args.alg != "fcp" else "sp"

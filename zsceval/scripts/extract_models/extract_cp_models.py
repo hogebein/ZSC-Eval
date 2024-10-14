@@ -46,10 +46,7 @@ def find_target_index(array, percentile: float):
 def extract_pop_cp_models(layout, algo, exp, env, percentile=0.8):
     logger.info(f"exp {exp}")
     api = wandb.Api(timeout=60)
-    if "overcooked" in env.lower():
-        layout_config = "config.layout_name"
-    else:
-        layout_config = "config.scenario_name"
+    layout_config = "config.layout_name"
     filters = {
         "$and": [
             {"config.experiment_name": exp},
@@ -105,8 +102,8 @@ def extract_pop_cp_models(layout, algo, exp, env, percentile=0.8):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Extract cp models")
-    parser.add_argument("--layout", type=str, help="layout name")
-    parser.add_argument("--env", type=str, help="env name")
+    parser.add_argument("-l", "--layout", type=str, help="layout name")
+    parser.add_argument("-e", "--env", type=str, help="env name")
     parser.add_argument("-a", "--algo", "--algorithm", type=str, action="append", required=True)
     parser.add_argument("-p", type=float, help="percentile", default=0.8)
 
@@ -150,8 +147,14 @@ if __name__ == "__main__":
 
     # assert all([algo in ["traj", "mep", "fcp", "cole", "hsp"] for algo in algorithms])
     ALG_EXPS = {
-        "hsp_cp" : ["hsp_plate_shared-pop_cross_play-s48-cp", 
-                    "adaptive_hsp_plate_shared-pop_cross_play-s48-cp"],
+        "hsp_cp" : [
+#                    "hsp_plate_shared-pop_cross_play-s48-cp", 
+#                    "adaptive_hsp_plate_shared-pop_cross_play-s48-cp",
+#                    "adaptive_mep-S2-s36-adp_cp-s5",
+#                    "mep-S2-s36-adp_cp-s5"
+                    "hsp_plate_shared-pop_cross_play-s48-cp",
+                ]
+
     }
 
     hostname = socket.gethostname()

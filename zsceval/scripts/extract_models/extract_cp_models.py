@@ -46,7 +46,10 @@ def find_target_index(array, percentile: float):
 def extract_pop_cp_models(layout, algo, exp, env, percentile=0.8):
     logger.info(f"exp {exp}")
     api = wandb.Api(timeout=60)
-    layout_config = "config.layout_name"
+    if "overcooked" in env.lower():
+        layout_config = "config.layout_name"
+    else:
+        layout_config = "config.scenario_name"
     filters = {
         "$and": [
             {"config.experiment_name": exp},

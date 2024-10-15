@@ -145,8 +145,8 @@ def extract_pop_S2_models(layout, algo, exp, env, percentile=0.8):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Extract S2 models")
-    parser.add_argument("--layout", type=str, help="layout name")
-    parser.add_argument("--env", type=str, help="env name")
+    parser.add_argument("-l", "--layout", type=str, help="layout name")
+    parser.add_argument("-e", "--env", type=str, help="env name")
     parser.add_argument("-a", "--algo", "--algorithm", type=str, action="append", required=True)
     parser.add_argument("-p", type=float, help="percentile", default=0.8)
 
@@ -202,7 +202,7 @@ if __name__ == "__main__":
         "hsp": [
             "hsp-S2-s12",
             "hsp-S2-s24",
-            "hsp-S2-s36",
+            "hsp_plate-S2-s36",
         ],
         "traj": [
             "traj-S2-s24",

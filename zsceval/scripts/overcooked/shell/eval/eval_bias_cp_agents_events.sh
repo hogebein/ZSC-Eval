@@ -16,12 +16,13 @@ path=../../policy_pool
 
 export POLICY_POOL=${path}
 
-policy_version="adaptive_hsp_plate_shared-pop_cross_play-s48-cp"
+policy_version="adaptive_mep-S2-s36-adp_cp-s5"
+cp_type="adp"
 
 echo "env is ${env}, layout is ${layout}, eval"
-n=$(find ${path}/${layout}/hsp_cp/pop/${policy_version} -name "*.pt" | wc -l)
-echo "Evaluate $n agents in ${path}/${layout}/hsp_cp/pop/${policy_version}"
-yml_dir=eval/eval_policy_pool/${layout}/bias_cp/pop/
+n=$(find ${path}/${layout}/hsp_cp/${cp_type}/${policy_version} -name "*.pt" | wc -l)
+echo "Evaluate $n agents in ${path}/${layout}/hsp_cp/adp/${policy_version}"
+yml_dir=eval/eval_policy_pool/${layout}/bias_cp/adp/
 mkdir -p ${yml_dir}
 
 eval_template="eval_template"
@@ -30,10 +31,10 @@ for i in $(seq 1 ${n});
 do
     agent0_policy_name="hsp_cp${i}_final_w0"
     agent1_policy_name="hsp_cp${i}_final_w1"
-    exp="eval-adaptive_hsp_plate_shared-pop_cross_play${i}"
+    exp="eval-adaptive_mep-S2-s36-adp_cp-s5_${i}"
     yml=${yml_dir}/${exp}.yml
     
-    sed -e "s/agent0/${agent0_policy_name}/g" -e "s/agent1/${agent1_policy_name}/g" -e "s/xxx/${i}/g" ${path}/${layout}/hsp_cp/pop/${policy_version}/${eval_template}.yml > ${yml}
+    sed -e "s/agent0/${agent0_policy_name}/g" -e "s/agent1/${agent1_policy_name}/g" -e "s/xxx/${i}/g" ${path}/${layout}/hsp_cp/${cp_type}/${policy_version}/${eval_template}.yml > ${yml}
     
     echo "########################################"
     echo "evaluate ${agent0_policy_name}-${agent1_policy_name}"

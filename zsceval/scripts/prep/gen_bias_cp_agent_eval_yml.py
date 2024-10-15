@@ -9,7 +9,7 @@ if __name__ == "__main__":
     exp = sys.argv[2]
     
     cp_type = re.findall(r".\d*-([a-z]*)_.", exp)[0]
-
+    logger.info(f"cp_type : {cp_type}")
 
     if layout == "all":
         layouts = [
@@ -49,7 +49,7 @@ agent{a_i}:
     featurize_type: ppo
     train: False
     model_path:
-        actor: {layout}/hsp/{cp_type}/{exp}/xxx.pt
+        actor: {layout}/hsp_cp/{cp_type}/{exp}/xxx.pt
     """
             )
         yml.close()

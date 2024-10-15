@@ -9,19 +9,19 @@ policy_pool_dir = "../policy_pool"
 S1_POP_EXPS = {
     "hsp-S1": "hsp/s1/hsp_plate_shared",
     "mep-S2" : "mep/s2/mep-S2-s36",
-    "hsp_S2" : "hsp/s2/hsp-S2-s36",
+    "hsp-S2" : "hsp/s2/hsp_plate-S2-s36",
 }
 
 PT_NUM = {
     "hsp-S1": 2,
     "mep-S2" : 1,
-    "hsp_S2" : 1,
+    "hsp-S2" : 1,
 }
 
 PT_CONFIG = {
     "hsp-S1": "mlp",
     "mep-S2" : "rnn",
-    "hsp_S2" : "rnn",
+    "hsp-S2" : "rnn",
 }
 
 N_REPEAT = 30

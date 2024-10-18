@@ -46,7 +46,8 @@ then
 elif [[ $2 == "hsp_cp" ]];
 then
     algorithm="hsp_cp"
-    exps=("adaptive_hsp_plate_shared-pop_cross_play-s48-cp" "hsp_plate_shared-pop_cross_play-s48-cp")
+    #exps=("adaptive_hsp_plate_shared-pop_cross_play-s48-cp" "hsp_plate_shared-pop_cross_play-s48-cp")
+    exps=("mep-S2-s36-adp_cp-s5" "hsp_plate-S2-s36-adp_cp-s5" "adaptive_mep-S2-s36-adp_cp-s5" "adaptive_hsp_plate-S2-s36-adp_cp-s5")
 
 else
     echo "bash eval_with_bias_agents.sh {layout} {algo}"

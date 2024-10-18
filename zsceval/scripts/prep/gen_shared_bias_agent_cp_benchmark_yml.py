@@ -64,6 +64,6 @@ agent_name:
     featurize_type: ppo
     train: False
     model_path:
-        actor: {l}/algorithm/pop/population/seed.pt"""
+        actor: {l}/algorithm/adp/population/seed.pt"""
             )
         logger.success(f"write to {benchmark_yml_path}")

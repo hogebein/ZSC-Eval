@@ -7,14 +7,13 @@ population_size=$3
 opponent=$4
 
 entropy_coefs="0.2 0.05 0.001"
-entropy_coef_horizons="0 12e6 2e7"
+entropy_coef_horizons="0 18e6 3e7"
 if [[ "${layout}" == "small_corridor" ]]; then
     entropy_coefs="0.2 0.05 0.001"
     entropy_coef_horizons="0 8e6 1e7"
 fi
-
-reward_shaping_horizon="2e7"
-num_env_steps="2e7"
+reward_shaping_horizon="3e7"
+num_env_steps="3e7"
 
 num_agents=2
 algo="mappo_cp"
@@ -23,7 +22,7 @@ exp="adaptive_${pop}-${opponent}_cp-s${population_size}"
 path=../../policy_pool
 
 export POLICY_POOL=${path}
-n_training_threads=20
+n_training_threads=80
 
 if [[ "${layout}" == "random0" || "${layout}" == "random0_medium" || "${layout}" == "random1" || "${layout}" == "random3" || "${layout}" == "small_corridor" || "${layout}" == "unident_s" ]]; then
     version="old"
@@ -51,9 +50,10 @@ if [[ "${layout}" == "random0" || "${layout}" == "random0_medium" || "${layout}"
     
     w1="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
     if [[ "${layout}" == "random0" ]]; then
-        w0="0,0,0,0,[0:10],0,[0:10],[-20:0],3,5,3,0,[-0.1:0:0.1],0,0,0,0,[0.1:1]"
+        #w0="0,0,[-5:0:5],0,0,0,0,0,[-5:0:5],0,0,3,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
+        w0="0,0,5,0,0,0,0,0,-5,0,0,3,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
         seed_begin=1
-        seed_max=30
+        seed_max=1
     elif [[ "${layout}" == "random0_medium" ]]; then
         w0="0,0,0,[-20:0],[-20:0:10],0,[0:10],[-20:0],3,5,3,0,[-0.1:0:0.1],0,0,0,0,[0.1:1]"
         seed_begin=1
@@ -103,8 +103,8 @@ else
     if [[ "${weight_pattern}" == "plate" ]]; then
         w0="0,0,[-5:0:5],0,0,0,0,0,[-5:0:5],0,0,3,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
         we0="0,0,[-5:0:5],0,0,0,0,0,[-5:0:5],0,0,3,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
-        seed_begin=1
-        seed_max=30
+        seed_begin=4
+        seed_max=10
     elif [[ "${weight_pattern}" == "random0_medium" ]]; then
         w0="0,0,0,[-20:0],[-20:0:10],0,[0:10],[-20:0],3,5,3,0,[-0.1:0:0.1],0,0,0,0,[0.1:1]"
         we0="0,0,0,0,0,0,0,0,0,0,0,3,5,3,0,0,0,0,[-20:0],[-20:0],0,0,[-5:0:20],[-15:0:10],0,[-0.1:0:0.1],0,0,0,1"

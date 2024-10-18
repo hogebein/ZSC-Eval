@@ -43,12 +43,17 @@ then
     exps=("cole-S2-s50" "cole-S2-s75")
     # exps=("cole-S2-s25" "cole-S2-s50" "cole-S2-s75")
     exps=("cole-S2-s50" "cole-S2-s75")
+elif [[ $2 == "hsp_cp" ]];
+then
+    algorithm="hsp_cp"
+    exps=("adaptive_hsp_plate_shared-pop_cross_play-s48-cp" "hsp_plate_shared-pop_cross_play-s48-cp")
+
 else
     echo "bash eval_with_bias_agents.sh {layout} {algo}"
     exit 0
 fi
 
-bias_agent_version="hsp"
+bias_agent_version="hsp_plate_shared"
 
 declare -A LAYOUTS_KS
 LAYOUTS_KS["random0"]=10
@@ -90,12 +95,12 @@ for (( i=0; i<$len; i++ )); do
         
         sed -e "s/agent_name/${agent_name}/g" -e "s/algorithm/${algorithm}/g" -e "s/population/${exp_name}/g" -e "s/seed/${seed}/g" "${bias_yml}" > "${yml}"
         
-        if [[ (${layout} == "random3_m" && $algorithm == "cole")  || $exp == *"mlp" ]]; then
+        if [[ (${layout} == "random3_m" && $algorithm == "cole" && $algorithm == "hsp_cp")  || $exp == *"mlp" ]]; then
             sed -i -e "s/rnn_policy_config/mlp_policy_config/g" "${yml}"
         fi
 
         python eval/eval_with_population.py --env_name ${env} --algorithm_name ${algo} --experiment_name "${eval_exp}" --layout_name "${layout}" \
-        --num_agents ${num_agents} --seed 1 --episode_length 400 --n_eval_rollout_threads $((n * 20)) --eval_episodes $((n * 40)) --eval_stochastic --dummy_batch_size 2 \
+        --num_agents ${num_agents} --seed 1 --episode_length 400 --n_eval_rollout_threads 60 --eval_episodes $((30 * 40)) --eval_stochastic --dummy_batch_size 2 \
         --use_proper_time_limits \
         --use_wandb \
         --population_yaml_path "${yml}" --population_size ${population_size} \

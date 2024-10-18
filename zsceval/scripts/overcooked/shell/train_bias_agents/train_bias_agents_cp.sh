@@ -7,14 +7,14 @@ population_size=$3
 opponent=$4
 
 entropy_coefs="0.2 0.05 0.001"
-entropy_coef_horizons="0 12e6 2e7"
+entropy_coef_horizons="0 18e6 3e7"
 if [[ "${layout}" == "small_corridor" ]]; then
     entropy_coefs="0.2 0.05 0.001"
     entropy_coef_horizons="0 8e6 1e7"
 fi
 
-reward_shaping_horizon="2e7"
-num_env_steps="2e7"
+reward_shaping_horizon="3e7"
+num_env_steps="3e7"
 
 num_agents=2
 algo="mappo_cp"
@@ -101,9 +101,10 @@ else
     # 29 sparse_reward  1
 
     if [[ "${weight_pattern}" == "plate" ]]; then
-        w0="0,0,[-5:0:5],0,0,0,0,0,[-5:0:5],0,0,3,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
+        #w0="0,0,[-5:0:5],0,0,0,0,0,[-5:0:5],0,0,3,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
+        w0="0,0,5,0,0,0,0,0,-5,0,0,3,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
         seed_begin=1
-        seed_max=30
+        seed_max=1
     elif [[ "${weight_pattern}" == "random0_medium" ]]; then
         w0="0,0,0,[-20:0],[-20:0:10],0,[0:10],[-20:0],3,5,3,0,[-0.1:0:0.1],0,0,0,0,[0.1:1]"
         seed_begin=1

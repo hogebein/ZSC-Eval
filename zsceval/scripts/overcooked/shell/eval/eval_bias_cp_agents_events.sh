@@ -16,7 +16,7 @@ path=../../policy_pool
 
 export POLICY_POOL=${path}
 
-policy_version="adaptive_mep-S2-s36-adp_cp-s5"
+policy_version="adaptive_hsp_plate-S2-s36-adp_cp-s5"
 cp_type="adp"
 
 echo "env is ${env}, layout is ${layout}, eval"
@@ -31,7 +31,7 @@ for i in $(seq 1 ${n});
 do
     agent0_policy_name="hsp_cp${i}_final_w0"
     agent1_policy_name="hsp_cp${i}_final_w1"
-    exp="eval-adaptive_mep-S2-s36-adp_cp-s5_${i}"
+    exp="eval-adaptive_hsp_plate-S2-s36-adp_cp-s5_${i}"
     yml=${yml_dir}/${exp}.yml
     
     sed -e "s/agent0/${agent0_policy_name}/g" -e "s/agent1/${agent1_policy_name}/g" -e "s/xxx/${i}/g" ${path}/${layout}/hsp_cp/${cp_type}/${policy_version}/${eval_template}.yml > ${yml}

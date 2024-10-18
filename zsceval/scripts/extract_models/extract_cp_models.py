@@ -155,7 +155,7 @@ if __name__ == "__main__":
 #                    "adaptive_hsp_plate_shared-pop_cross_play-s48-cp",
 #                    "adaptive_mep-S2-s36-adp_cp-s5",
 #                    "mep-S2-s36-adp_cp-s5"
-                    "hsp_plate_shared-pop_cross_play-s48-cp",
+                    "adaptive_hsp_plate-S2-s36-adp_cp-s5",
                 ]
 
     }

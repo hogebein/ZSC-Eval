@@ -2,6 +2,7 @@
 env="Overcooked"
 
 layout=$1
+weight_pattern=$2
 
 entropy_coefs="0.2 0.05 0.001"
 entropy_coef_horizons="0 6e6 1e7"
@@ -16,7 +17,7 @@ num_env_steps="1e7"
 num_agents=2
 algo="mappo"
 stage="S1"
-exp="hsp-${stage}"
+exp="hsp_all-${stage}"
 
 
 if [[ "${layout}" == "random0" || "${layout}" == "random0_medium" || "${layout}" == "random1" || "${layout}" == "random3" || "${layout}" == "small_corridor" || "${layout}" == "unident_s" ]]; then
@@ -104,9 +105,9 @@ else
         seed_begin=1
         seed_max=54
     elif [[ "${weight_pattern}" == "all" ]]; then
-        w0="[-3:0:3],[-3:0:3],[-3:0:3],[-3:0:3],[-3:0:3],[-3:0:3],[-3:0:3],[-3:0:3],-5,0,0,3,5,3,0,0,0,0,[-20:0],[-20:0],0,0,[-5:0:20],[-15:0:10],0,[-0.1:0:0.1],0,0,0,[-1:0:1]"
+        w0="[-3:0:3],[-3:0:3],[-3:0:3],[-3:0:3],[-3:0:3],[-3:0:3],[-3:0:3],[-3:0:3],[-3:0:3],0,0,3,5,3,0,0,0,0,[-20:0],[-20:0],0,0,[-5:0:20],[-15:0:10],0,[-0.1:0:0.1],0,0,0,[-1:0:1]"
         seed_begin=1
-        seed_max=10000
+        seed_max=1
     else
         w0="0,0,0,0,[-20:0:10],0,[-20:0:10],0,3,5,3,[-20:0],[-0.1:0:0.1],0,0,0,0,[0.1:1]"
         seed_begin=1
@@ -116,6 +117,7 @@ else
     w1="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
 fi
 
+echo "seed_max is ${seed_max}:"
 for seed in $(seq ${seed_begin} ${seed_max});
 do
     echo "seed is ${seed}:"
@@ -127,5 +129,6 @@ do
     --cnn_layers_params "32,3,1,1 64,3,1,1 32,3,1,1" --use_recurrent_policy \
     --use_proper_time_limits \
     --save_interval 25 --log_interval 10 --use_eval --eval_interval 20 --n_eval_rollout_threads 20 \
-    --wandb_name "hogebein"
+    --wandb_name "hogebein" \
+    --use_wandb
 done

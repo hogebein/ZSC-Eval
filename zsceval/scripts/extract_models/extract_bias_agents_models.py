@@ -152,6 +152,7 @@ if __name__ == "__main__":
         "plate": "hsp_plate_cross_play-S1",
         "adp_plate" : "adaptive_hsp_plate-S1",
         "small_corridor" : "hsp-S1",
+        "all" : "hsp_all-S1",
         "random0" : "hsp-S1",
     }
 

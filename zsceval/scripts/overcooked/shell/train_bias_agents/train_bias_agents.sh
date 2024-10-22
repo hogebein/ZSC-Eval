@@ -17,7 +17,7 @@ num_env_steps="1e7"
 num_agents=2
 algo="mappo"
 stage="S1"
-exp="hsp_all-${stage}"
+exp="hsp_all_shared-${stage}"
 
 
 if [[ "${layout}" == "random0" || "${layout}" == "random0_medium" || "${layout}" == "random1" || "${layout}" == "random3" || "${layout}" == "small_corridor" || "${layout}" == "unident_s" ]]; then
@@ -106,8 +106,8 @@ else
         seed_max=54
     elif [[ "${weight_pattern}" == "all" ]]; then
         w0="[-3:0:3],[-3:0:3],[-3:0:3],[-3:0:3],[-3:0:3],[-3:0:3],[-3:0:3],[-3:0:3],[-3:0:3],0,0,3,5,3,0,0,0,0,[-20:0],[-20:0],0,0,[-5:0:20],[-15:0:10],0,[-0.1:0:0.1],0,0,0,[-1:0:1]"
-        seed_begin=1
-        seed_max=1
+        seed_begin=64
+        seed_max=128
     else
         w0="0,0,0,0,[-20:0:10],0,[-20:0:10],0,3,5,3,[-20:0],[-0.1:0:0.1],0,0,0,0,[0.1:1]"
         seed_begin=1
@@ -125,7 +125,7 @@ do
     --seed ${seed} --n_training_threads 1 --n_rollout_threads 100 --dummy_batch_size 2 --num_mini_batch 1 --episode_length 400 --num_env_steps ${num_env_steps} --reward_shaping_horizon ${reward_shaping_horizon} \
     --overcooked_version ${version} \
     --ppo_epoch 15 --entropy_coefs ${entropy_coefs} --entropy_coef_horizons ${entropy_coef_horizons} \
-    --use_hsp --w0 ${w0} --w1 ${w1} --share_policy --random_index \
+    --use_hsp --w0 ${w0} --w1 ${w1} --random_index \
     --cnn_layers_params "32,3,1,1 64,3,1,1 32,3,1,1" --use_recurrent_policy \
     --use_proper_time_limits \
     --save_interval 25 --log_interval 10 --use_eval --eval_interval 20 --n_eval_rollout_threads 20 \

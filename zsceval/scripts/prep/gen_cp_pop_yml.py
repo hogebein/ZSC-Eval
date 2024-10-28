@@ -24,6 +24,10 @@ PT_CONFIG = {
     "hsp-S2" : "rnn",
 }
 
+ALG_NAME = {
+    "hsp-S1": "hsp"
+}
+
 N_REPEAT = 30
 
 
@@ -93,12 +97,12 @@ hsp_cp:
             )
             for p_i in range(1, args.pop + 1):
                 pt_i = (args.total // N_REPEAT * n_r + p_i - 1) % args.total + 1
-
+                logger.debug(pt_i)
                 if PT_NUM[args.alg] == 2:
                     actor_names = [
                     #    f"{pop_alg}{pt_i}_init_actor.pt",
-                        f"{pop_alg}{pt_i}_mid_actor.pt",
-                        f"{pop_alg}{pt_i}_final_actor.pt",
+                        f"{ALG_NAME[pop_alg]}{pt_i}_mid_actor.pt",
+                        f"{ALG_NAME[pop_alg]}{pt_i}_final_actor.pt",
                     ]
 
                     for actor_name in actor_names:

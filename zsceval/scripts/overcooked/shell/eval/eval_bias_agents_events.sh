@@ -16,7 +16,7 @@ path=../../policy_pool
 
 export POLICY_POOL=${path}
 
-policy_version="adaptive_hsp_plate"
+policy_version="hsp_all"
 
 echo "env is ${env}, layout is ${layout}, eval"
 n=$(find ${path}/${layout}/hsp/s1/${policy_version} -name "*_final_w0_actor.pt" | wc -l)
@@ -30,7 +30,7 @@ for i in $(seq 1 ${n});
 do
     agent0_policy_name="hsp${i}_final_w0"
     agent1_policy_name="hsp${i}_final_w1"
-    exp="eval-adaptive_hsp_plate${i}"
+    exp="eval-hsp_all${i}"
     yml=${yml_dir}/${exp}.yml
     
     sed -e "s/agent0/${agent0_policy_name}/g" -e "s/agent1/${agent1_policy_name}/g" -e "s/pop/${policy_version}/g" ${path}/${layout}/hsp/s1/${eval_template}.yml > ${yml}

@@ -149,10 +149,10 @@ if __name__ == "__main__":
 
     hostname = socket.gethostname()
     exp_names = {
-        "plate": "hsp_plate_cross_play-S1",
+        "plate": "hsp_plate_shared-S1",
         "adp_plate" : "adaptive_hsp_plate-S1",
         "small_corridor" : "hsp-S1",
-        "all" : "hsp_all-S1",
+        "all" : "hsp_all=shared-S1",
         "random0" : "hsp-S1",
     }
 
@@ -160,5 +160,5 @@ if __name__ == "__main__":
     # logger.info(f"hostname: {hostname}")
     for l in layout:
         exp_trans = exp_names[exp]
-        logger.info(f"Extracting {exp} for {l}")
+        logger.info(f"Extracting {exp_trans} for {l}")
         extract_sp_S1_models(l, exp_trans, env)

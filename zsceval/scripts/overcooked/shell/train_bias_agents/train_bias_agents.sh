@@ -106,7 +106,7 @@ else
         seed_max=54
     elif [[ "${weight_pattern}" == "all" ]]; then
         w0="[-3:0:3],[-3:0:3],[-3:0:3],[-3:0:3],[-3:0:3],[-3:0:3],[-3:0:3],[-3:0:3],[-3:0:3],0,0,3,5,3,0,0,0,0,[-20:0],[-20:0],0,0,[-5:0:20],[-15:0:10],0,[-0.1:0:0.1],0,0,0,[-1:0:1]"
-        seed_begin=64
+        seed_begin=65
         seed_max=128
     else
         w0="0,0,0,0,[-20:0:10],0,[-20:0:10],0,3,5,3,[-20:0],[-0.1:0:0.1],0,0,0,0,[0.1:1]"
@@ -122,7 +122,7 @@ for seed in $(seq ${seed_begin} ${seed_max});
 do
     echo "seed is ${seed}:"
     python train/train_bias_agent.py --env_name ${env} --algorithm_name ${algo} --experiment_name "${exp}" --layout_name ${layout} --num_agents ${num_agents} \
-    --seed ${seed} --n_training_threads 1 --n_rollout_threads 100 --dummy_batch_size 2 --num_mini_batch 1 --episode_length 400 --num_env_steps ${num_env_steps} --reward_shaping_horizon ${reward_shaping_horizon} \
+    --seed ${seed} --n_training_threads 2 --n_rollout_threads 100 --dummy_batch_size 2 --num_mini_batch 1 --episode_length 400 --num_env_steps ${num_env_steps} --reward_shaping_horizon ${reward_shaping_horizon} \
     --overcooked_version ${version} \
     --ppo_epoch 15 --entropy_coefs ${entropy_coefs} --entropy_coef_horizons ${entropy_coef_horizons} \
     --use_hsp --w0 ${w0} --w1 ${w1} --random_index \

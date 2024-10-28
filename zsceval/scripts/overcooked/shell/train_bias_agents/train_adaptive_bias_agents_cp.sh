@@ -22,7 +22,7 @@ exp="adaptive_${pop}-${opponent}_cp-s${population_size}"
 path=../../policy_pool
 
 export POLICY_POOL=${path}
-n_training_threads=80
+n_training_threads=100
 
 if [[ "${layout}" == "random0" || "${layout}" == "random0_medium" || "${layout}" == "random1" || "${layout}" == "random3" || "${layout}" == "small_corridor" || "${layout}" == "unident_s" ]]; then
     version="old"
@@ -101,8 +101,8 @@ else
     # 29 sparse_reward  1
 
     if [[ "${weight_pattern}" == "plate" ]]; then
-        #w0="0,0,[-5:0:5],0,0,0,0,0,[-5:0:5],0,0,3,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
-        w0="0,0,5,0,0,0,0,0,-5,0,0,3,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
+        w0="0,0,[-5:0:5],0,0,0,0,0,[-5:0:5],0,0,3,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
+        # w0="0,0,5,0,0,0,0,0,-5,0,0,3,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
         seed_begin=1
         seed_max=10
     elif [[ "${weight_pattern}" == "random0_medium" ]]; then

@@ -22,7 +22,7 @@ exp="${pop}-${opponent}_cp-s${population_size}"
 path=../../policy_pool
 
 export POLICY_POOL=${path}
-n_training_threads=20
+n_training_threads=100
 
 if [[ "${layout}" == "random0" || "${layout}" == "random0_medium" || "${layout}" == "random1" || "${layout}" == "random3" || "${layout}" == "small_corridor" || "${layout}" == "unident_s" ]]; then
     version="old"

@@ -12,13 +12,12 @@ if [[ "${layout}" == "small_corridor" ]]; then
     entropy_coefs="0.2 0.05 0.001"
     entropy_coef_horizons="0 8e6 1e7"
 fi
-
 reward_shaping_horizon="3e7"
 num_env_steps="3e7"
 
 num_agents=2
 algo="mappo_cp"
-pop=hsp_plate-S2-s36
+pop=hsp_${weight_pattern}_shared
 exp="${pop}-${opponent}_cp-s${population_size}"
 path=../../policy_pool
 
@@ -101,8 +100,8 @@ else
     # 29 sparse_reward  1
 
     if [[ "${weight_pattern}" == "plate" ]]; then
-        #w0="0,0,[-5:0:5],0,0,0,0,0,[-5:0:5],0,0,3,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
-        w0="0,0,5,0,0,0,0,0,-5,0,0,3,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
+        w0="0,0,[-5:0:5],0,0,0,0,0,[-5:0:5],0,0,3,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
+        # w0="0,0,5,0,0,0,0,0,-5,0,0,3,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
         seed_begin=1
         seed_max=10
     elif [[ "${weight_pattern}" == "random0_medium" ]]; then

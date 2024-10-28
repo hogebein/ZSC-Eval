@@ -17,7 +17,7 @@ num_env_steps="3e7"
 
 num_agents=2
 algo="mappo_cp"
-pop=hsp_${weight_pattern}-S2-s36
+pop=hsp_${weight_pattern}_shared
 exp="adaptive_${pop}-${opponent}_cp-s${population_size}"
 path=../../policy_pool
 

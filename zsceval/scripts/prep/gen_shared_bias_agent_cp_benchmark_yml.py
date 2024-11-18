@@ -10,7 +10,8 @@ def parse_args():
     parser.add_argument("-l", "--layout", type=str, required=True, help="layout name")
     parser.add_argument("--eval_result_dir", type=str, default="eval/results")
     parser.add_argument("--policy_pool_path", type=str, default="../policy_pool")
-    parser.add_argument("--bias_agent_version", type=str, default="hsp")
+    parser.add_argument("-v", "--bias_agent_version", type=str, default="hsp")
+    parser.add_argument("-t", "--training_type", type=str, default="pop")
     args = parser.parse_args()
     return args
 
@@ -64,6 +65,6 @@ agent_name:
     featurize_type: ppo
     train: False
     model_path:
-        actor: {l}/algorithm/adp/population/seed.pt"""
+        actor: {l}/algorithm/{args.training_type}/population/seed.pt"""
             )
         logger.success(f"write to {benchmark_yml_path}")

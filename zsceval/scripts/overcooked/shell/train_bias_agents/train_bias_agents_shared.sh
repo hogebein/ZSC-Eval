@@ -17,7 +17,7 @@ num_env_steps="1e7"
 num_agents=2
 algo="mappo"
 stage="S1"
-exp="hsp_all_shared-${stage}"
+exp="hsp_placement_shared-${stage}"
 
 
 if [[ "${layout}" == "random0" || "${layout}" == "random0_medium" || "${layout}" == "random1" || "${layout}" == "random3" || "${layout}" == "small_corridor" || "${layout}" == "unident_s" ]]; then
@@ -66,13 +66,13 @@ else
     version="new"
     # 0 "put_onion_on_X",　　0
     # 1 "put_tomato_on_X",　0
-    # 2 "put_dish_on_X",　　0
+    # 2 "put_dish_on_X",　　[-5:0:5]
     # 3 "put_soup_on_X",　　0
     # 4 "pickup_onion_from_X",　　0
     # 5 "pickup_onion_from_O",　　0
     # 6 "pickup_tomato_from_X",　0
     # 7 "pickup_tomato_from_T",  0
-    # 8 "pickup_dish_from_X",   0
+    # 8 "pickup_dish_from_X",   [-5:0:5]
     # 9 "pickup_dish_from_D",  0
     # 10 "pickup_soup_from_X", 0
     # 11 "USEFUL_DISH_PICKUP",  # counted when #taken_dishes < #cooking_pots + #partially_full_pots and no dishes on the counter   3
@@ -93,28 +93,43 @@ else
     # 26 "MOVEMENT",    0
     # 27 "IDLE_MOVEMENT", 0
     # 28 "IDLE_INTERACT",  0
-    # 29 sparse_reward  1
+    # 29 "sparse_reward  1　
+    # 30 "place_onion_on_X",
+    # 31 "place_tomato_on_X",
+    # 32 "place_dish_on_X",
+    # 33 "place_soup_on_X",
+    # 34 "recieve_onion_via_X",
+    # 35 "recieve_tomato_via_X",
+    # 36 "recieve_dish_via_X",
+    # 37 "recieve_soup_via_X",
+    # 38 "final_onions_placed_on_X",
+    # 39 "final_tomatoes_placed_on_X",
+    # 40 "final_dishes_placed_on_X",
+    # 41 "final_soups_placed_on_X"
 
     if [[ "${weight_pattern}" == "plate" ]]; then
-        #w0="0,0,[-5:0:5],0,0,0,0,0,[-5:0:5],0,0,3,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
-        w0="0,0,5,0,0,0,0,0,-5,0,0,3,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
+        w0="0,0,[-5:0:5],0,0,0,0,0,[-5:0:5],0,0,3,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0"
         seed_begin=1
-        seed_max=10
+        seed_max=72
     elif [[ "${weight_pattern}" == "random0_medium" ]]; then
-        w0="0,0,0,[-20:0],[-20:0:10],0,[0:10],[-20:0],3,5,3,0,[-0.1:0:0.1],0,0,0,0,[0.1:1]"
+        w0="0,0,0,[-20:0],[-20:0:10],0,[0:10],[-20:0],3,5,3,0,[-0.1:0:0.1],0,0,0,0,[0.1:1],0,0,0,0,0,0,0,0,0,0,0,0"
         seed_begin=1
         seed_max=54
     elif [[ "${weight_pattern}" == "all" ]]; then
-        w0="[-3:0:3],[-3:0:3],[-3:0:3],[-3:0:3],[-3:0:3],[-3:0:3],[-3:0:3],[-3:0:3],[-3:0:3],0,0,3,5,3,0,0,0,0,[-20:0],[-20:0],0,0,[-5:0:20],[-15:0:10],0,[-0.1:0:0.1],0,0,0,[-1:0:1]"
-        seed_begin=65
-        seed_max=128
+        w0="0,0,[-5:0:5],0,0,0,0,0,[-5:0:5],0,0,3,5,3,0,0,0,0,[-20:0],[-20:0],0,0,[-5:0:20],[-15:0:10],0,[-0.1:0:0.1],0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0"
+        seed_begin=1
+        seed_max=124
+    elif [[ "${weight_pattern}" == "placement" ]]; then
+        w0="0,0,0,0,0,0,0,0,0,0,0,3,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,[0:3],0,0,0,0,0,0,0,[0:20],0"
+        seed_begin=3
+        seed_max=20
     else
-        w0="0,0,0,0,[-20:0:10],0,[-20:0:10],0,3,5,3,[-20:0],[-0.1:0:0.1],0,0,0,0,[0.1:1]"
+        w0="0,0,0,0,[-20:0:10],0,[-20:0:10],0,3,5,3,[-20:0],[-0.1:0:0.1],0,0,0,0,[0.1:1],0,0,0,0,0,0,0,0,0,0,0,0"
         seed_begin=1
         seed_max=72
     fi
 
-    w1="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
+    w1="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0"
 fi
 
 echo "seed_max is ${seed_max}:"

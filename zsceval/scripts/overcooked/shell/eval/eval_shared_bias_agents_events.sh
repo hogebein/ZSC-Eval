@@ -16,7 +16,7 @@ path=../../policy_pool
 
 export POLICY_POOL=${path}
 
-policy_version="hsp_plate_cross_play"
+policy_version="hsp_all_shared"
 
 echo "env is ${env}, layout is ${layout}, eval"
 n=$(find ${path}/${layout}/hsp/s1/${policy_version} -name "*final_actor.pt" | wc -l)
@@ -30,7 +30,7 @@ for i in $(seq 1 ${n});
 do
     agent0_policy_name="hsp${i}_final_w0"
     agent1_policy_name="hsp${i}_final_w1"
-    exp="eval-hsp_plate_shared${i}"
+    exp="eval-hsp_all_shared${i}"
     yml=${yml_dir}/${exp}.yml
     
     sed -e "s/agent0/${agent0_policy_name}/g" -e "s/agent1/${agent1_policy_name}/g" -e "s/xxx/hsp${i}_final_actor/g" ${path}/${layout}/hsp/s1/${policy_version}/${eval_template}.yml > ${yml}
@@ -42,6 +42,7 @@ do
     --use_proper_time_limits \
     --use_wandb \
     --use_render \
+    --store_traj \
     --population_yaml_path ${yml} --population_size 2 \
     --agent0_policy_name ${agent0_policy_name} \
     --agent1_policy_name ${agent1_policy_name} --overcooked_version ${version} --eval_result_path eval/results/${layout}/bias_cp/${exp}.json

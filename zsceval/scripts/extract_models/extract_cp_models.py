@@ -151,11 +151,11 @@ if __name__ == "__main__":
     # assert all([algo in ["traj", "mep", "fcp", "cole", "hsp"] for algo in algorithms])
     ALG_EXPS = {
         "hsp_cp" : [
-#                    "hsp_plate_shared-pop_cross_play-s48-cp", 
-#                    "adaptive_hsp_plate_shared-pop_cross_play-s48-cp",
+                    "hsp_plate_shared-pop_cp-s60", 
+                    "adaptive_hsp_plate_shared-pop_cp-s60",
 #                    "adaptive_mep-S2-s36-adp_cp-s5",
 #                    "mep-S2-s36-adp_cp-s5"
-                    "adaptive_hsp_plate-S2-s36-adp_cp-s5",
+#                    "adaptive_hsp_plate-S2-s36-adp_cp-s5",
                 ]
 
     }

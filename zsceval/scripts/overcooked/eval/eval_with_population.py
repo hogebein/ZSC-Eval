@@ -204,7 +204,7 @@ def main(args):
     population_agents = [name for name, _, _, _ in runner.policy.all_policies() if all_args.agent_name not in name]
     # logger.info(population_agents)
     # logger.info(len(population_agents))
-    assert all_args.n_eval_rollout_threads % (num_population_agents * 2) == 0, num_population_agents
+    # assert all_args.n_eval_rollout_threads % (num_population_agents * 2) == 0, num_population_agents
     assert all_args.eval_episodes % all_args.n_eval_rollout_threads == 0
     map_ea2p = dict()
     for e in range(all_args.n_eval_rollout_threads // 2):
@@ -223,7 +223,10 @@ def main(args):
         [(agent_featurize_type, agent_featurize_type) for _ in range(all_args.n_eval_rollout_threads)]
     )
 
-    runner.evaluate_with_multi_policy()
+    if all_args.use_reactive:
+        runner.evaluate_reactive_policy_with_multi_policy()
+    else:
+        runner.evaluate_with_multi_policy()
 
     if envs is not None:
         # post process
@@ -234,9 +237,9 @@ def main(args):
 
     if all_args.use_wandb:
         run.finish()
-    else:
-        runner.writter.export_scalars_to_json(str(runner.log_dir + "/summary.json"))
-        runner.writter.close()
+    # else:
+        # runner.writter.export_scalars_to_json(str(runner.log_dir + "/summary.json"))
+        # runner.writter.close()
 
 
 if __name__ == "__main__":

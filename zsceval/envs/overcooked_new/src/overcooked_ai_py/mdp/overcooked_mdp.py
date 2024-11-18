@@ -3,6 +3,7 @@ import itertools
 import warnings
 from collections import Counter, defaultdict
 from functools import reduce
+from loguru import logger
 
 import numpy as np
 
@@ -51,6 +52,18 @@ SHAPED_INFOS = [
     "MOVEMENT",
     "IDLE_MOVEMENT",
     "IDLE_INTERACT",
+    "place_onion_on_X",
+    "place_tomato_on_X",
+    "place_dish_on_X",
+    "place_soup_on_X",
+    "recieve_onion_via_X",
+    "recieve_tomato_via_X",
+    "recieve_dish_via_X",
+    "recieve_soup_via_X",
+    "final_onions_placed_on_X",
+    "final_tomatoes_placed_on_X",
+    "final_dishes_placed_on_X",
+    "final_soups_placed_on_X"
 ]
 
 
@@ -334,6 +347,7 @@ class ObjectState(object):
         """
         self.name = name
         self._position = tuple(position)
+        self._last_owner = None
 
     @property
     def position(self):
@@ -342,6 +356,14 @@ class ObjectState(object):
     @position.setter
     def position(self, new_pos):
         self._position = new_pos
+
+    @property
+    def last_owner(self):
+        return self._last_owner
+
+    @last_owner.setter
+    def last_owner(self, owner):
+        self._last_owner = owner
 
     def is_valid(self):
         return self.name in ["onion", "tomato", "dish"]
@@ -419,6 +441,7 @@ class SoupState(ObjectState):
         self._position = new_pos
         for ingredient in self._ingredients:
             ingredient.position = new_pos
+
 
     @property
     def ingredients(self):
@@ -785,6 +808,18 @@ class OvercookedState(object):
         del self.objects[pos]
         return obj
 
+    def count_onions_on_X(self):
+        return sum((obj.name == "onion" for obj in self.objects.values()))
+
+    def count_tomatoes_on_X(self):
+        return sum((obj.name == "tomato" for obj in self.objects.values()))
+
+    def count_dishes_on_X(self):
+        return sum((obj.name == "dish" for obj in self.objects.values()))
+
+    def count_soups_on_X(self):
+        return sum((obj.name == "soup" for obj in self.objects.values()))
+
     @classmethod
     def from_players_pos_and_or(
         cls,
@@ -886,21 +921,33 @@ EVENT_TYPES = [
     "tomato_drop",
     "useful_tomato_drop",
     "potting_tomato",
+    "placing_tomato",
+    "recieve_tomato",
+    "final_placed_tomatoes",
     # Onion events
     "onion_pickup",
     "useful_onion_pickup",
     "onion_drop",
     "useful_onion_drop",
     "potting_onion",
+    "placing_onion",
+    "recieve_onion",
+    "final_placed_onions",
     # Dish events
     "dish_pickup",
     "useful_dish_pickup",
     "dish_drop",
     "useful_dish_drop",
+    "placing_dish",
+    "recieve_dish",
+    "final_placed_dishes",
     # Soup events
     "soup_pickup",
     "soup_delivery",
     "soup_drop",
+    "placing_soup",
+    "recieve_soup",
+    "final_placed_soups",
     # Potting events
     "optimal_onion_potting",
     "optimal_tomato_potting",
@@ -1322,18 +1369,26 @@ class OvercookedGridworld(object):
                     obj_name = player.get_object().name
                     self.log_object_drop(events_infos, new_state, obj_name, pot_states, player_idx)
                     shaped_info[player_idx][f"put_{obj_name}_on_X"] += 1
-
+                    shaped_info[player_idx][f"place_{obj_name}_on_X"] += 1
                     # Drop object on counter
                     obj = player.remove_object()
+                    obj.last_owner = player
                     new_state.add_object(obj, i_pos)
+                    
                 elif not player.has_object() and new_state.has_object(i_pos):
                     obj_name = new_state.get_object(i_pos).name
                     self.log_object_pickup(events_infos, new_state, obj_name, pot_states, player_idx)
                     shaped_info[player_idx][f"pickup_{obj_name}_from_X"] += 1
-
+                    
                     # Pick up object from counter
                     obj = new_state.remove_object(i_pos)
+                    if obj.last_owner == player:
+                        shaped_info[player_idx][f"place_{obj_name}_on_X"] -= 1
+                    else:
+                        shaped_info[player_idx][f"recieve_{obj_name}_via_X"] += 1
+
                     player.set_object(obj)
+
                 else:
                     shaped_info[player_idx]["IDLE_INTERACT"] += 1
 
@@ -1442,6 +1497,11 @@ class OvercookedGridworld(object):
                     events_infos["soup_delivery"][player_idx] = True
             else:
                 shaped_info[player_idx]["IDLE_INTERACT"] += 1
+
+            shaped_info[player_idx]["final_onions_placed_on_X"] = new_state.count_onions_on_X()
+            shaped_info[player_idx]["final_tomatoes_placed_on_X"] = new_state.count_tomatoes_on_X()
+            shaped_info[player_idx]["final_dishes_placed_on_X"] = new_state.count_dishes_on_X()
+            shaped_info[player_idx]["final_soups_placed_on_X"] = new_state.count_soups_on_X()
 
         return sparse_reward, shaped_reward, shaped_info
 

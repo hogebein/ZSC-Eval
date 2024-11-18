@@ -1,5 +1,6 @@
 import os
 import pickle
+import json
 import pprint
 import time
 from collections import defaultdict
@@ -681,6 +682,7 @@ class Overcooked(gym.Env):
         self.use_phi = all_args.use_phi
         self.use_hsp = all_args.use_hsp
         self.use_expectation = all_args.use_expectation
+        self.use_reactive = all_args.use_reactive
         self.store_traj = getattr(all_args, "store_traj", False)
         self.rank = rank
         self.random_index = all_args.random_index
@@ -999,7 +1001,7 @@ class Overcooked(gym.Env):
 
         if self.store_traj:
             #self.traj_to_store.append(info["shaped_info_by_agent"])
-            self.traj_to_store.append(joint_action)
+            self.traj_to_store["ep_action"].append(joint_action)
 
         if self.use_phi:
             raise NotImplementedError
@@ -1072,7 +1074,7 @@ class Overcooked(gym.Env):
 
         if self.store_traj:
             #self.traj_to_store.append(info["shaped_info_by_agent"])
-            self.traj_to_store.append(self.base_env.state.to_dict())
+            self.traj_to_store["ep_state"].append(self.base_env.state.to_dict())
 
         reward = [[shaped_reward_p0], [shaped_reward_p1]]
 
@@ -1179,8 +1181,10 @@ class Overcooked(gym.Env):
             self.init_traj()
 
         if self.store_traj:
-            self.traj_to_store = []
-            self.traj_to_store.append(self.base_env.state.to_dict())
+            self.traj_to_store = {}
+            self.traj_to_store["ep_state"] = []
+            self.traj_to_store["ep_action"] = []
+            self.traj_to_store["ep_state"].append(self.base_env.state.to_dict())
 
         if self.use_hsp:
             self.cumulative_hidden_reward = np.zeros(2)
@@ -1240,8 +1244,8 @@ class Overcooked(gym.Env):
     def _store_trajectory(self):
         if not os.path.exists(f"{self.run_dir}/trajs_store/{self.layout_name}/"):
             os.makedirs(f"{self.run_dir}/trajs_store/{self.layout_name}/", exist_ok=True)
-        save_dir = f"{self.run_dir}/trajs_store/{self.layout_name}/traj_{self.rank}_{self.traj_num}.pkl"
-        pickle.dump(self.traj_to_store, open(save_dir, "wb"))
+        save_dir = f"{self.run_dir}/trajs_store/{self.layout_name}/traj_{self.rank}_{self.traj_num}.json"
+        json.dump(self.traj_to_store, open(save_dir, "w"))
         
         #if not os.path.exists(f"{self.run_dir}/trajs/{self.layout_name}/"):
         #    os.makedirs(f"{self.run_dir}/trajs/{self.layout_name}/", exist_ok=True)

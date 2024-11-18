@@ -84,6 +84,9 @@ class Runner(object):
         self.env_name = self.all_args.env_name
         self.algorithm_name = self.all_args.algorithm_name
         self.experiment_name = self.all_args.experiment_name
+
+        self.use_reactive = self.all_args.use_reactive
+
         self.use_centralized_V = self.all_args.use_centralized_V
         self.use_obs_instead_of_state = self.all_args.use_obs_instead_of_state
         self.num_env_steps = self.all_args.num_env_steps
@@ -106,6 +109,7 @@ class Runner(object):
 
         # dir
         self.model_dir = self.all_args.model_dir
+
 
         if self.use_render:
             self.run_dir = config["run_dir"]

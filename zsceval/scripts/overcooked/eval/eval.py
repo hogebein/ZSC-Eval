@@ -218,6 +218,7 @@ def main(args):
     runner.population_size = all_args.population_size
 
     eval_envs.reset_featurize_type(featurize_types)
+
     runner.evaluate_with_multi_policy()
 
     if envs is not None:

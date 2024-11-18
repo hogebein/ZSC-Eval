@@ -42,7 +42,7 @@ agent{a_i}:
     featurize_type: ppo
     train: False
     model_path:
-        actor: {layout}/hsp/s1/hsp_all/agent{a_i}_actor.pt
+        actor: {layout}/hsp/s1/hsp_plate/agent{a_i}_actor.pt
     """
             )
         yml.close()

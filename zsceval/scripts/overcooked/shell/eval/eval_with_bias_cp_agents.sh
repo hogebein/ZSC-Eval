@@ -46,8 +46,8 @@ then
 elif [[ $2 == "hsp_cp" ]];
 then
     algorithm="hsp_cp"
-    #exps=("adaptive_hsp_plate_shared-pop_cross_play-s48-cp" "hsp_plate_shared-pop_cross_play-s48-cp")
-    exps=("mep-S2-s36-adp_cp-s5" "hsp_plate-S2-s36-adp_cp-s5" "adaptive_mep-S2-s36-adp_cp-s5" "adaptive_hsp_plate-S2-s36-adp_cp-s5")
+    exps=("adaptive_hsp_plate_shared-pop_cp-s60" "hsp_plate_shared-pop_cp-s60")
+    #exps=("mep-S2-s36-adp_cp-s5" "hsp_plate-S2-s36-adp_cp-s5" "adaptive_mep-S2-s36-adp_cp-s5" "adaptive_hsp_plate-S2-s36-adp_cp-s5")
 
 else
     echo "bash eval_with_bias_agents.sh {layout} {algo}"
@@ -91,7 +91,7 @@ for (( i=0; i<$len; i++ )); do
         agent_name="${exp_name}-${seed}"
         
         echo "Exp name ${exp_name}"
-        eval_exp="eval-${agent_name}"
+        eval_exp="eval_cp-${agent_name}"
         yml=${yml_dir}/${eval_exp}.yml
         
         sed -e "s/agent_name/${agent_name}/g" -e "s/algorithm/${algorithm}/g" -e "s/population/${exp_name}/g" -e "s/seed/${seed}/g" "${bias_yml}" > "${yml}"
@@ -104,7 +104,7 @@ for (( i=0; i<$len; i++ )); do
         --num_agents ${num_agents} --seed 1 --episode_length 400 --n_eval_rollout_threads 30 --eval_episodes $((30 * 40)) --eval_stochastic --dummy_batch_size 2 \
         --use_proper_time_limits \
         --use_wandb \
-        --store_traj --use_render \
+        --store_traj \
         --population_yaml_path "${yml}" --population_size ${population_size} \
         --overcooked_version ${version} --eval_result_path "eval/results/${layout}/${algorithm}/${eval_exp}.json" \
         --agent_name "${agent_name}"

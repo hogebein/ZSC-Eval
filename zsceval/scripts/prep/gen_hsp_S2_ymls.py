@@ -145,6 +145,7 @@ if __name__ == "__main__":
                 "MOVEMENT",
                 "IDLE_MOVEMENT",
                 "IDLE_INTERACT",
+                
             ]
     else:
         event_types = [

@@ -60,7 +60,7 @@ fi
 
 num_agents=2
 algo="adaptive"
-exp="hsp_plate-S2-s${population_size}"
+exp="hsp_plate_placement_shared-S2-s${population_size}"
 stage="S2"
 seed_begin=1
 seed_max=5

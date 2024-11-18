@@ -46,15 +46,21 @@ then
 elif [[ $2 == "hsp_cp" ]];
 then
     algorithm="hsp_cp"
-    exps=("adaptive_hsp_plate_shared-pop_cp-s60" "hsp_plate_shared-pop_cp-s60")
+    #exps=("adaptive_hsp_plate_shared-pop_cp-s60" "hsp_plate_shared-pop_cp-s60")
     #exps=("mep-S2-s36-adp_cp-s5" "hsp_plate-S2-s36-adp_cp-s5" "adaptive_mep-S2-s36-adp_cp-s5" "adaptive_hsp_plate-S2-s36-adp_cp-s5")
+
+elif [[ $2 == "hsp_react" ]];
+then
+    algorithm="hsp"
+    exps=("hsp_placement_shared")
+    
 
 else
     echo "bash eval_with_bias_agents.sh {layout} {algo}"
     exit 0
 fi
 
-bias_agent_version="hsp_plate_shared"
+pop_agent_version="mep-S2-s36"
 
 declare -A LAYOUTS_KS
 LAYOUTS_KS["random0"]=10
@@ -65,13 +71,13 @@ LAYOUTS_KS["small_corridor"]=10
 LAYOUTS_KS["unident_s"]=10
 LAYOUTS_KS["random0_m"]=15
 LAYOUTS_KS["random1_m"]=15
-LAYOUTS_KS["random3_m"]=15
+LAYOUTS_KS["random3_m"]=5
 
 path=../../policy_pool
 export POLICY_POOL=${path}
 
-K=$((2 * LAYOUTS_KS[${layout}]))
-bias_yml="${path}/${layout}/hsp/s1/${bias_agent_version}/benchmarks-s${K}.yml"
+K=$((LAYOUTS_KS[${layout}]))
+bias_yml="${path}/${layout}/mep/s2/${pop_agent_version}/benchmarks-s${K}.yml"
 yml_dir=eval/eval_policy_pool/${layout}/results
 mkdir -p ${yml_dir}
 
@@ -94,19 +100,17 @@ for (( i=0; i<$len; i++ )); do
         eval_exp="eval_cp-${agent_name}"
         yml=${yml_dir}/${eval_exp}.yml
         
-        sed -e "s/agent_name/${agent_name}/g" -e "s/algorithm/${algorithm}/g" -e "s/population/${exp_name}/g" -e "s/seed/${seed}/g" "${bias_yml}" > "${yml}"
+        sed -e "s/agent_name/${agent_name}/g" -e "s/algorithm/${algorithm}/g" -e "s/population/${exp_name}/g" -e "s/seed/hsp${seed}_final_actor/g" "${bias_yml}" > "${yml}"
         
-        if [[ (${layout} == "random3_m" && $algorithm == "cole" && $algorithm == "hsp_cp")  || $exp == *"mlp" ]]; then
-            sed -i -e "s/rnn_policy_config/mlp_policy_config/g" "${yml}"
-        fi
 
         python eval/eval_with_population.py --env_name ${env} --algorithm_name ${algo} --experiment_name "${eval_exp}" --layout_name "${layout}" \
-        --num_agents ${num_agents} --seed 1 --episode_length 400 --n_eval_rollout_threads 30 --eval_episodes $((30 * 40)) --eval_stochastic --dummy_batch_size 2 \
+        --num_agents ${num_agents} --seed 1 --episode_length 400 --n_eval_rollout_threads 1 --eval_episodes $((30 * 40)) --eval_stochastic --dummy_batch_size 1 \
         --use_proper_time_limits \
         --use_wandb \
         --store_traj \
         --population_yaml_path "${yml}" --population_size ${population_size} \
         --overcooked_version ${version} --eval_result_path "eval/results/${layout}/${algorithm}/${eval_exp}.json" \
-        --agent_name "${agent_name}"
+        --agent_name "${agent_name}" \
+        --use_reactive
     done
 done

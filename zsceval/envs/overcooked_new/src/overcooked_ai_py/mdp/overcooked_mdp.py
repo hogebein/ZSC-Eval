@@ -60,10 +60,10 @@ SHAPED_INFOS = [
     "recieve_tomato_via_X",
     "recieve_dish_via_X",
     "recieve_soup_via_X",
-    "final_onions_placed_on_X",
-    "final_tomatoes_placed_on_X",
-    "final_dishes_placed_on_X",
-    "final_soups_placed_on_X"
+    "onion_placed_on_X",
+    "tomato_placed_on_X",
+    "dish_placed_on_X",
+    "soup_placed_on_X"
 ]
 
 
@@ -340,14 +340,14 @@ class ObjectState(object):
     State of an object in OvercookedGridworld.
     """
 
-    def __init__(self, name, position, **kwargs):
+    def __init__(self, name, position, last_owner=None, **kwargs):
         """
         name (str): The name of the object
         position (int, int): Tuple for the current location of the object.
         """
         self.name = name
         self._position = tuple(position)
-        self._last_owner = None
+        self._last_owner = last_owner
 
     @property
     def position(self):
@@ -369,19 +369,19 @@ class ObjectState(object):
         return self.name in ["onion", "tomato", "dish"]
 
     def deepcopy(self):
-        return ObjectState(self.name, self.position)
+        return ObjectState(self.name, self.position, self.last_owner)
 
     def __eq__(self, other):
-        return isinstance(other, ObjectState) and self.name == other.name and self.position == other.position
+        return isinstance(other, ObjectState) and self.name == other.name and self.position == other.position and self.last_owner
 
     def __hash__(self):
         return hash((self.name, self.position))
 
     def __repr__(self):
-        return "{}@{}".format(self.name, self.position)
+        return "{}@{}, last_owner:{}".format(self.name, self.position, self.last_owner)
 
     def to_dict(self):
-        return {"name": self.name, "position": self.position}
+        return {"name": self.name, "position": self.position, "last_owner": self.last_owner}
 
     @classmethod
     def from_dict(cls, obj_dict):
@@ -808,17 +808,17 @@ class OvercookedState(object):
         del self.objects[pos]
         return obj
 
-    def count_onions_on_X(self):
-        return sum((obj.name == "onion" for obj in self.objects.values()))
+    def count_onions_on_X(self, grid):
+        return sum((obj.name == "onion" and grid[obj.position[1]][obj.position[0]] == "X" for obj in self.objects.values()))
 
-    def count_tomatoes_on_X(self):
-        return sum((obj.name == "tomato" for obj in self.objects.values()))
+    def count_tomatoes_on_X(self, grid):
+        return sum((obj.name == "tomato" and grid[obj.position[1]][obj.position[0]] == "X" for obj in self.objects.values()))
 
-    def count_dishes_on_X(self):
-        return sum((obj.name == "dish" for obj in self.objects.values()))
+    def count_dishes_on_X(self, grid):
+        return sum((obj.name == "dish" and grid[obj.position[1]][obj.position[0]] == "X" for obj in self.objects.values()))
 
-    def count_soups_on_X(self):
-        return sum((obj.name == "soup" for obj in self.objects.values()))
+    def count_soups_on_X(self, grid):
+        return sum((obj.name == "soup" and grid[obj.position[1]][obj.position[0]] == "X" for obj in self.objects.values()))
 
     @classmethod
     def from_players_pos_and_or(
@@ -923,7 +923,7 @@ EVENT_TYPES = [
     "potting_tomato",
     "placing_tomato",
     "recieve_tomato",
-    "final_placed_tomatoes",
+    "placed_tomatoes",
     # Onion events
     "onion_pickup",
     "useful_onion_pickup",
@@ -932,7 +932,7 @@ EVENT_TYPES = [
     "potting_onion",
     "placing_onion",
     "recieve_onion",
-    "final_placed_onions",
+    "placed_onions",
     # Dish events
     "dish_pickup",
     "useful_dish_pickup",
@@ -940,14 +940,14 @@ EVENT_TYPES = [
     "useful_dish_drop",
     "placing_dish",
     "recieve_dish",
-    "final_placed_dishes",
+    "placed_dishes",
     # Soup events
     "soup_pickup",
     "soup_delivery",
     "soup_drop",
     "placing_soup",
     "recieve_soup",
-    "final_placed_soups",
+    "placed_soups",
     # Potting events
     "optimal_onion_potting",
     "optimal_tomato_potting",
@@ -1370,19 +1370,21 @@ class OvercookedGridworld(object):
                     self.log_object_drop(events_infos, new_state, obj_name, pot_states, player_idx)
                     shaped_info[player_idx][f"put_{obj_name}_on_X"] += 1
                     shaped_info[player_idx][f"place_{obj_name}_on_X"] += 1
+                    shaped_info[player_idx][f"{obj_name}_placed_on_X"] += 1
+
                     # Drop object on counter
                     obj = player.remove_object()
-                    obj.last_owner = player
+                    obj.last_owner = player_idx
                     new_state.add_object(obj, i_pos)
                     
                 elif not player.has_object() and new_state.has_object(i_pos):
                     obj_name = new_state.get_object(i_pos).name
                     self.log_object_pickup(events_infos, new_state, obj_name, pot_states, player_idx)
                     shaped_info[player_idx][f"pickup_{obj_name}_from_X"] += 1
-                    
+                    shaped_info[player_idx][f"{obj_name}_placed_on_X"] -= 1
                     # Pick up object from counter
                     obj = new_state.remove_object(i_pos)
-                    if obj.last_owner == player:
+                    if obj.last_owner == player_idx:
                         shaped_info[player_idx][f"place_{obj_name}_on_X"] -= 1
                     else:
                         shaped_info[player_idx][f"recieve_{obj_name}_via_X"] += 1
@@ -1498,10 +1500,8 @@ class OvercookedGridworld(object):
             else:
                 shaped_info[player_idx]["IDLE_INTERACT"] += 1
 
-            shaped_info[player_idx]["final_onions_placed_on_X"] = new_state.count_onions_on_X()
-            shaped_info[player_idx]["final_tomatoes_placed_on_X"] = new_state.count_tomatoes_on_X()
-            shaped_info[player_idx]["final_dishes_placed_on_X"] = new_state.count_dishes_on_X()
-            shaped_info[player_idx]["final_soups_placed_on_X"] = new_state.count_soups_on_X()
+            
+
 
         return sparse_reward, shaped_reward, shaped_info
 

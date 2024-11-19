@@ -93,19 +93,19 @@ else
     # 26 "MOVEMENT",    0
     # 27 "IDLE_MOVEMENT", 0
     # 28 "IDLE_INTERACT",  0
-    # 29 "sparse_reward  1　
-    # 30 "place_onion_on_X",
-    # 31 "place_tomato_on_X",
-    # 32 "place_dish_on_X",
-    # 33 "place_soup_on_X",
-    # 34 "recieve_onion_via_X",
-    # 35 "recieve_tomato_via_X",
-    # 36 "recieve_dish_via_X",
-    # 37 "recieve_soup_via_X",
-    # 38 "onions_placed_on_X",
-    # 39 "tomatoes_placed_on_X",
-    # 40 "dishes_placed_on_X",
-    # 41 "soups_placed_on_X"
+    # 29 "place_onion_on_X",
+    # 30 "place_tomato_on_X",
+    # 31 "place_dish_on_X",
+    # 32 "place_soup_on_X",
+    # 33 "recieve_onion_via_X",
+    # 34 "recieve_tomato_via_X",
+    # 35 "recieve_dish_via_X",
+    # 36 "recieve_soup_via_X",
+    # 37 "onions_placed_on_X",
+    # 38 "tomatoes_placed_on_X",
+    # 39 "dishes_placed_on_X",
+    # 40 "soups_placed_on_X"
+    # 41 "sparse_reward  1　
 
     if [[ "${weight_pattern}" == "plate" ]]; then
         w0="0,0,[-5:0:5],0,0,0,0,0,[-5:0:5],0,0,3,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0"
@@ -120,8 +120,9 @@ else
         seed_begin=1
         seed_max=124
     elif [[ "${weight_pattern}" == "plate_placement" ]]; then
-        w0="0,0,0,0,0,0,0,0,0,0,0,3,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,[0:3],0,0,0,0,0,0,0,[0:20],0"
-        seed_begin=3
+        # w0="0,0,0,0,0,0,0,0,0,0,0,3,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,[0:3],0,0,0,0,0,0,0,[0:20],0,0"
+        w0="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,[0:3],0,0,0,0,0,0,0,[0:20],0,0"
+        seed_begin=1
         seed_max=20
     else
         w0="0,0,0,0,[-20:0:10],0,[-20:0:10],0,3,5,3,[-20:0],[-0.1:0:0.1],0,0,0,0,[0.1:1],0,0,0,0,0,0,0,0,0,0,0,0"
@@ -129,7 +130,7 @@ else
         seed_max=72
     fi
 
-    w1="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0"
+    w1="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
 fi
 
 echo "seed_max is ${seed_max}:"
@@ -137,7 +138,7 @@ for seed in $(seq ${seed_begin} ${seed_max});
 do
     echo "seed is ${seed}:"
     python train/train_bias_agent.py --env_name ${env} --algorithm_name ${algo} --experiment_name "${exp}" --layout_name ${layout} --num_agents ${num_agents} \
-    --seed ${seed} --n_training_threads 2 --n_rollout_threads 200 --dummy_batch_size 2 --num_mini_batch 1 --episode_length 400 --num_env_steps ${num_env_steps} --reward_shaping_horizon ${reward_shaping_horizon} \
+    --seed ${seed} --n_training_threads 2 --n_rollout_threads 100 --dummy_batch_size 2 --num_mini_batch 1 --episode_length 400 --num_env_steps ${num_env_steps} --reward_shaping_horizon ${reward_shaping_horizon} \
     --overcooked_version ${version} \
     --ppo_epoch 15 --entropy_coefs ${entropy_coefs} --entropy_coef_horizons ${entropy_coef_horizons} \
     --use_hsp --w0 ${w0} --w1 ${w1} --random_index \

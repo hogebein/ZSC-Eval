@@ -115,38 +115,8 @@ if __name__ == "__main__":
                 "sparse_r",
             ]
         else:
-            event_types = [
-                "put_onion_on_X",
-                "put_tomato_on_X",
-                "put_dish_on_X",
-                "put_soup_on_X",
-                "pickup_onion_from_X",
-                "pickup_onion_from_O",
-                "pickup_tomato_from_X",
-                "pickup_tomato_from_T",
-                "pickup_dish_from_X",
-                "pickup_dish_from_D",
-                "pickup_soup_from_X",
-                "USEFUL_DISH_PICKUP",  # counted when #taken_dishes < #cooking_pots + #partially_full_pots and no dishes on the counter
-                "SOUP_PICKUP",  # counted when soup in the pot is picked up (not a soup placed on the table)
-                "PLACEMENT_IN_POT",  # counted when some ingredient is put into pot
-                "viable_placement",
-                "optimal_placement",
-                "catastrophic_placement",
-                "useless_placement",  # pot an ingredient to a useless recipe
-                "potting_onion",
-                "potting_tomato",
-                "cook",
-                "delivery",
-                "deliver_size_two_order",
-                "deliver_size_three_order",
-                "deliver_useless_order",
-                "STAY",
-                "MOVEMENT",
-                "IDLE_MOVEMENT",
-                "IDLE_INTERACT",
-                
-            ]
+            from zsceval.envs.overcooked_new.mdp.overcooked_mdp import SHAPED_INFOS
+            event_types = SHAPED_INFOS
     else:
         event_types = [
             "actual_pass",

@@ -5,6 +5,7 @@ from loguru import logger
 
 if __name__ == "__main__":
     layout = sys.argv[1]
+    exp = sys.argv[2]
     if layout == "all":
         layouts = [
             "random0",
@@ -27,7 +28,7 @@ if __name__ == "__main__":
         if layout in ["academy_3_vs_1_with_keeper"]:
             num_agents = 3
 
-        yml_path = f"../policy_pool/{layout}/hsp/s1/eval_template.yml"
+        yml_path = f"../policy_pool/{layout}/hsp/s1/{exp}/eval_template.yml"
         os.makedirs(os.path.dirname(yml_path), exist_ok=True)
         yml = open(
             yml_path,
@@ -42,7 +43,7 @@ agent{a_i}:
     featurize_type: ppo
     train: False
     model_path:
-        actor: {layout}/hsp/s1/hsp_plate/agent{a_i}_actor.pt
+        actor: {layout}/hsp/s1/{exp}/agent{a_i}_actor.pt
     """
             )
         yml.close()

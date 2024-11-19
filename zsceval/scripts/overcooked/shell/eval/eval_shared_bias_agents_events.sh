@@ -16,12 +16,12 @@ path=../../policy_pool
 
 export POLICY_POOL=${path}
 
-policy_version="hsp_all_shared"
+policy_version="hsp_plate_placement_shared"
 
 echo "env is ${env}, layout is ${layout}, eval"
 n=$(find ${path}/${layout}/hsp/s1/${policy_version} -name "*final_actor.pt" | wc -l)
 echo "Evaluate $n agents in ${path}/${layout}/hsp/s1/${policy_version}"
-yml_dir=eval/eval_policy_pool/${layout}/bias/pop/
+yml_dir=eval/eval_policy_pool/${layout}/bias/
 mkdir -p ${yml_dir}
 
 eval_template="eval_template"
@@ -30,7 +30,7 @@ for i in $(seq 1 ${n});
 do
     agent0_policy_name="hsp${i}_final_w0"
     agent1_policy_name="hsp${i}_final_w1"
-    exp="eval-hsp_all_shared${i}"
+    exp="eval-${policy_version}${i}"
     yml=${yml_dir}/${exp}.yml
     
     sed -e "s/agent0/${agent0_policy_name}/g" -e "s/agent1/${agent1_policy_name}/g" -e "s/xxx/hsp${i}_final_actor/g" ${path}/${layout}/hsp/s1/${policy_version}/${eval_template}.yml > ${yml}

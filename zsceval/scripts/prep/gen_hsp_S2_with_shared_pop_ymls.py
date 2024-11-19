@@ -117,7 +117,7 @@ if __name__ == "__main__":
                 "sparse_r",
             ]
         else:
-            from zsceval.envs.overcooked_new.mdp.overcooked_mdp import SHAPED_INFOS
+            from zsceval.envs.overcooked_new.src.overcooked_ai_py.mdp.overcooked_mdp import SHAPED_INFOS
             event_types = SHAPED_INFOS
     else:
         event_types = [
@@ -130,7 +130,7 @@ if __name__ == "__main__":
         ]
 
     events = dict()
-    eval_result_dir = os.path.join(args.env.lower(), args.eval_result_dir, layout, "bias_cp")
+    eval_result_dir = os.path.join(args.env.lower(), args.eval_result_dir, layout, "bias")
     logger.info(f"eval result dir {eval_result_dir}")
     logfiles = glob.glob(f"{eval_result_dir}/eval*{policy_version}*.json")
     logfiles = [l_f for l_f in logfiles if "mid" not in l_f]

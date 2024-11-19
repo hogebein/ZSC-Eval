@@ -390,7 +390,7 @@ class ObjectState(object):
 
 
 class SoupState(ObjectState):
-    def __init__(self, position, ingredients=[], cooking_tick=-1, cook_time=None, **kwargs):
+    def __init__(self, position, last_owner=None, ingredients=[], cooking_tick=-1, cook_time=None, **kwargs):
         """
         Represents a soup object. An object becomes a soup the instant it is placed in a pot. The
         soup's recipe is a list of ingredient names used to create it. A soup's recipe is undetermined
@@ -401,7 +401,8 @@ class SoupState(ObjectState):
         cooking (int): How long the soup has been cooking for. -1 means cooking hasn't started yet
         cook_time(int): How long soup needs to be cooked, used only mostly for getting soup from dict with supplied cook_time, if None self.recipe.time is used
         """
-        super(SoupState, self).__init__("soup", position)
+        super(SoupState, self).__init__("soup", position, last_owner)
+
         self._ingredients = ingredients
         self._cooking_tick = cooking_tick
         self._recipe = None
@@ -441,7 +442,6 @@ class SoupState(ObjectState):
         self._position = new_pos
         for ingredient in self._ingredients:
             ingredient.position = new_pos
-
 
     @property
     def ingredients(self):
@@ -538,6 +538,7 @@ class SoupState(ObjectState):
     def deepcopy(self):
         return SoupState(
             self.position,
+            self.last_owner,
             [ingredient.deepcopy() for ingredient in self._ingredients],
             self._cooking_tick,
         )

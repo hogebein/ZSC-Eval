@@ -197,7 +197,12 @@ def main(args):
 
     # load population
     logger.info(f"population_yaml_path: {all_args.population_yaml_path}")
-    featurize_type = runner.policy.load_population(all_args.population_yaml_path, evaluation=True)
+
+    if all_args.use_hsp:
+        featurize_type = runner.policy.load_population(all_args.population_yaml_path, evaluation=True, utility=True)
+
+    else:
+        featurize_type = runner.policy.load_population(all_args.population_yaml_path, evaluation=True)
 
     # configure mapping from (env_id, agent_id) to policy_name
     num_population_agents = all_args.population_size - 1

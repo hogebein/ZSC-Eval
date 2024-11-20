@@ -577,21 +577,21 @@ class OvercookedRunner(Runner):
         return eval_infos
 
 
-    def evaluate_reactive_one_episode_with_multi_policy(self, policy_pool: Dict, map_ea2p: Dict):
+    def evaluate_reactive_one_episode_with_multi_policy(self, policy_pool: Dict, policy_utility: Dict, map_ea2p: Dict):
             
-        def reaction_filter(infos, agents):
+        def reaction_filter(infos, agents, utility):
             if infos is None:
                 return False
             
             for agent in agents:
                 agent_id = agent[1]
-                # infos[0]["shaped_info_by_agent"][agent_id]["final_dishes_placed_on_X"]
+                logger.debug(infos[0]["shaped_info_by_agent"][agent_id])
 
             return False
 
         def reaction_planner():
 
-            return
+            return np.array([[0]])
 
 
         """Evaluate one episode with different policy for each agent.
@@ -619,7 +619,7 @@ class OvercookedRunner(Runner):
         infos = None
         for _ in range(self.all_args.episode_length):
             eval_actions = np.full((self.n_eval_rollout_threads, self.num_agents, 1), fill_value=0).tolist()
-            for _, policy in policy_pool.items():
+            for policy_name, policy in policy_pool.items():
                 if len(policy.control_agents) > 0:
                     policy.prep_rollout()
                     policy.to(self.device)
@@ -632,7 +632,7 @@ class OvercookedRunner(Runner):
                     agents = policy.control_agents
 
 
-                    if reaction_filter(infos, agents):
+                    if reaction_filter(infos, agents, policy_utility[policy_name]):
                         actions = reaction_planner()
                     else:
                         actions = policy.step(
@@ -642,7 +642,6 @@ class OvercookedRunner(Runner):
                             deterministic=not self.all_args.eval_stochastic,
                             available_actions=np.stack(avail_action_lst),
                         )
-                        logger.debug(type(actions))
                     for action, (e, a) in zip(actions, agents):
                         
                         eval_actions[e][a] = action
@@ -692,6 +691,7 @@ class OvercookedRunner(Runner):
         """Evaluate with different policy for each agent."""
 
         policy_pool = policy_pool or self.policy.policy_pool
+        policy_utility = self.policy.policy_utility
         map_ea2p = map_ea2p or self.policy.map_ea2p
         num_eval_episodes = num_eval_episodes or self.all_args.eval_episodes
         logger.debug(f"evaluate {self.population_size} policies with {num_eval_episodes} episodes")
@@ -700,7 +700,7 @@ class OvercookedRunner(Runner):
             range(max(1, num_eval_episodes // self.n_eval_rollout_threads)),
             desc="Evaluate with Population",
         ):
-            eval_env_info = self.evaluate_reactive_one_episode_with_multi_policy(policy_pool, map_ea2p)
+            eval_env_info = self.evaluate_reactive_one_episode_with_multi_policy(policy_pool, policy_utility, map_ea2p)
             for k, v in eval_env_info.items():
                 for e in range(self.n_eval_rollout_threads):
                     agent0, agent1 = map_ea2p[(e, 0)], map_ea2p[(e, 1)]

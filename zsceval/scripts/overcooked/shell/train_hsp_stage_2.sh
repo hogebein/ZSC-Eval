@@ -20,8 +20,8 @@ if [[ ${population_size} == 12 ]]; then
     fi
     reward_shaping_horizon="5e7"
     num_env_steps="5e7"
-    pop="hsp"
-    mep_exp="mep-S1-s5"
+    pop="hsp_plate_placement_shared"
+    mep_exp="mep-S1-s10"
 elif [[ ${population_size} == 24 ]]; then
     entropy_coefs="0.2 0.05 0.01"
     entropy_coef_horizons="0 4e7 8e7"

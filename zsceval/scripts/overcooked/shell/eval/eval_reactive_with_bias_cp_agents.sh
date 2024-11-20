@@ -52,7 +52,7 @@ then
 elif [[ $2 == "hsp_react" ]];
 then
     algorithm="hsp"
-    exps=("hsp_placement_shared")
+    exps=("hsp_plate_placement_shared")
     
 
 else
@@ -100,7 +100,7 @@ for (( i=0; i<$len; i++ )); do
         eval_exp="eval_cp-${agent_name}"
         yml=${yml_dir}/${eval_exp}.yml
         
-        sed -e "s/agent_name/${agent_name}/g" -e "s/algorithm/${algorithm}/g" -e "s/population/${exp_name}/g" -e "s/seed/hsp${seed}_final_actor/g" "${bias_yml}" > "${yml}"
+        sed -e "s/agent_name/${agent_name}/g" -e "s/algorithm/${algorithm}/g" -e "s/population/${exp_name}/g" -e "s/seed/hsp${seed}_final_actor/g" -e "s/xxx/" "${bias_yml}" > "${yml}"
         
 
         python eval/eval_with_population.py --env_name ${env} --algorithm_name ${algo} --experiment_name "${eval_exp}" --layout_name "${layout}" \

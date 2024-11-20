@@ -683,6 +683,7 @@ class Overcooked(gym.Env):
         self.use_hsp = all_args.use_hsp
         self.use_expectation = all_args.use_expectation
         self.use_reactive = all_args.use_reactive
+        self.use_side_utility = all_args.use_side_utility
         self.store_traj = getattr(all_args, "store_traj", False)
         self.rank = rank
         self.random_index = all_args.random_index
@@ -964,7 +965,7 @@ class Overcooked(gym.Env):
                 # assert available_actions[agent_idx].sum() > 0
         return available_actions
 
-    def step(self, action):
+    def step(self, action, utility=None):
         """
         action:
             (agent with index self.agent_idx action, other agent action)
@@ -1013,7 +1014,6 @@ class Overcooked(gym.Env):
         else:
             next_state, sparse_reward, done, info = self.base_env.step(joint_action, display_phi=False)
             if self.use_hsp:
-
                 if self.use_expectation:
                     shaped_info = info["shaped_info_by_agent"]
                     vec_shaped_info = np.array(
@@ -1060,7 +1060,8 @@ class Overcooked(gym.Env):
                         )
                         shaped_reward_p0 = hidden_reward[0] + self.reward_shaping_factor * dense_reward[0]
                         shaped_reward_p1 = hidden_reward[1]
-                
+            elif self.use_side_utility and utility is not None:
+                hoge = 1
             else:
                 dense_reward = info["shaped_r_by_agent"]
                 shaped_reward_p0 = sparse_reward + self.reward_shaping_factor * dense_reward[0]

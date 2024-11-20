@@ -30,6 +30,7 @@ class PolicyPool:
         self.policy_pool = dict()
         self.policy_config = dict()
         self.policy_train = dict()
+        self.policy_utility = dict()
         self.policy_info = dict()
         self.map_ea2p = dict()
 
@@ -37,13 +38,14 @@ class PolicyPool:
     def normal_init(device=torch.device("cpu")):
         return PolicyPool(None, None, None, None, device=device)
 
-    def register_policy(self, policy_name, policy, policy_config, policy_train, policy_info):
+    def register_policy(self, policy_name, policy, policy_config, policy_train, policy_utility, policy_info):
         # MARK: the identifier of a policy is its name
         if policy_name in self.policy_pool.keys():
             raise RuntimeError(f"Policy name {policy_name} already in policy pool.")
         self.policy_pool[policy_name] = policy
         self.policy_config[policy_name] = policy_config  # args, obs_space, share_obs_space, act_space
         self.policy_train[policy_name] = policy_train
+        self.policy_utility[policy_name] = policy_utility
         self.policy_info[policy_name] = policy_info
 
     def update_policy(self, policy_name, policy_train, **policy_config_kwargs):
@@ -98,7 +100,7 @@ class PolicyPool:
                     self.policy_config[policy_name][0], self.policy_pool[policy_name]
                 )
 
-    def load_population(self, population_yaml_path, evaluation=False, override_policy_config={}) -> Dict[str, str]:
+    def load_population(self, population_yaml_path, evaluation=False, utility=False, override_policy_config={}) -> Dict[str, str]:
         # load population
         # warnings.warn(
         #     "Policy pool currently loads all checkpoints into gpu, consider load into cpu latter..."
@@ -151,8 +153,11 @@ class PolicyPool:
                     policy.to_parallel()
                 if evaluation:
                     policy = EvalPolicy(policy_args, policy)
+                policy_utility = None
+                if utility and "utility" in population_config[policy_name].keys():
+                    policy_utility = population_config[policy_name]["utility"]
                 policy_info = [policy_name, population_config[policy_name]]
-                self.register_policy(policy_name, policy, policy_config, policy_train, policy_info)
+                self.register_policy(policy_name, policy, policy_config, policy_train, policy_utility, policy_info)
                 featurize_type[policy_name] = population_config[policy_name]["featurize_type"]
             except Exception as e:
                 warnings.warn(f"Load policy {policy_name} failed due to {e}")

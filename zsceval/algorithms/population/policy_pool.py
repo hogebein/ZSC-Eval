@@ -7,6 +7,8 @@ import numpy as np
 import torch
 import yaml
 
+from loguru import logger
+
 from zsceval.algorithms.population.utils import EvalPolicy
 from zsceval.runner.shared.base_runner import make_trainer_policy_cls
 
@@ -154,8 +156,12 @@ class PolicyPool:
                 if evaluation:
                     policy = EvalPolicy(policy_args, policy)
                 policy_utility = None
+
                 if utility and "utility" in population_config[policy_name].keys():
-                    policy_utility = population_config[policy_name]["utility"]
+                    util_str = population_config[policy_name]["utility"]
+                    util_str = util_str.split(",")
+                    policy_utility = [float(i) for i in util_str]
+                    population_config[policy_name]["utility"] = policy_utility
                 policy_info = [policy_name, population_config[policy_name]]
                 self.register_policy(policy_name, policy, policy_config, policy_train, policy_utility, policy_info)
                 featurize_type[policy_name] = population_config[policy_name]["featurize_type"]

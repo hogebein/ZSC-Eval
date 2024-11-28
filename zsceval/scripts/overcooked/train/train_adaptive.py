@@ -317,9 +317,11 @@ def main(args):
                 None,
             )  # only override share_obs_space
 
+
     runner.policy.load_population(
         all_args.population_yaml_path,
         evaluation=False,
+        utility=True,
         override_policy_config=override_policy_config,
     )
     runner.trainer.init_population()

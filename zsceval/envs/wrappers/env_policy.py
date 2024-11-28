@@ -5,6 +5,8 @@ import warnings
 import numpy as np
 import torch
 
+from loguru import logger
+
 from zsceval.algorithms.population.policy_pool import add_path_prefix
 from zsceval.algorithms.population.utils import EvalPolicy
 from zsceval.runner.shared.base_runner import make_trainer_policy_cls
@@ -31,6 +33,8 @@ class PartialPolicyEnv:
         self.policy_name = [None for _ in range(self.num_agents)]
         self.mask = np.ones((self.num_agents, 1), dtype=np.float32)
 
+        self.policy_utility = [None for _ in range(self.num_agents)]
+
         self.observation_space, self.share_observation_space, self.action_space = (
             self.__env.observation_space,
             self.__env.share_observation_space,
@@ -38,7 +42,11 @@ class PartialPolicyEnv:
         )
 
     def reset(self, reset_choose=True):
+        #logger.debug(self.agent_policy_id)
+        #logger.debug(self.policy_utility)
         self.__env._set_agent_policy_id(self.agent_policy_id)
+        if self.all_args.use_opponent_utility:
+            self.__env._set_agent_utility(self.policy_utility)
         obs, share_obs, available_actions = self.__env.reset(reset_choose)
         self.mask = np.ones((self.num_agents, 1), dtype=np.float32)
         self.obs, self.share_obs, self.available_actions = (
@@ -62,6 +70,8 @@ class PartialPolicyEnv:
                 self.agent_policy_id[a] = -1.0
             else:
                 policy_name, policy_info = load_policy_config[a]
+                #logger.debug(policy_info)
+
                 if policy_name != self.policy_name[a]:
                     policy_config_path = os.path.join(POLICY_POOL_PATH, policy_info["policy_config_path"])
                     policy_config = pickle.load(open(policy_config_path, "rb"))
@@ -83,6 +93,7 @@ class PartialPolicyEnv:
                         policy.load_checkpoint(model_path)
                     else:
                         warnings.warn(f"Policy {policy_name} does not have a valid checkpoint.")
+                    
                     policy = EvalPolicy(policy_args, policy)
 
                     policy.reset(1, 1)
@@ -90,19 +101,26 @@ class PartialPolicyEnv:
 
                     self.policy[a] = policy
                     self.policy_name[a] = policy_name
-                    self.agent_policy_id[a] = policy_info["id"]
+                    #logger.debug(self.agent_policy_id[a])
+
+                if "utility" in policy_info:
+                    self.policy_utility[a] = policy_info["utility"]
+                    #logger.debug(self.policy_utility[a])
+
+                    
 
     def step(self, actions):
         for a in range(self.num_agents):
             if self.policy[a] is not None:
-                assert actions[a] is None, "Expected None action for policy already set in parallel envs."
-                actions[a] = self.policy[a].step(
-                    np.array([self.obs[a]]),
-                    [(0, 0)],
-                    deterministic=False,
-                    masks=np.array([self.mask[a]]),
-                    available_actions=np.array([self.available_actions[a]]),
-                )[0]
+                if actions[a] is None: #  "Expected None action for policy already set in parallel envs."
+                    actions[a] = self.policy[a].step(
+                        np.array([self.obs[a]]),
+                        [(0, 0)],
+                        deterministic=False,
+                        masks=np.array([self.mask[a]]),
+                        available_actions=np.array([self.available_actions[a]]),
+                    )[0]
+
             else:
                 assert actions[a] is not None, f"Agent {a} is given NoneType action."
         obs, share_obs, reward, done, info, available_actions = self.__env.step(actions)

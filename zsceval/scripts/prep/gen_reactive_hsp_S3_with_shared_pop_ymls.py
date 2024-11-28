@@ -4,6 +4,7 @@ import json
 import os
 import re
 import random
+import json
 from collections import defaultdict
 from itertools import permutations
 
@@ -201,13 +202,17 @@ if __name__ == "__main__":
     logger.success(f"selected runs: {runs}")
 
     # generate HSP training config
-    os.makedirs(f"{args.policy_pool_path}/{layout}/hsp/s2", exist_ok=True)
+    os.makedirs(f"{args.policy_pool_path}/{layout}/hsp_react/s3", exist_ok=True)
     mep_exp = MEP_EXPS[args.s]
     policy_pool_version = args.policy_pool_version if args.policy_pool_version != None else policy_version
+    
+    w0_open = open(f'{args.policy_pool_path}/{layout}/hsp/s1/{policy_pool_version}/w0.json', 'r')
+    w0_load = json.load(w0_open)
+
     for seed in range(1, 6):
-        logger.info(f"Writing {args.policy_pool_path}/{layout}/hsp/s2/train-s{args.S}-{args.bias_agent_version}_{mep_exp}-{seed}.yml")
+        logger.info(f"Writing {args.policy_pool_path}/{layout}/hsp_react/s3/train-s{args.S}-{args.bias_agent_version}_{mep_exp}-{seed}.yml")
         with open(
-            f"{args.policy_pool_path}/{layout}/hsp/s2/train-s{args.S}-{args.bias_agent_version}_{mep_exp}-{seed}.yml",
+            f"{args.policy_pool_path}/{layout}/hsp_react/s3/train-s{args.S}-{args.bias_agent_version}_{mep_exp}-{seed}.yml",
             "w",
         ) as f:
             f.write(
@@ -246,6 +251,7 @@ mep{p_i}_3:
 """
                 )
             for i, run_i in enumerate(runs):
+                w0_i = w0_load[f"hsp{run_i}_final_actor"]
                 f.write(
                     f"""\
 hsp{i+1}_final:
@@ -253,6 +259,6 @@ hsp{i+1}_final:
     featurize_type: ppo
     train: False
     model_path:
-        actor: {layout}/hsp/s1/{policy_pool_version}/hsp{run_i}_final_actor.pt\n
-    utility: @@@{i+1}"""
+        actor: {layout}/hsp/s1/{policy_pool_version}/hsp{run_i}_final_actor.pt
+    utility: {str(w0_i)}\n"""
                 )

@@ -683,7 +683,7 @@ class Overcooked(gym.Env):
         self.use_hsp = all_args.use_hsp
         self.use_expectation = all_args.use_expectation
         self.use_reactive = all_args.use_reactive
-        self.use_side_utility = all_args.use_side_utility
+        self.use_opponent_utility = all_args.use_opponent_utility
         self.store_traj = getattr(all_args, "store_traj", False)
         self.rank = rank
         self.random_index = all_args.random_index
@@ -787,6 +787,7 @@ class Overcooked(gym.Env):
             "use_agent_policy_id", False
         )  # Add policy id for loaded policy
         self.agent_policy_id = [-1.0 for _ in range(self.num_agents)]
+        self.agent_utility = [[] for _ in range(self.num_agents)]
         self.featurize_fn_ppo = lambda state: self.base_env.lossless_state_encoding_mdp(
             state, old_dynamics=self.old_dynamics
         )  # Encoding obs for PPO
@@ -894,6 +895,9 @@ class Overcooked(gym.Env):
     def _set_agent_policy_id(self, agent_policy_id):
         self.agent_policy_id = agent_policy_id
 
+    def _set_agent_utility(self, utility):
+        self.agent_utility = utility
+
     def _gen_share_observation(self, state):
         share_obs = list(self.featurize_fn_ppo(state))
         if self.agent_idx == 1:
@@ -965,7 +969,7 @@ class Overcooked(gym.Env):
                 # assert available_actions[agent_idx].sum() > 0
         return available_actions
 
-    def step(self, action, utility=None):
+    def step(self, action):
         """
         action:
             (agent with index self.agent_idx action, other agent action)
@@ -1022,23 +1026,37 @@ class Overcooked(gym.Env):
                     assert len(self.w0) == len(self.w1) == len(SHAPED_INFOS) + 1
                     dense_reward = info["shaped_r_by_agent"]
                     if self.agent_idx == 0:
+                        utility_reward = (
+                            np.dot(self.w0[:-1], vec_shaped_info[0]),
+                            np.dot(self.w1[:-1], vec_shaped_info[1]),
+                            np.dot(self.we0[:-1], vec_shaped_info[1]),
+                            np.dot(self.we1[:-1], vec_shaped_info[0])
+                        )
                         hidden_reward = (
-                            np.dot(self.w0[:-1], vec_shaped_info[0]) + sparse_reward * self.w0[-1],
-                            np.dot(self.w1[:-1], vec_shaped_info[1]) + sparse_reward * self.w1[-1],
-                            np.dot(self.we0[:-1], vec_shaped_info[1]) + sparse_reward * self.we0[-1],
-                            np.dot(self.we1[:-1], vec_shaped_info[0]) + sparse_reward * self.we1[-1],
+                            utility_reward[0] + sparse_reward * self.w0[-1],
+                            utility_reward[1] + sparse_reward * self.w1[-1],
+                            utility_reward[2] + sparse_reward * self.we0[-1],
+                            utility_reward[3] + sparse_reward * self.we1[-1],
                         )
                         shaped_reward_p0 = hidden_reward[0] + hidden_reward[2]
-                        shaped_reward_p1 = hidden_reward[1] + hidden_reward[3] +self.reward_shaping_factor * dense_reward[1]
+                        shaped_reward_p1 = hidden_reward[1] + hidden_reward[3] + self.reward_shaping_factor * dense_reward[1]
+                        utility_r_by_agent = utility_reward[0] + utility_reward[2]
                     else:
+                        utility_reward = (
+                            np.dot(self.w0[:-1], vec_shaped_info[0]),
+                            np.dot(self.w1[:-1], vec_shaped_info[1]),
+                            np.dot(self.we0[:-1], vec_shaped_info[1]),
+                            np.dot(self.we1[:-1], vec_shaped_info[0])
+                        )
                         hidden_reward = (
-                            np.dot(self.w1[:-1], vec_shaped_info[0]) + sparse_reward * self.w1[-1],
-                            np.dot(self.w0[:-1], vec_shaped_info[1]) + sparse_reward * self.w0[-1],
-                            np.dot(self.we1[:-1], vec_shaped_info[1]) + sparse_reward * self.we1[-1],
-                            np.dot(self.we0[:-1], vec_shaped_info[0]) + sparse_reward * self.we0[-1],
+                            utility_reward[0] + sparse_reward * self.w1[-1],
+                            utility_reward[1] + sparse_reward * self.w0[-1],
+                            utility_reward[2] + sparse_reward * self.we1[-1],
+                            utility_reward[3] + sparse_reward * self.we0[-1],
                         )
                         shaped_reward_p0 = hidden_reward[0] + hidden_reward[2] + self.reward_shaping_factor * dense_reward[0]
                         shaped_reward_p1 = hidden_reward[1] + hidden_reward[3]
+                        utility_r_by_agent = utility_reward[1] + utility_reward[3]
                 else:
                     shaped_info = info["shaped_info_by_agent"]
                     vec_shaped_info = np.array(
@@ -1047,31 +1065,78 @@ class Overcooked(gym.Env):
                     assert len(self.w0) == len(self.w1) == len(SHAPED_INFOS) + 1
                     dense_reward = info["shaped_r_by_agent"]
                     if self.agent_idx == 0:
+                        utility_reward = (
+                            np.dot(self.w0[:-1], vec_shaped_info[0]),
+                            np.dot(self.w1[:-1], vec_shaped_info[1])
+                        )
                         hidden_reward = (
-                            np.dot(self.w0[:-1], vec_shaped_info[0]) + sparse_reward * self.w0[-1],
-                            np.dot(self.w1[:-1], vec_shaped_info[1]) + sparse_reward * self.w1[-1],
+                            utility_reward[0] + sparse_reward * self.w0[-1],
+                            utility_reward[1] + sparse_reward * self.w1[-1],
                         )
                         shaped_reward_p0 = hidden_reward[0]
                         shaped_reward_p1 = hidden_reward[1] + self.reward_shaping_factor * dense_reward[1]
+                        utility_r_by_agent = utility_reward[0]
                     else:
+                        utility_reward = (
+                            np.dot(self.w1[:-1], vec_shaped_info[0]),
+                            np.dot(self.w0[:-1], vec_shaped_info[1])
+                        )
                         hidden_reward = (
-                            np.dot(self.w1[:-1], vec_shaped_info[0]) + sparse_reward * self.w1[-1],
-                            np.dot(self.w0[:-1], vec_shaped_info[1]) + sparse_reward * self.w0[-1],
+                            utility_reward[0] + sparse_reward * self.w1[-1],
+                            utility_reward[1] + sparse_reward * self.w0[-1],
                         )
                         shaped_reward_p0 = hidden_reward[0] + self.reward_shaping_factor * dense_reward[0]
                         shaped_reward_p1 = hidden_reward[1]
-            elif self.use_side_utility and utility is not None:
-                hoge = 1
+                        utility_r_by_agent = utility_reward[1]
+
+            elif self.use_opponent_utility:
+                shaped_info = info["shaped_info_by_agent"]
+                vec_shaped_info = np.array(
+                    [[agent_info[k] for k in SHAPED_INFOS] for agent_info in shaped_info]
+                ).astype(np.float32)
+                # assert len(self.policy_utility) == len(self.w1) == len(SHAPED_INFOS) + 1
+                dense_reward = info["shaped_r_by_agent"]
+
+                # logger.debug(self.agent_utility)
+                if self.agent_idx == 0 and self.agent_utility[1]!=None:
+                    utility_reward = (
+                        np.dot(self.agent_utility[1][:-1], vec_shaped_info[1]),
+                    )
+                    hidden_reward = (
+                        utility_reward[0] + sparse_reward * self.agent_utility[1][-1],
+                    )
+                    shaped_reward_p0 = hidden_reward[0]
+                    shaped_reward_p1 = sparse_reward + self.reward_shaping_factor * dense_reward[1]
+                    utility_r_by_agent = utility_reward[0]
+                elif self.agent_idx == 1 and self.agent_utility[0]!=None:
+                    utility_reward = (
+                        np.dot(self.agent_utility[:-1], vec_shaped_info[0]),
+                    )
+                    hidden_reward = (
+                        utility_reward[0] + sparse_reward * self.agent_utility[1][-1],
+                    )
+                    shaped_reward_p0 = sparse_reward + self.reward_shaping_factor * dense_reward[0]
+                    shaped_reward_p1 = hidden_reward[1]
+                    utility_r_by_agent = utility_reward[0]
+                else:
+                    dense_reward = info["shaped_r_by_agent"]
+                    shaped_reward_p0 = sparse_reward + self.reward_shaping_factor * dense_reward[0]
+                    shaped_reward_p1 = sparse_reward + self.reward_shaping_factor * dense_reward[1]
+                    utility_r_by_agent = 0
             else:
                 dense_reward = info["shaped_r_by_agent"]
                 shaped_reward_p0 = sparse_reward + self.reward_shaping_factor * dense_reward[0]
                 shaped_reward_p1 = sparse_reward + self.reward_shaping_factor * dense_reward[1]
+                utility_r_by_agent = 0
 
         for i in range(2):
             shaped_info = info["shaped_info_by_agent"]
             for k, v in shaped_info[i].items():
                 self.cumulative_shaped_info[i][k] += v
+            self.cumulative_utility_r[i] += utility_r_by_agent
+        
         info["shaped_info_by_agent"] = self.cumulative_shaped_info
+        info["total_utility_reward_by_agent"] = self.cumulative_utility_r
 
         if self.store_traj:
             #self.traj_to_store.append(info["shaped_info_by_agent"])
@@ -1117,6 +1182,8 @@ class Overcooked(gym.Env):
                 self._store_trajectory()
             if self.use_hsp:
                 info["episode"]["ep_hidden_r_by_agent"] = self.cumulative_hidden_reward
+            info["episode"]["ep_utility_r_by_agent"] = self.cumulative_utility_r
+            info["episode"]["ep_utility_r"] = sum(self.cumulative_utility_r)
             info["bad_transition"] = True
         else:
             info["bad_transition"] = False
@@ -1161,6 +1228,7 @@ class Overcooked(gym.Env):
             self.step_count = 0
             self.base_env.reset()
             self.cumulative_shaped_info = [defaultdict(int), defaultdict(int)]
+            self.cumulative_utility_r = np.zeros(2)
 
         if self.random_index:
             self.agent_idx = np.random.choice([0, 1])

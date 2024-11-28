@@ -22,6 +22,7 @@ if [[ ${population_size} == 12 ]]; then
     num_env_steps="5e7"
     pop="hsp_plate_placement_shared"
     mep_exp="mep-S1-s10"
+
 elif [[ ${population_size} == 24 ]]; then
     entropy_coefs="0.2 0.05 0.01"
     entropy_coef_horizons="0 4e7 8e7"
@@ -60,7 +61,7 @@ fi
 
 num_agents=2
 algo="adaptive"
-exp="hsp_plate_placement_shared-S2-s${population_size}"
+exp="reactive_hsp_plate_placement_shared-S3-s${population_size}"
 stage="S2"
 seed_begin=1
 seed_max=5
@@ -68,7 +69,7 @@ path=../../policy_pool
 
 export POLICY_POOL=${path}
 
-n_training_threads=1
+n_training_threads=80
 
 ulimit -n 65536
 
@@ -83,10 +84,11 @@ do
     --ppo_epoch 15 --entropy_coefs ${entropy_coefs} --entropy_coef_horizons ${entropy_coef_horizons} \
     --stage 2 \
     --save_interval 25 --log_interval 1 --use_eval --eval_interval 20 --n_eval_rollout_threads $((population_size * 2)) --eval_episodes 5 \
-    --population_yaml_path ${path}/${layout}/hsp/s2/train-s${population_size}-${pop}_${mep_exp}-${seed}.yml \
+    --population_yaml_path ${path}/${layout}/hsp_react/s3/train-s${population_size}-${pop}_${mep_exp}-${seed}.yml \
     --population_size ${population_size} --adaptive_agent_name hsp_adaptive --use_agent_policy_id \
     --use_proper_time_limits \
     --wandb_name "hogebein" \
-    --use_wandb
+    --use_reactive \
+    --use_opponent_utility
 done
 

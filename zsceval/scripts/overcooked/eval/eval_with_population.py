@@ -15,6 +15,7 @@ from zsceval.envs.overcooked.Overcooked_Env import Overcooked
 from zsceval.envs.overcooked_new.Overcooked_Env import Overcooked as Overcooked_new
 from zsceval.overcooked_config import get_overcooked_args
 from zsceval.utils.train_util import setup_seed
+from zsceval.envs.wrappers.env_policy import PartialPolicyEnv
 
 
 def make_eval_env(all_args, run_dir):
@@ -25,6 +26,7 @@ def make_eval_env(all_args, run_dir):
                     env = Overcooked(all_args, run_dir, rank=rank, evaluation=True)
                 else:
                     env = Overcooked_new(all_args, run_dir, rank=rank)
+                env = PartialPolicyEnv(all_args, env)
             else:
                 print("Can not support the " + all_args.env_name + "environment.")
                 raise NotImplementedError
@@ -73,6 +75,14 @@ def parse_args(args, parser):
         type=str,
         help="eval/results/{layout}/{exp}",
         required=True,
+    )
+
+    # fixed policy actions inside env threads
+    parser.add_argument(
+        "--use_policy_in_env",
+        default=True,
+        action="store_false",
+        help="Use loaded policy to move in env threads.",
     )
 
     # all_args = parser.parse_known_args(args)[0]
@@ -198,7 +208,7 @@ def main(args):
     # load population
     logger.info(f"population_yaml_path: {all_args.population_yaml_path}")
 
-    if all_args.use_hsp:
+    if all_args.use_opponent_utility:
         featurize_type = runner.policy.load_population(all_args.population_yaml_path, evaluation=True, utility=True)
 
     else:

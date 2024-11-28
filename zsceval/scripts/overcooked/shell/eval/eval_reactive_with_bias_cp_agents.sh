@@ -92,25 +92,31 @@ for (( i=0; i<$len; i++ )); do
     exp=${exps[$i]}
 
     echo "Evaluate population ${algo} ${exp} ${population}"
-    for seed in $(seq 1 5); do
+    for seed in $(seq 1 10); do
         exp_name="${exp}"
         agent_name="${exp_name}-${seed}"
         
         echo "Exp name ${exp_name}"
         eval_exp="eval_cp-${agent_name}"
         yml=${yml_dir}/${eval_exp}.yml
+
+        w0_path="${path}/${layout}/${algorithm}/s1/${exp}/w0.json"
+        w0=$(cat ${w0_path} | jq ".${algorithm}${seed}_final_actor")
         
-        sed -e "s/agent_name/${agent_name}/g" -e "s/algorithm/${algorithm}/g" -e "s/population/${exp_name}/g" -e "s/seed/hsp${seed}_final_actor/g" -e "s/xxx/" "${bias_yml}" > "${yml}"
+        sed -e "s/agent_name/${agent_name}/g" -e "s/algorithm/${algorithm}/g" -e "s/population/${exp_name}/g" -e "s/seed/hsp${seed}_final_actor/g" -e "s/@@@/${w0}/g" "${bias_yml}" > "${yml}"
         
 
         python eval/eval_with_population.py --env_name ${env} --algorithm_name ${algo} --experiment_name "${eval_exp}" --layout_name "${layout}" \
-        --num_agents ${num_agents} --seed 1 --episode_length 400 --n_eval_rollout_threads 1 --eval_episodes $((30 * 40)) --eval_stochastic --dummy_batch_size 1 \
+        --num_agents ${num_agents} --seed 1 --episode_length 400 --n_eval_rollout_threads 50 --eval_episodes $((${n} * 40)) --eval_stochastic --dummy_batch_size 1 \
         --use_proper_time_limits \
         --use_wandb \
         --store_traj \
+        --use_render \
         --population_yaml_path "${yml}" --population_size ${population_size} \
         --overcooked_version ${version} --eval_result_path "eval/results/${layout}/${algorithm}/${eval_exp}.json" \
         --agent_name "${agent_name}" \
-        --use_reactive
+        --use_reactive \
+        --use_agent_policy_id \
+        --use_opponent_utility
     done
 done

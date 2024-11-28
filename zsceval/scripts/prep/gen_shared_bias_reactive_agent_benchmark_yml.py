@@ -50,6 +50,8 @@ if __name__ == "__main__":
                 else:
                     model_name = f"{exp_i+1}"
 
+
+
 #                f.write(
 #                    f"""\
 #bias{i+1}_mid:
@@ -75,6 +77,8 @@ agent_name:
     featurize_type: ppo
     train: False
     model_path:
-        actor: {l}/algorithm/{args.training_type}/population/seed.pt"""
+        actor: {l}/algorithm/{args.training_type}/population/seed.pt
+    utility: @@@"""
             )
         logger.success(f"write to {benchmark_yml_path}")
+    

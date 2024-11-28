@@ -51,6 +51,8 @@ class EvalPolicy:
             self._rnn_states[(e, a)] = self.default_hidden_state
 
     def step(self, obs, agents, deterministic=False, masks=None, **kwargs):
+        #print(f"{agents}, {obs}")
+        #print(f"{len(agents)}, {obs.shape[0]}")
         num = len(agents)
         assert obs.shape[0] == num
         rnn_states = [self._rnn_states[ea] for ea in agents]

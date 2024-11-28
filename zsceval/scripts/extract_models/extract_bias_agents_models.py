@@ -1,10 +1,12 @@
 import os
 import socket
 import sys
+import json
 
 import numpy as np
 import wandb
 from loguru import logger
+
 
 wandb_name = "hogebein"
 POLICY_POOL_PATH = "../policy_pool"
@@ -33,6 +35,11 @@ def extract_sp_S1_models(layout, exp, env="Overcooked"):
     logger.info(f"num of runs: {len(runs)}")
     seeds = set()
     num_agents = None
+    utility_weights = dict()
+
+    hsp_s1_dir = f"{POLICY_POOL_PATH}/{layout}/hsp/s1/{exp.replace('-S1', '')}"
+    os.makedirs(hsp_s1_dir, exist_ok=True)
+
     for r_i, run_id in enumerate(run_ids):
         run = runs[r_i]
         if run.state == "finished":
@@ -84,6 +91,7 @@ def extract_sp_S1_models(layout, exp, env="Overcooked"):
                     if abs(exp_version - version) > abs(exp_version - actor_version):
                         version = actor_version
                 logger.info(f"hsp{i}: {tag} Expected: {exp_version} {sparse_r_dict[tag]} Found: {version}")
+
                 actor_pts = []
                 if(run.config["share_policy"]):
                     actor_pts.append(run.file(f"actor_periodic_{version}.pt"))
@@ -91,24 +99,28 @@ def extract_sp_S1_models(layout, exp, env="Overcooked"):
                     for a_i in range(run.config["num_agents"]):
                         actor_pts.append(run.file(f"actor_agent{a_i}_periodic_{version}.pt"))
 
+                w0 = run.config["w0"]
+
                 tmp_dir = f"tmp/{layout}/{exp}"
                 for pt in actor_pts:
                     pt.download(tmp_dir, replace=True)
-
-                hsp_s1_dir = f"{POLICY_POOL_PATH}/{layout}/hsp/s1/{exp.replace('-S1', '')}"
-                os.makedirs(hsp_s1_dir, exist_ok=True)
 
                 if(run.config["share_policy"]):
                     
                     pt_path = f"{hsp_s1_dir}/hsp{i}_{tag}_actor.pt"
                     logger.info(f"pt store in {pt_path}")
                     os.system(f"mv {tmp_dir}/actor_periodic_{version}.pt {pt_path}")
+                    utility_weights[f"hsp{i}_{tag}_actor"] = w0
                 else:
                     for a_i in range(run.config["num_agents"]):
                         pt_path = f"{hsp_s1_dir}/hsp{i}_{tag}_w{a_i}_actor.pt"
                         logger.info(f"pt {a_i} store in {pt_path}")
                         os.system(f"mv {tmp_dir}/actor_agent{a_i}_periodic_{version}.pt {pt_path}")
+                        utility_weights[f"hsp{i}_{tag}_w{a_i}_actor"] = w0
 
+    with open(f"{hsp_s1_dir}/w0.json", mode="wt", encoding="utf-8") as f:
+        json.dump(utility_weights, f, ensure_ascii=False, indent=2)
+                
     logger.success(f"Extracted {len(seeds)} models for {layout}")
 
 

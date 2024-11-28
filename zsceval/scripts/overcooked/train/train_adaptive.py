@@ -62,6 +62,7 @@ def make_eval_env(all_args, run_dir):
                     env = Overcooked(all_args, run_dir, evaluation=True)
                 else:
                     env = Overcooked_new(all_args, run_dir, evaluation=True)
+                env = PartialPolicyEnv(all_args, env)
             else:
                 print("Can not support the " + all_args.env_name + "environment.")
                 raise NotImplementedError
@@ -181,7 +182,7 @@ def main(args):
     # cuda
     if all_args.cuda and torch.cuda.is_available():
         n_gpu = torch.cuda.device_count()
-        assert n_gpu == 1 or all_args.data_parallel
+        #assert n_gpu == 1 or all_args.data_parallel
         print(f"choose to use {n_gpu} gpu...")
         device = torch.device("cuda:0")
         torch.set_num_threads(all_args.n_training_threads)

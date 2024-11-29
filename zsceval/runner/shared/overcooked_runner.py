@@ -1100,7 +1100,7 @@ class OvercookedRunner(Runner):
             logger.trace(f"Post update models time: {e_time - s_time:.3f}s")
 
     def reactive_train_with_multi_policy(self, reset_map_ea2t_fn=None, reset_map_ea2p_fn=None):
-    """This is a naive training loop using TrainerPool and PolicyPool.
+        """This is a naive training loop using TrainerPool and PolicyPool.
 
         To use PolicyPool and TrainerPool, you should first initialize population in policy_pool, with either:
         >>> self.policy.load_population(population_yaml_path)
@@ -1214,7 +1214,7 @@ class OvercookedRunner(Runner):
             for step in range(self.episode_length):
                 # Sample actions
                 actions = self.trainer.step(step)
-                logger.debug(actions)
+                #logger.debug(actions)
                 # Observe reward and next obs
                 (
                     obs,

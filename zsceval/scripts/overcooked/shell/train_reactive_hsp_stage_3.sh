@@ -69,7 +69,7 @@ path=../../policy_pool
 
 export POLICY_POOL=${path}
 
-n_training_threads=80
+n_training_threads=200
 
 ulimit -n 65536
 
@@ -89,7 +89,6 @@ do
     --use_proper_time_limits \
     --wandb_name "hogebein" \
     --use_reactive \
-    --use_opponent_utility \
-    --use_wandb
+    --use_opponent_utility 
 done
 

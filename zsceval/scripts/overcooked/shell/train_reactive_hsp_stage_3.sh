@@ -89,6 +89,7 @@ do
     --use_proper_time_limits \
     --wandb_name "hogebein" \
     --use_reactive \
-    --use_opponent_utility
+    --use_opponent_utility \
+    --use_wandb
 done
 

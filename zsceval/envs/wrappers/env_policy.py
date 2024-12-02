@@ -41,6 +41,8 @@ class PartialPolicyEnv:
             self.__env.action_space,
         )
 
+        
+
     def reset(self, reset_choose=True):
         #logger.debug(self.agent_policy_id)
         #logger.debug(self.policy_utility)
@@ -59,6 +61,10 @@ class PartialPolicyEnv:
             if policy is not None:
                 policy.reset(1, 1)
                 policy.register_control_agent(0, 0)
+
+        self.infos_buffer = [[] for _ in range(self.num_agents)]
+        self.infos_previous = [None for _ in range(self.num_agents)]
+
         return obs, share_obs, available_actions
 
     def load_policy(self, load_policy_config):
@@ -109,11 +115,72 @@ class PartialPolicyEnv:
 
                     
 
-    def step(self, actions):
+    def step(self, actions, hoge=None):
+
+        def reaction_filter(_infos_buffer, _utility, agent_id):
+
+            if len(_infos_buffer[0]) == 0 or len(_infos_buffer[1])==0:
+                return False
+
+            if _utility == None:
+                return False
+
+            #logger.debug([i for i in _infos_buffer[agent_id^1]])
+            # PATTERN B : Agent that likes to place plates by itsself 
+            if _utility[31] > 0:
+                # Complain when the opponent places a plate
+                dishes_placed_log = [i["place_dish_on_X"] for i in _infos_buffer[agent_id^1]]
+                if sum(dishes_placed_log) >= 1:
+                    #logger.debug(dishes_placed_log)
+                    return True
+                else:
+                    return False
+            # PATTERN A : Agent that likes plates placed on the counter
+            elif _utility[39] > 0:
+                # Complain when the opponent has taken a plate
+                dishes_recieved_log = [i["pickup_dish_from_X"] for i in _infos_buffer[agent_id^1]]
+                if sum(dishes_recieved_log) >= 1:
+                    #logger.debug(dishes_recieved_log)
+                    return True
+                else:
+                    return False
+            else:
+                return False
+
+        def reaction_planner():
+            
+            r = 0
+            # STAY
+            if r == 0:
+                return [4]
+            # MOVE IN RANDOM DIRECTION
+            else:
+                action = np.random.choice(4,1)
+                return [action]
+
+        def update_infos_buffer(infos):
+            for a, agent_infos in enumerate(infos["shaped_info_by_agent"]):
+                #logger.debug(agent_infos)
+                #logger.debug(self.infos_previous[a])
+                if len(self.infos_buffer[a]) == 20:
+                    #logger.debug(type(self.infos_buffer[a]))
+                    self.infos_buffer[a].pop(0)
+
+                if len(self.infos_buffer[a]) == 0:
+                    self.infos_buffer[a].append(agent_infos)
+                    self.infos_previous[a] = agent_infos.copy()
+                else:
+                    agent_diffs = {k:0 for k in agent_infos.keys()}
+                    for key in agent_diffs.keys():
+                        agent_diffs[key] = agent_infos[key] - self.infos_previous[a][key]
+                    self.infos_buffer[a].append(agent_diffs)
+                    self.infos_previous[a] = agent_infos.copy()
+
         for a in range(self.num_agents):
             if self.policy[a] is not None:
                 if actions[a] is None: #  "Expected None action for policy already set in parallel envs."
-                    actions[a] = self.policy[a].step(
+                    
+                    action_cand = self.policy[a].step(
                         np.array([self.obs[a]]),
                         [(0, 0)],
                         deterministic=False,
@@ -121,8 +188,24 @@ class PartialPolicyEnv:
                         available_actions=np.array([self.available_actions[a]]),
                     )[0]
 
+                else:
+                    action_cand = actions[a]
+
+                if self.all_args.use_reactive:
+                    filter_result = reaction_filter(self.infos_buffer, self.policy_utility[a], a)
+                    if filter_result:
+                        actions[a] = reaction_planner()
+                    else:
+                        actions[a] = action_cand
+
             else:
                 assert actions[a] is not None, f"Agent {a} is given NoneType action."
+                
+                if self.infos_buffer[a]!=None and self.policy_utility[a] != None and self.all_args.use_reactive:
+                    filter_result = reaction_filter(self.infos_buffer, self.policy_utility[a], a)
+                    if filter_result:
+                        actions[a] = reaction_planner()
+        
         obs, share_obs, reward, done, info, available_actions = self.__env.step(actions)
         self.obs, self.share_obs, self.available_actions = (
             obs,
@@ -131,6 +214,10 @@ class PartialPolicyEnv:
         )
         done = np.array(done)
         self.mask[done == True] = np.zeros(((done == True).sum(), 1), dtype=np.float32)
+        
+        update_infos_buffer(info)
+        #logger.debug(info)
+        
         return obs, share_obs, reward, done, info, available_actions
 
     def render(self, mode):

@@ -169,6 +169,7 @@ class TrainerPool:
         assert self.__initialized
         actions = np.full((self.n_rollout_threads, self.num_agents), fill_value=None).tolist()
         self.step_data = dict()
+        agent_trainers = {}
         for trainer_name in self.active_trainers:
             self.trainer_total_num_steps[trainer_name] += self.control_agent_count[trainer_name]
             self.train_infos[f"{trainer_name}-total_num_steps"] = self.trainer_total_num_steps[trainer_name]
@@ -212,7 +213,12 @@ class TrainerPool:
 
             for i, (e, a) in enumerate(self.control_agents[trainer_name]):
                 actions[e][a] = action[i][0]
-        return actions
+                agent_trainers[(e, a)] = trainer_name
+
+        if self.all_args.use_reactive:
+            return actions, agent_trainers
+        else:
+            return actions
 
     def insert_data(
         self,

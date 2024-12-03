@@ -38,8 +38,6 @@ if __name__ == "__main__":
         # generate HSP evaluation config
         benchmark_yml_path = f"{args.policy_pool_path}/{l}/{args.algo}/s{args.stage}/{policy_version}/benchmarks-s{args.K}.yml"
 
-        opponent_model_name_format = "seed"
-
         with open(
             benchmark_yml_path,
             "w",
@@ -70,7 +68,8 @@ bias{i+1}_final:
     featurize_type: ppo
     train: False
     model_path:
-        actor: {l}/{args.algo}/s{args.stage}/{policy_version}/{model_name}.pt\n"""
+        actor: {l}/{args.algo}/s{args.stage}/{policy_version}/{model_name}.pt
+    utility: @@@\n"""
                 )
             f.write(
                 f"""\
@@ -79,8 +78,7 @@ agent_name:
     featurize_type: ppo
     train: False
     model_path:
-        actor: {l}/algorithm/{args.training_type}/population/{opponent_model_name_format}.pt
-    utility: @@@"""
+        actor: {l}/algorithm/{args.training_type}/population/seed.pt"""
             )
         logger.success(f"write to {benchmark_yml_path}")
     

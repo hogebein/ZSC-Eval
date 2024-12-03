@@ -12,7 +12,22 @@ fi
 num_agents=2
 algo="population"
 
-if [[ $2 == "fcp" ]];
+if [[ $2 == "fcp" ]];declare -A LAYOUTS_KS
+LAYOUTS_KS["random0"]=10
+LAYOUTS_KS["random0_medium"]=10
+LAYOUTS_KS["random1"]=10
+LAYOUTS_KS["random3"]=10
+LAYOUTS_KS["small_corridor"]=10
+LAYOUTS_KS["unident_s"]=10
+LAYOUTS_KS["random0_m"]=15
+LAYOUTS_KS["random1_m"]=15
+LAYOUTS_KS["random3_m"]=10
+
+path=../../policy_pool
+export POLICY_POOL=${path}
+
+K=$((LAYOUTS_KS[${layout}]))
+bias_yml="${path}/${layout}/${pop_agent_algo}/s2/${pop_agent_version}/benchmarks-s${K}.yml"
 then
     algorithm="fcp"
     # exps=("fcp-S2-s12")
@@ -60,7 +75,7 @@ else
     exit 0
 fi
 
-pop_agent_version="hsp_plate_placement_shared-S2-s12"
+pop_agent_version="mep-S2-s36"
 pop_agent_algo="hsp"
 
 declare -A LAYOUTS_KS
@@ -72,7 +87,7 @@ LAYOUTS_KS["small_corridor"]=10
 LAYOUTS_KS["unident_s"]=10
 LAYOUTS_KS["random0_m"]=15
 LAYOUTS_KS["random1_m"]=15
-LAYOUTS_KS["random3_m"]=5
+LAYOUTS_KS["random3_m"]=10
 
 path=../../policy_pool
 export POLICY_POOL=${path}

@@ -10,8 +10,7 @@ if [[ "${layout}" == "random0" || "${layout}" == "random0_medium" || "${layout}"
 else
     version="new"
 fi
-
-if [[ ${population_size} == 12 ]]; then
+if [[ ${population_size} == 0 ]]; then
     entropy_coefs="0.2 0.05 0.01"
     entropy_coef_horizons="0 2.5e7 5e7"
     if [[ "${layout}" == "small_corridor" ]]; then
@@ -20,6 +19,17 @@ if [[ ${population_size} == 12 ]]; then
     fi
     reward_shaping_horizon="5e7"
     num_env_steps="5e7"
+    pop="hsp_plate_placement_shared"
+    mep_exp="mep-S1-s10"
+elif [[ ${population_size} == 12 ]]; then
+    entropy_coefs="0.2 0.05 0.01"
+    entropy_coef_horizons="0 4e7 8e7"
+    if [[ "${layout}" == "small_corridor" ]]; then
+        entropy_coefs="0.2 0.05 0.01"
+        entropy_coef_horizons="0 6.4e7 8e7"
+    fi
+    reward_shaping_horizon="8e7"
+    num_env_steps="8e7"
     pop="hsp_plate_placement_shared"
     mep_exp="mep-S1-s10"
 
@@ -69,7 +79,7 @@ path=../../policy_pool
 
 export POLICY_POOL=${path}
 
-n_training_threads=80
+n_training_threads=1
 
 ulimit -n 65536
 
@@ -78,7 +88,7 @@ for seed in $(seq ${seed_begin} ${seed_max});
 # for seed in 1 2 5;
 do
     python train/train_adaptive.py --env_name ${env} --algorithm_name ${algo} --experiment_name "${exp}" --layout_name ${layout} --num_agents ${num_agents} \
-    --seed ${seed} --n_training_threads 1 --num_mini_batch 1 --episode_length 400 --num_env_steps ${num_env_steps} --reward_shaping_horizon ${reward_shaping_horizon} \
+    --seed ${seed} --n_training_threads 1 --num_mini_batch 1 --episode_length 100 --num_env_steps ${num_env_steps} --reward_shaping_horizon ${reward_shaping_horizon} \
     --overcooked_version ${version} \
     --n_rollout_threads ${n_training_threads} --dummy_batch_size 1 \
     --ppo_epoch 15 --entropy_coefs ${entropy_coefs} --entropy_coef_horizons ${entropy_coef_horizons} \
@@ -89,6 +99,7 @@ do
     --use_proper_time_limits \
     --wandb_name "hogebein" \
     --use_reactive \
-    --use_opponent_utility
+    --use_opponent_utility \
+    --random_index
 done
 

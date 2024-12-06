@@ -497,9 +497,12 @@ class OvercookedRunner(Runner):
                     )
                 eval_env_infos[f"eval_ep_sparse_r_by_agent{a}"].append(eval_info["episode"]["ep_sparse_r_by_agent"][a])
                 eval_env_infos[f"eval_ep_shaped_r_by_agent{a}"].append(eval_info["episode"]["ep_shaped_r_by_agent"][a])
+                eval_env_infos[f"eval_ep_utility_r_by_agent{a}"].append(eval_info["episode"]["ep_utility_r_by_agent"][a])
+                # eval_env_infos[f"eval_ep_hidden_r_by_agent{a}"].append(eval_info["episode"]["ep_shaped_r_by_agent"][a])
+
             eval_env_infos["eval_ep_sparse_r"].append(eval_info["episode"]["ep_sparse_r"])
             eval_env_infos["eval_ep_shaped_r"].append(eval_info["episode"]["ep_shaped_r"])
-
+            eval_env_infos["eval_ep_utility_r"].append(eval_info["episode"]["ep_utility_r"])
         return eval_env_infos
 
     def evaluate_with_multi_policy(self, policy_pool=None, map_ea2p=None, num_eval_episodes=None):
@@ -520,7 +523,7 @@ class OvercookedRunner(Runner):
                     for log_name in [
                         f"{agent0}-{agent1}-{k}",
                     ]:
-                        if k in ["eval_ep_sparse_r", "eval_ep_shaped_r"]:
+                        if k in ["eval_ep_sparse_r", "eval_ep_shaped_r", "eval_ep_utility_r"]:
                             eval_infos[log_name].append(v[e])
                         elif (
                             getattr(self.all_args, "stage", 1) == 1
@@ -529,7 +532,7 @@ class OvercookedRunner(Runner):
                         ):
                             eval_infos[log_name].append(v[e])
 
-                    if k in ["eval_ep_sparse_r", "eval_ep_shaped_r"]:
+                    if k in ["eval_ep_sparse_r", "eval_ep_shaped_r", "eval_ep_utility_r"]:
                         for log_name in [
                             f"either-{agent0}-{k}",
                             f"either-{agent0}-{k}-as_agent_0",
@@ -874,7 +877,6 @@ class OvercookedRunner(Runner):
             for step in range(self.episode_length):
                 # Sample actions
                 actions = self.trainer.step(step)
-
                 # Observe reward and next obs
                 (
                     obs,
@@ -924,6 +926,7 @@ class OvercookedRunner(Runner):
                     ]:
                         episode_env_infos[f"{log_name}-ep_sparse_r"].append(info["episode"]["ep_sparse_r"])
                         episode_env_infos[f"{log_name}-ep_shaped_r"].append(info["episode"]["ep_shaped_r"])
+                        episode_env_infos[f"{log_name}-ep_utility_r"].append(info["episode"]["ep_utility_r"])
                         for a in range(self.num_agents):
                             # if getattr(self.all_args, "stage", 1) == 1 or not self.all_args.use_wandb:
                             for i, k in enumerate(shaped_info_keys):
@@ -936,7 +939,10 @@ class OvercookedRunner(Runner):
                             episode_env_infos[f"{log_name}-ep_shaped_r_by_agent{a}"].append(
                                 info["episode"]["ep_shaped_r_by_agent"][a]
                             )
-                    for k in ["ep_sparse_r", "ep_shaped_r"]:
+                            episode_env_infos[f"{log_name}-ep_utility_r_by_agent{a}"].append(
+                                info["episode"]["ep_utility_r_by_agent"][a]
+                            )
+                    for k in ["ep_sparse_r", "ep_shaped_r", "ep_utility_r"]:
                         for log_name in [
                             f"either-{agent0_trainer}-{k}",
                             f"either-{agent0_trainer}-{k}-as_agent_0",
@@ -1253,6 +1259,7 @@ class OvercookedRunner(Runner):
                     ]:
                         episode_env_infos[f"{log_name}-ep_sparse_r"].append(info["episode"]["ep_sparse_r"])
                         episode_env_infos[f"{log_name}-ep_shaped_r"].append(info["episode"]["ep_shaped_r"])
+                        episode_env_infos[f"{log_name}-ep_utility_r"].append(info["episode"]["ep_utility_r"])
                         for a in range(self.num_agents):
                             # if getattr(self.all_args, "stage", 1) == 1 or not self.all_args.use_wandb:
                             for i, k in enumerate(shaped_info_keys):
@@ -1268,7 +1275,7 @@ class OvercookedRunner(Runner):
                             episode_env_infos[f"{log_name}-ep_utility_r_by_agent{a}"].append(
                                 info["episode"]["ep_utility_r_by_agent"][a]
                             )
-                    for k in ["ep_sparse_r", "ep_shaped_r"]:
+                    for k in ["ep_sparse_r", "ep_shaped_r", "ep_utility_r"]:
                         for log_name in [
                             f"either-{agent0_trainer}-{k}",
                             f"either-{agent0_trainer}-{k}-as_agent_0",

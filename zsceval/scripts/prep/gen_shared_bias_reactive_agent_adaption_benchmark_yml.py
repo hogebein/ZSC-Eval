@@ -10,10 +10,10 @@ def parse_args():
     parser.add_argument("-l", "--layout", type=str, required=True, help="layout name")
     parser.add_argument("--eval_result_dir", type=str, default="eval/results")
     parser.add_argument("--policy_pool_path", type=str, default="../policy_pool")
-    parser.add_argument("-a", "--algo", type=str, default="mep")
-    parser.add_argument("-s", "--stage", type=str, default=2)
+    parser.add_argument("-a", "--algo", type=str, default="hsp")
+    parser.add_argument("-s", "--stage", type=str, default=1)
     parser.add_argument("-v", "--bias_agent_version", type=str, default="hsp")
-    parser.add_argument("-t", "--training_type", type=str, default="s1")
+    parser.add_argument("-t", "--training_type", type=str, default="s2")
     parser.add_argument("-k", "--K", type=int, default=5)
 
     args = parser.parse_args()
@@ -64,17 +64,17 @@ if __name__ == "__main__":
                 f.write(
                     f"""\
 bias{i+1}_final:
-    policy_config_path: {l}/policy_config/rnn_policy_config.pkl
+    policy_config_path: {l}/policy_config/mlp_policy_config.pkl
     featurize_type: ppo
     train: False
     model_path:
         actor: {l}/{args.algo}/s{args.stage}/{policy_version}/{model_name}.pt
-    utility: @@@\n"""
+    utility: @@{i+1}\n"""
                 )
             f.write(
                 f"""\
 agent_name:
-    policy_config_path: {l}/policy_config/mlp_policy_config.pkl
+    policy_config_path: {l}/policy_config/rnn_policy_config.pkl
     featurize_type: ppo
     train: False
     model_path:

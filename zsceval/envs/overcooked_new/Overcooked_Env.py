@@ -1110,13 +1110,13 @@ class Overcooked(gym.Env):
                     utility_r_by_agent = utility_reward[0]
                 elif self.agent_idx == 1 and self.agent_utility[0]!=None:
                     utility_reward = (
-                        np.dot(self.agent_utility[:-1], vec_shaped_info[0]),
+                        np.dot(self.agent_utility[0][:-1], vec_shaped_info[0]),
                     )
                     hidden_reward = (
-                        utility_reward[0] + sparse_reward * self.agent_utility[1][-1],
+                        utility_reward[0] + sparse_reward * self.agent_utility[0][-1],
                     )
                     shaped_reward_p0 = sparse_reward + self.reward_shaping_factor * dense_reward[0]
-                    shaped_reward_p1 = hidden_reward[1]
+                    shaped_reward_p1 = hidden_reward[0]
                     utility_r_by_agent = utility_reward[0]
                 else:
                     dense_reward = info["shaped_r_by_agent"]
@@ -1129,18 +1129,6 @@ class Overcooked(gym.Env):
                 shaped_reward_p1 = sparse_reward + self.reward_shaping_factor * dense_reward[1]
                 utility_r_by_agent = 0
 
-        for i in range(2):
-            shaped_info = info["shaped_info_by_agent"]
-            for k, v in shaped_info[i].items():
-                self.cumulative_shaped_info[i][k] += v
-            self.cumulative_utility_r[i] += utility_r_by_agent
-        
-        info["shaped_info_by_agent"] = self.cumulative_shaped_info
-        info["total_utility_reward_by_agent"] = self.cumulative_utility_r
-
-        if self.store_traj:
-            #self.traj_to_store.append(info["shaped_info_by_agent"])
-            self.traj_to_store["ep_state"].append(self.base_env.state.to_dict())
 
         reward = [[shaped_reward_p0], [shaped_reward_p1]]
 
@@ -1150,6 +1138,20 @@ class Overcooked(gym.Env):
         self.history_sa = self.history_sa[1:] + [
             [next_state, None],
         ]
+
+        for i in range(2):
+            shaped_info = info["shaped_info_by_agent"]
+            for k, v in shaped_info[i].items():
+                self.cumulative_shaped_info[i][k] += v
+            self.cumulative_utility_r[i] += utility_r_by_agent
+            self.cumulative_shaped_r[i] +=  reward[i][0]
+        
+        info["shaped_info_by_agent"] = self.cumulative_shaped_info
+        info["total_utility_reward_by_agent"] = self.cumulative_utility_r
+
+        if self.store_traj:
+            #self.traj_to_store.append(info["shaped_info_by_agent"])
+            self.traj_to_store["ep_state"].append(self.base_env.state.to_dict())
 
         # stuck
         stuck_info = []
@@ -1183,7 +1185,9 @@ class Overcooked(gym.Env):
             if self.use_hsp:
                 info["episode"]["ep_hidden_r_by_agent"] = self.cumulative_hidden_reward
             info["episode"]["ep_utility_r_by_agent"] = self.cumulative_utility_r
+            info["episode"]["ep_shaped_r_by_agent"] = self.cumulative_shaped_r
             info["episode"]["ep_utility_r"] = sum(self.cumulative_utility_r)
+            info["episode"]["ep_shaped_r"] = sum(self.cumulative_shaped_r)
             info["bad_transition"] = True
         else:
             info["bad_transition"] = False
@@ -1228,6 +1232,7 @@ class Overcooked(gym.Env):
             self.step_count = 0
             self.base_env.reset()
             self.cumulative_shaped_info = [defaultdict(int), defaultdict(int)]
+            self.cumulative_shaped_r = np.zeros(2)
             self.cumulative_utility_r = np.zeros(2)
 
         if self.random_index:

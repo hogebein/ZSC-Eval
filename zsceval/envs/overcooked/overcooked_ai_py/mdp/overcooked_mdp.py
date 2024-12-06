@@ -31,6 +31,24 @@ SHAPED_INFOS = [
     "IDLE_INTERACT_EMPTY",
 ]
 
+NO_REW_SHAPING_PARAMS = {
+    "PLACEMENT_IN_POT_REW": 0,
+    "DISH_PICKUP_REWARD": 0,
+    "SOUP_PICKUP_REWARD": 0,
+    "DISH_DISP_DISTANCE_REW": 0,
+    "POT_DISTANCE_REW": 0,
+    "SOUP_DISTANCE_REW": 0,
+}
+
+BASE_REW_SHAPING_PARAMS = {
+    "PLACEMENT_IN_POT_REW": 3,
+    "DISH_PICKUP_REWARD": 3,
+    "SOUP_PICKUP_REWARD": 5,
+    "DISH_DISP_DISTANCE_REW": 0,
+    "POT_DISTANCE_REW": 0,
+    "SOUP_DISTANCE_REW": 0,
+}
+
 
 class ObjectState(object):
     """
@@ -361,23 +379,6 @@ class OvercookedState(object):
         return load_from_json(filename)
 
 
-NO_REW_SHAPING_PARAMS = {
-    "PLACEMENT_IN_POT_REW": 0,
-    "DISH_PICKUP_REWARD": 0,
-    "SOUP_PICKUP_REWARD": 0,
-    "DISH_DISP_DISTANCE_REW": 0,
-    "POT_DISTANCE_REW": 0,
-    "SOUP_DISTANCE_REW": 0,
-}
-
-BASE_REW_SHAPING_PARAMS = {
-    "PLACEMENT_IN_POT_REW": 3,
-    "DISH_PICKUP_REWARD": 3,
-    "SOUP_PICKUP_REWARD": 5,
-    "DISH_DISP_DISTANCE_REW": 0,
-    "POT_DISTANCE_REW": 0,
-    "SOUP_DISTANCE_REW": 0,
-}
 
 
 class OvercookedGridworld(object):

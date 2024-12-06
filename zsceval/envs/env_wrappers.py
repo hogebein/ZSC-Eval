@@ -482,7 +482,7 @@ def dummyvecenvworker(remote, parent_remote, env_fns_wrapper: CloudpickleWrapper
     while True:
         cmd, data = remote.recv()
         if cmd == "step":
-            ob, s_ob, reward, done, info, available_actions = share_dummy_vecenv.step(data[0], data[1])
+            ob, s_ob, reward, done, info, available_actions = share_dummy_vecenv.step(data)
             remote.send((ob, s_ob, reward, done, info, available_actions))
         elif cmd == "reset":
             ob, s_ob, available_actions = share_dummy_vecenv.reset()
@@ -570,15 +570,10 @@ class ShareSubprocDummyBatchVecEnv(ShareVecEnv):
     def _merge_batch(self, data: List[Union[Tuple, List]]):
         return sum(data[1:], start=data[0])
 
-    def step(self, actions, infos=None):
-        self.step_async(actions, infos)
-        return self.step_wait()
-
-    def step_async(self, actions, infos=None):
+    def step_async(self, actions):
         action_batchs = self._split_batch(actions)
-        infos_batchs = self._spilit_batch(infos) if infos != None else [None] * len(action_batchs)
-        for remote, action_batch, infos_batch in zip(self.remotes, action_batchs, infos_batchs):
-            remote.send(("step", (action_batch, infos_batch)))
+        for remote, action_batch in zip(self.remotes, action_batchs):
+            remote.send(("step", action_batch))
         self.waiting = True
 
     def step_wait(self):
@@ -1333,19 +1328,11 @@ class ShareDummyVecEnv(ShareVecEnv):
         )
         self.actions = None
 
-    def step(self, actions, infos=None):
-        self.step_async(actions, infos)
-        return self.step_wait()
-
-    def step_async(self, actions, infos=None):
+    def step_async(self, actions):
         self.actions = actions
-        if infos==None:
-            self.infos = [None] * len(actions)
-        else:
-            self.infos = infos
 
     def step_wait(self):
-        results = [env.step(a, i) for (a, i, env) in zip(self.actions, self.infos, self.envs)]
+        results = [env.step(a) for (a, env) in zip(self.actions, self.envs)]
         obs, share_obs, rews, dones, infos, available_actions = map(list, zip(*results))
 
         for i, done in enumerate(dones):

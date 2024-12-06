@@ -66,6 +66,83 @@ SHAPED_INFOS = [
     "soup_placed_on_X"
 ]
 
+NO_REW_SHAPING_PARAMS = {
+    "PLACEMENT_IN_POT_REW": 0,
+    "DISH_PICKUP_REWARD": 0,
+    "SOUP_PICKUP_REWARD": 0,
+    "DISH_DISP_DISTANCE_REW": 0,
+    "POT_DISTANCE_REW": 0,
+    "SOUP_DISTANCE_REW": 0,
+}
+
+BASE_REW_SHAPING_PARAMS = {
+    "PLACEMENT_IN_POT_REW": 3,
+    "DISH_PICKUP_REWARD": 3,
+    "SOUP_PICKUP_REWARD": 5,
+    "DISH_DISP_DISTANCE_REW": 0,
+    "POT_DISTANCE_REW": 0,
+    "SOUP_DISTANCE_REW": 0,
+}
+
+EVENT_TYPES = [
+    # Tomato events
+    "tomato_pickup",
+    "useful_tomato_pickup",
+    "tomato_drop",
+    "useful_tomato_drop",
+    "potting_tomato",
+    "placing_tomato",
+    "recieve_tomato",
+    "placed_tomatoes",
+    # Onion events
+    "onion_pickup",
+    "useful_onion_pickup",
+    "onion_drop",
+    "useful_onion_drop",
+    "potting_onion",
+    "placing_onion",
+    "recieve_onion",
+    "placed_onions",
+    # Dish events
+    "dish_pickup",
+    "useful_dish_pickup",
+    "dish_drop",
+    "useful_dish_drop",
+    "placing_dish",
+    "recieve_dish",
+    "placed_dishes",
+    # Soup events
+    "soup_pickup",
+    "soup_delivery",
+    "soup_drop",
+    "placing_soup",
+    "recieve_soup",
+    "placed_soups",
+    # Potting events
+    "optimal_onion_potting",
+    "optimal_tomato_potting",
+    "viable_onion_potting",
+    "viable_tomato_potting",
+    "catastrophic_onion_potting",
+    "catastrophic_tomato_potting",
+    "useless_onion_potting",
+    "useless_tomato_potting",
+]
+
+POTENTIAL_CONSTANTS = {
+    "default": {
+        "max_delivery_steps": 10,
+        "max_pickup_steps": 10,
+        "pot_onion_steps": 10,
+        "pot_tomato_steps": 10,
+    },
+    "mdp_test_tomato": {
+        "max_delivery_steps": 4,
+        "max_pickup_steps": 4,
+        "pot_onion_steps": 5,
+        "pot_tomato_steps": 6,
+    },
+}
 
 class Recipe:
     MAX_NUM_INGREDIENTS = 3
@@ -906,74 +983,6 @@ class OvercookedState(object):
         return OvercookedState(**state_dict)
 
 
-BASE_REW_SHAPING_PARAMS = {
-    "PLACEMENT_IN_POT_REW": 3,
-    "DISH_PICKUP_REWARD": 3,
-    "SOUP_PICKUP_REWARD": 5,
-    "DISH_DISP_DISTANCE_REW": 0,
-    "POT_DISTANCE_REW": 0,
-    "SOUP_DISTANCE_REW": 0,
-}
-
-EVENT_TYPES = [
-    # Tomato events
-    "tomato_pickup",
-    "useful_tomato_pickup",
-    "tomato_drop",
-    "useful_tomato_drop",
-    "potting_tomato",
-    "placing_tomato",
-    "recieve_tomato",
-    "placed_tomatoes",
-    # Onion events
-    "onion_pickup",
-    "useful_onion_pickup",
-    "onion_drop",
-    "useful_onion_drop",
-    "potting_onion",
-    "placing_onion",
-    "recieve_onion",
-    "placed_onions",
-    # Dish events
-    "dish_pickup",
-    "useful_dish_pickup",
-    "dish_drop",
-    "useful_dish_drop",
-    "placing_dish",
-    "recieve_dish",
-    "placed_dishes",
-    # Soup events
-    "soup_pickup",
-    "soup_delivery",
-    "soup_drop",
-    "placing_soup",
-    "recieve_soup",
-    "placed_soups",
-    # Potting events
-    "optimal_onion_potting",
-    "optimal_tomato_potting",
-    "viable_onion_potting",
-    "viable_tomato_potting",
-    "catastrophic_onion_potting",
-    "catastrophic_tomato_potting",
-    "useless_onion_potting",
-    "useless_tomato_potting",
-]
-
-POTENTIAL_CONSTANTS = {
-    "default": {
-        "max_delivery_steps": 10,
-        "max_pickup_steps": 10,
-        "pot_onion_steps": 10,
-        "pot_tomato_steps": 10,
-    },
-    "mdp_test_tomato": {
-        "max_delivery_steps": 4,
-        "max_pickup_steps": 4,
-        "pot_onion_steps": 5,
-        "pot_tomato_steps": 6,
-    },
-}
 
 
 class OvercookedGridworld(object):
@@ -991,7 +1000,7 @@ class OvercookedGridworld(object):
         terrain,
         start_player_positions,
         start_bonus_orders=[],
-        rew_shaping_params=None,
+        rew_shaping_params=False,
         layout_name="unnamed_layout",
         start_all_orders=[],
         max_num_items_for_soup=3,
@@ -1025,7 +1034,7 @@ class OvercookedGridworld(object):
         self.start_player_positions = start_player_positions
         self.num_players = len(start_player_positions)
         self.start_bonus_orders = start_bonus_orders
-        self.reward_shaping_params = BASE_REW_SHAPING_PARAMS if rew_shaping_params is None else rew_shaping_params
+        self.reward_shaping_params = NO_REW_SHAPING_PARAMS if rew_shaping_params else BASE_REW_SHAPING_PARAMS
         self.layout_name = layout_name
         self.order_bonus = order_bonus
         self.start_state = start_state
@@ -1089,7 +1098,7 @@ class OvercookedGridworld(object):
         # After removing player positions from grid we have a terrain mtx
         mdp_config["terrain"] = layout_grid
         mdp_config["start_player_positions"] = player_positions
-
+        
         for k, v in params_to_overwrite.items():
             curr_val = mdp_config.get(k, None)
             if debug:

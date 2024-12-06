@@ -41,11 +41,8 @@ class PartialPolicyEnv:
             self.__env.action_space,
         )
 
-        
 
     def reset(self, reset_choose=True):
-        #logger.debug(self.agent_policy_id)
-        #logger.debug(self.policy_utility)
         self.__env._set_agent_policy_id(self.agent_policy_id)
         if self.all_args.use_opponent_utility:
             self.__env._set_agent_utility(self.policy_utility)
@@ -197,6 +194,8 @@ class PartialPolicyEnv:
                         actions[a] = reaction_planner()
                     else:
                         actions[a] = action_cand
+                else:
+                    actions[a] = action_cand
 
             else:
                 assert actions[a] is not None, f"Agent {a} is given NoneType action."

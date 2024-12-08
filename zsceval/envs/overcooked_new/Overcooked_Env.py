@@ -896,7 +896,11 @@ class Overcooked(gym.Env):
         self.agent_policy_id = agent_policy_id
 
     def _set_agent_utility(self, utility):
-        self.agent_utility = utility
+        if self.agent_idx == 0:
+            self.agent_utility = utility
+        else:
+            self.agent_utility[0] = utility[1]
+            self.agent_utility[1] = utility[0]
 
     def _gen_share_observation(self, state):
         share_obs = list(self.featurize_fn_ppo(state))

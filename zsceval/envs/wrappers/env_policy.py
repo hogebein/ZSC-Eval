@@ -43,13 +43,11 @@ class PartialPolicyEnv:
 
 
     def reset(self, reset_choose=True):
+
         self.__env._set_agent_policy_id(self.agent_policy_id)
         if self.all_args.use_opponent_utility:
-            self.__env._set_agent_utility(self.policy_utility)
+            self.__env._set_agent_utility(self.policy_utility.copy())
         obs, share_obs, available_actions = self.__env.reset(reset_choose)
-
-        logger.debug(self.policy_name)
-        logger.debug(self.__env.agent_utility)
 
         self.mask = np.ones((self.num_agents, 1), dtype=np.float32)
         self.obs, self.share_obs, self.available_actions = (
@@ -75,9 +73,9 @@ class PartialPolicyEnv:
                 self.policy[a] = None
                 self.policy_name[a] = None
                 self.agent_policy_id[a] = -1.0
+                self.policy_utility[a] = None
             else:
                 policy_name, policy_info = load_policy_config[a]
-                #logger.debug(policy_info)
 
                 if policy_name != self.policy_name[a]:
                     policy_config_path = os.path.join(POLICY_POOL_PATH, policy_info["policy_config_path"])
@@ -108,11 +106,11 @@ class PartialPolicyEnv:
 
                     self.policy[a] = policy
                     self.policy_name[a] = policy_name
-                    logger.debug(policy_name)
 
                     if "utility" in policy_info:
                         self.policy_utility[a] = policy_info["utility"]
-                        logger.debug(self.policy_utility[a])
+#                        logger.debug(self.policy_name)
+#                        logger.debug(self.policy_utility)
 
                     
 
@@ -204,10 +202,10 @@ class PartialPolicyEnv:
             else:
                 assert actions[a] is not None, f"Agent {a} is given NoneType action."
                 
-                if self.infos_buffer[a]!=None and self.policy_utility[a] != None and self.all_args.use_reactive:
-                    filter_result = reaction_filter(self.infos_buffer, self.policy_utility[a], a)
-                    if filter_result:
-                        actions[a] = reaction_planner()
+                #if self.infos_buffer[a]!=None and self.policy_utility[a] != None and self.all_args.use_reactive:
+                #    filter_result = reaction_filter(self.infos_buffer, self.policy_utility[a], a)
+                #    if filter_result:
+                #        actions[a] = reaction_planner()
         
         obs, share_obs, reward, done, info, available_actions = self.__env.step(actions)
         self.obs, self.share_obs, self.available_actions = (

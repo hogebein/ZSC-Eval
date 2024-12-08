@@ -1097,6 +1097,9 @@ class Overcooked(gym.Env):
                 # assert len(self.policy_utility) == len(self.w1) == len(SHAPED_INFOS) + 1
                 dense_reward = info["shaped_r_by_agent"]
 
+                #logger.debug(self.agent_idx)
+                #logger.debug(self.agent_utility)
+
                 # logger.debug(self.agent_utility)
                 if self.agent_idx == 0 and self.agent_utility[1]!=None:
                     utility_reward = (
@@ -1108,6 +1111,7 @@ class Overcooked(gym.Env):
                     shaped_reward_p0 = hidden_reward[0]
                     shaped_reward_p1 = sparse_reward + self.reward_shaping_factor * dense_reward[1]
                     utility_r_by_agent = utility_reward[0]
+
                 elif self.agent_idx == 1 and self.agent_utility[0]!=None:
                     utility_reward = (
                         np.dot(self.agent_utility[0][:-1], vec_shaped_info[0]),
@@ -1123,12 +1127,17 @@ class Overcooked(gym.Env):
                     shaped_reward_p0 = sparse_reward + self.reward_shaping_factor * dense_reward[0]
                     shaped_reward_p1 = sparse_reward + self.reward_shaping_factor * dense_reward[1]
                     utility_r_by_agent = 0
+
+                #logger.debug(info["shaped_info_by_agent"][self.agent_idx]["dish_placed_on_X"])
+                #logger.debug(utility_r_by_agent)
+
             else:
                 dense_reward = info["shaped_r_by_agent"]
                 shaped_reward_p0 = sparse_reward + self.reward_shaping_factor * dense_reward[0]
                 shaped_reward_p1 = sparse_reward + self.reward_shaping_factor * dense_reward[1]
                 utility_r_by_agent = 0
 
+        
 
         reward = [[shaped_reward_p0], [shaped_reward_p1]]
 
@@ -1236,7 +1245,13 @@ class Overcooked(gym.Env):
             self.cumulative_utility_r = np.zeros(2)
 
         if self.random_index:
+            old_idx = self.agent_idx
             self.agent_idx = np.random.choice([0, 1])
+            if old_idx != self.agent_idx:
+                temp = self.policy_utility[self.agent_idx]
+                old_utility = self.policy_utility[old_idx]
+                self.policy_utility[self.agent_idx] = old_utility
+                self.policy_utility[old_idx] = temp
 
         for a in range(self.num_agents):
             if self.script_agent[a] is not None:

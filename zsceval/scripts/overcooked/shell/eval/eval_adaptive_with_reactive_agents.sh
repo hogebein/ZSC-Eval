@@ -121,7 +121,7 @@ for (( i=0; i<$len; i++ )); do
             sed -e "s/agent_name/${agent_name}/g" -e "s/algorithm/${algorithm}/g" -e "s/population/${exp_name}/g" -e "s/seed/${seed}/g" "${options[@]}" "${bias_yml}" > "${yml}"
 
             python eval/eval_with_population.py --env_name ${env} --algorithm_name ${algo} --experiment_name "${eval_exp}" --layout_name "${layout}" \
-            --num_agents ${num_agents} --seed 1 --episode_length 400 --n_eval_rollout_threads 50 --eval_episodes $((${n} * 40)) --eval_stochastic --dummy_batch_size 1 \
+            --num_agents ${num_agents} --seed 1 --episode_length 400 --n_eval_rollout_threads 100 --eval_episodes $((${n} * 40)) --eval_stochastic --dummy_batch_size 1 \
             --use_proper_time_limits \
             --use_wandb \
             --store_traj \

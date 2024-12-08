@@ -426,10 +426,17 @@ class OvercookedRunner(Runner):
         """
         # warnings.warn("Evaluation with multi policy is not compatible with async done.")
         [policy.reset(self.n_eval_rollout_threads, self.num_agents) for _, policy in policy_pool.items()]
+        if self.all_args.use_opponent_utility:
+            load_policy_cfg = np.full((self.n_eval_rollout_threads, self.num_agents), fill_value=None).tolist()
         for e in range(self.n_eval_rollout_threads):
             for agent_id in range(self.num_agents):
                 if not map_ea2p[(e, agent_id)].startswith("script:"):
                     policy_pool[map_ea2p[(e, agent_id)]].register_control_agent(e, agent_id)
+                    if self.all_args.use_opponent_utility:
+                        load_policy_cfg[e][agent_id] = self.policy.policy_info[map_ea2p[(e,agent_id)]]
+        if self.all_args.use_opponent_utility:
+            self.eval_envs.load_policy(load_policy_cfg)
+            
         if self.all_args.algorithm_name == "cole":
             c_a_str = {
                 p_name: len(policy_pool[p_name].control_agents)

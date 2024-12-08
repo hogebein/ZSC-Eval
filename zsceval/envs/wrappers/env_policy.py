@@ -47,6 +47,10 @@ class PartialPolicyEnv:
         if self.all_args.use_opponent_utility:
             self.__env._set_agent_utility(self.policy_utility)
         obs, share_obs, available_actions = self.__env.reset(reset_choose)
+
+        logger.debug(self.policy_name)
+        logger.debug(self.__env.agent_utility)
+
         self.mask = np.ones((self.num_agents, 1), dtype=np.float32)
         self.obs, self.share_obs, self.available_actions = (
             obs,
@@ -104,11 +108,11 @@ class PartialPolicyEnv:
 
                     self.policy[a] = policy
                     self.policy_name[a] = policy_name
-                    #logger.debug(self.agent_policy_id[a])
+                    logger.debug(policy_name)
 
-                if "utility" in policy_info:
-                    self.policy_utility[a] = policy_info["utility"]
-                    #logger.debug(self.policy_utility[a])
+                    if "utility" in policy_info:
+                        self.policy_utility[a] = policy_info["utility"]
+                        logger.debug(self.policy_utility[a])
 
                     
 

@@ -1094,7 +1094,7 @@ class Overcooked(gym.Env):
                 vec_shaped_info = np.array(
                     [[agent_info[k] for k in SHAPED_INFOS] for agent_info in shaped_info]
                 ).astype(np.float32)
-                # assert len(self.policy_utility) == len(self.w1) == len(SHAPED_INFOS) + 1
+                # assert len(self.agent_utility) == len(self.w1) == len(SHAPED_INFOS) + 1
                 dense_reward = info["shaped_r_by_agent"]
 
                 #logger.debug(self.agent_idx)
@@ -1248,10 +1248,10 @@ class Overcooked(gym.Env):
             old_idx = self.agent_idx
             self.agent_idx = np.random.choice([0, 1])
             if old_idx != self.agent_idx:
-                temp = self.policy_utility[self.agent_idx]
-                old_utility = self.policy_utility[old_idx]
-                self.policy_utility[self.agent_idx] = old_utility
-                self.policy_utility[old_idx] = temp
+                temp = self.agent_utility[self.agent_idx]
+                old_utility = self.agent_utility[old_idx]
+                self.agent_utility[self.agent_idx] = old_utility
+                self.agent_utility[old_idx] = temp
 
         for a in range(self.num_agents):
             if self.script_agent[a] is not None:

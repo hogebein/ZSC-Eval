@@ -107,14 +107,13 @@ class PartialPolicyEnv:
                     self.policy[a] = policy
                     self.policy_name[a] = policy_name
 
+                    self.policy_utility[a] = None
                     if "utility" in policy_info:
-                        self.policy_utility[a] = policy_info["utility"]
-#                        logger.debug(self.policy_name)
-#                        logger.debug(self.policy_utility)
+                        self.policy_utility[a] = policy_info["utility"]                    
 
                     
 
-    def step(self, actions, hoge=None):
+    def step(self, actions):
 
         def reaction_filter(_infos_buffer, _utility, agent_id):
 
@@ -217,7 +216,6 @@ class PartialPolicyEnv:
         self.mask[done == True] = np.zeros(((done == True).sum(), 1), dtype=np.float32)
         
         update_infos_buffer(info)
-        #logger.debug(info)
         
         return obs, share_obs, reward, done, info, available_actions
 

@@ -41,6 +41,22 @@ def compute_metric(events: dict, event_types: list, num_agents: int):
 
     return exps, event_ratio_np, df
 
+def select_fixed_policies(runs, metric_np, K):
+    S = []
+    n = len(runs)
+    S.append(np.random.randint(0, n))
+    for _ in range(1, K):
+        v = np.zeros((n,), dtype=np.float32)
+        for i in range(n):
+            if i not in S:
+                for j in S:
+                    v[i] += abs(metric_np[i] - metric_np[j]).sum()
+            else:
+                v[i] = -1e9
+        x = v.argmax()
+        S.append(x)
+    S = sorted([runs[i] for i in S])
+    return S
 
 def select_policies(runs, metric_np, K):
     S = []

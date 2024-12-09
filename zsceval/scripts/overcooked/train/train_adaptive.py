@@ -184,7 +184,7 @@ def main(args):
         n_gpu = torch.cuda.device_count()
         #assert n_gpu == 1 or all_args.data_parallel
         print(f"choose to use {n_gpu} gpu...")
-        device = torch.device("cuda:0")
+        device = torch.device(f"cuda:{all_args.cuda_id}")
         torch.set_num_threads(all_args.n_training_threads)
         if all_args.cuda_deterministic:
             torch.backends.cudnn.benchmark = False

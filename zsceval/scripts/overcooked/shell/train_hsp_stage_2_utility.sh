@@ -81,7 +81,7 @@ path=../../policy_pool
 
 export POLICY_POOL=${path}
 
-n_training_threads=80
+n_training_threads=200
 
 ulimit -n 65536
 
@@ -100,7 +100,6 @@ do
     --population_size ${population_size} --adaptive_agent_name hsp_adaptive --use_agent_policy_id \
     --use_proper_time_limits \
     --wandb_name "hogebein" \
-    --use_opponent_utility \
-    --random_index
+    --cuda_id 0
 done
 

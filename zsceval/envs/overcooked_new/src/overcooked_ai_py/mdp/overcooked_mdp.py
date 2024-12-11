@@ -63,7 +63,7 @@ SHAPED_INFOS = [
     "onion_placed_on_X",
     "tomato_placed_on_X",
     "dish_placed_on_X",
-    "soup_placed_on_X"
+    "soup_placed_on_X",
 ]
 
 NO_REW_SHAPING_PARAMS = {
@@ -886,18 +886,18 @@ class OvercookedState(object):
         del self.objects[pos]
         return obj
 
-    def count_onions_on_X(self, grid):
-        return sum((obj.name == "onion" and grid[obj.position[1]][obj.position[0]] == "X" for obj in self.objects.values()))
-
-    def count_tomatoes_on_X(self, grid):
-        return sum((obj.name == "tomato" and grid[obj.position[1]][obj.position[0]] == "X" for obj in self.objects.values()))
-
-    def count_dishes_on_X(self, grid):
-        return sum((obj.name == "dish" and grid[obj.position[1]][obj.position[0]] == "X" for obj in self.objects.values()))
-
-    def count_soups_on_X(self, grid):
-        return sum((obj.name == "soup" and grid[obj.position[1]][obj.position[0]] == "X" for obj in self.objects.values()))
-
+    def count_obj_on_X(self, grid, obj_name):
+        
+        if obj_name == "onion":
+            return sum((obj.name == "onion" and grid[obj.position[1]][obj.position[0]] == "X" for obj in self.objects.values()))
+        elif obj_name == "tomato":
+            return sum((obj.name == "tomato" and grid[obj.position[1]][obj.position[0]] == "X" for obj in self.objects.values()))
+        elif obj_name == "dish":
+            return sum((obj.name == "dish" and grid[obj.position[1]][obj.position[0]] == "X" for obj in self.objects.values()))
+        elif obj_name == "soup":
+            return sum((obj.name == "soup" and grid[obj.position[1]][obj.position[0]] == "X" for obj in self.objects.values()))
+        
+        
     @classmethod
     def from_players_pos_and_or(
         cls,
@@ -1360,7 +1360,12 @@ class OvercookedGridworld(object):
         sparse_reward, shaped_reward = [0] * self.num_players, [0] * self.num_players
         # MARK
         shaped_info = [dict(zip(SHAPED_INFOS, [0 for _ in range(len(SHAPED_INFOS))])) for _ in range(self.num_players)]
+        
         for player_idx, (player, action) in enumerate(zip(new_state.players, joint_action)):
+            
+            for obj_name in ["onion", "tomato", "dish", "soup"]:
+                shaped_info[player_idx][f"{obj_name}_placed_on_X"] += new_state.count_obj_on_X(self.terrain_mtx, obj_name)
+            
             if action != Action.INTERACT:
                 if action in Direction.ALL_DIRECTIONS:
                     shaped_info[player_idx]["MOVEMENT"] += 1
@@ -1380,7 +1385,7 @@ class OvercookedGridworld(object):
                     self.log_object_drop(events_infos, new_state, obj_name, pot_states, player_idx)
                     shaped_info[player_idx][f"put_{obj_name}_on_X"] += 1
                     shaped_info[player_idx][f"place_{obj_name}_on_X"] += 1
-                    shaped_info[player_idx][f"{obj_name}_placed_on_X"] += 1
+                    # shaped_info[player_idx][f"{obj_name}_placed_on_X"] += 1
 
                     # Drop object on counter
                     obj = player.remove_object()
@@ -1391,7 +1396,8 @@ class OvercookedGridworld(object):
                     obj_name = new_state.get_object(i_pos).name
                     self.log_object_pickup(events_infos, new_state, obj_name, pot_states, player_idx)
                     shaped_info[player_idx][f"pickup_{obj_name}_from_X"] += 1
-                    shaped_info[player_idx][f"{obj_name}_placed_on_X"] -= 1
+                    # shaped_info[player_idx][f"{obj_name}_placed_on_X"] -= 1
+
                     # Pick up object from counter
                     obj = new_state.remove_object(i_pos)
                     if obj.last_owner == player_idx:

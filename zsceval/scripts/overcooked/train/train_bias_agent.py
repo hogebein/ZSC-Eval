@@ -138,19 +138,25 @@ def main(args):
             w0.append(s)
             if len(s) > 1:
                 bias_index.append(s_i)
-        bias_index = np.array(bias_index)
-        w0_candidates = list(map(list, product(*w0)))
-        w0_candidates = [cand for cand in w0_candidates if sum(np.array(cand)[bias_index] != 0) <= 3]
-        logger.info(f"bias index {bias_index}")
-        logger.info(f"num w0_candidates {len(w0_candidates)}")
-        candidates_str = ""
-        for c_i in range(len(w0_candidates)):
-            candidates_str += f"{c_i+1}: {w0_candidates[c_i]}\n"
-        # logger.info(
-        #     f"w0_candidates:\n {pprint.pformat(w0_candidates, width=150, compact=True)}"
-        # )
-        logger.info(f"w0_candidates:\n{candidates_str}")
-        w0 = w0_candidates[(all_args.seed + all_args.w0_offset) % len(w0_candidates)]
+        if len(bias_index) > 0:
+            bias_index = np.array(bias_index)
+            logger.info(f"bias index {bias_index}")
+            w0_candidates = list(map(list, product(*w0)))
+            w0_candidates = [cand for cand in w0_candidates if sum(np.array(cand)[bias_index] != 0) <= 3]
+            logger.info(f"num w0_candidates {len(w0_candidates)}")
+            candidates_str = ""
+            for c_i in range(len(w0_candidates)):
+                candidates_str += f"{c_i+1}: {w0_candidates[c_i]}\n"
+            # logger.info(
+            #     f"w0_candidates:\n {pprint.pformat(w0_candidates, width=150, compact=True)}"
+            # )
+            logger.info(f"w0_candidates:\n{candidates_str}")
+            w0 = w0_candidates[(all_args.seed + all_args.w0_offset) % len(w0_candidates)]
+        else:
+            w0_candidates = list(map(list, product(*w0)))
+            logger.debug(f"w1_candidates:\n {pprint.pformat(w0_candidates, compact=True, width=200)}")
+            w0 = w0_candidates[(all_args.seed) % len(w0_candidates)]
+
         all_args.w0 = ""
         for s in w0:
             all_args.w0 += str(s) + ","
@@ -170,7 +176,7 @@ def main(args):
     # cuda
     if all_args.cuda and torch.cuda.is_available():
         print("choose to use gpu...")
-        device = torch.device("cuda:0")
+        device = torch.device(f"cuda:{all_args.cuda_id}")
         torch.set_num_threads(all_args.n_training_threads)
         if all_args.cuda_deterministic:
             torch.backends.cudnn.benchmark = False

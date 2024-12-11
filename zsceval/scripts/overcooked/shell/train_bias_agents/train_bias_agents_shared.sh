@@ -124,7 +124,6 @@ else
         seed_begin=6
         seed_max=10
     else
-    elif [[ "${weight_pattern}" == "plate_placed" ]]; then
         #w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,[0:3],0,0,0,0,0,0,0,[0:10],0,0"
 
         w0="0,0,0,0,[-20:0:10],0,[-20:0:10],0,3,5,3,[-20:0],[-0.1:0:0.1],0,0,0,0,[0.1:1],0,0,0,0,0,0,0,0,0,0,0,0"
@@ -140,12 +139,13 @@ for seed in $(seq ${seed_begin} ${seed_max});
 do
     echo "seed is ${seed}:"
     python train/train_bias_agent.py --env_name ${env} --algorithm_name ${algo} --experiment_name "${exp}" --layout_name ${layout} --num_agents ${num_agents} \
-    --seed ${seed} --n_training_threads 2 --n_rollout_threads 400 --dummy_batch_size 2 --num_mini_batch 1 --episode_length 100 --num_env_steps ${num_env_steps} --reward_shaping_horizon ${reward_shaping_horizon} \
+    --seed ${seed} --n_training_threads 2 --n_rollout_threads 400 --dummy_batch_size 2 --num_mini_batch 1 --episode_length 400 --num_env_steps ${num_env_steps} --reward_shaping_horizon ${reward_shaping_horizon} \
     --overcooked_version ${version} \
     --ppo_epoch 15 --entropy_coefs ${entropy_coefs} --entropy_coef_horizons ${entropy_coef_horizons} \
     --use_hsp --w0 ${w0} --w1 ${w1} --random_index \
     --cnn_layers_params "32,3,1,1 64,3,1,1 32,3,1,1" --use_recurrent_policy \
     --use_proper_time_limits \
     --save_interval 25 --log_interval 10 --use_eval --eval_interval 20 --n_eval_rollout_threads 20 \
-    --wandb_name "hogebein"
+    --wandb_name "hogebein" \
+    --cuda_id 0
 done

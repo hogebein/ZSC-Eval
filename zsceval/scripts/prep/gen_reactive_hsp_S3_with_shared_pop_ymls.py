@@ -41,23 +41,6 @@ def compute_metric(events: dict, event_types: list, num_agents: int):
 
     return exps, event_ratio_np, df
 
-def select_fixed_policies(runs, metric_np, K):
-    S = []
-    n = len(runs)
-    S.append(np.random.randint(0, n))
-    for _ in range(1, K):
-        v = np.zeros((n,), dtype=np.float32)
-        for i in range(n):
-            if i not in S:
-                for j in S:
-                    v[i] += abs(metric_np[i] - metric_np[j]).sum()
-            else:
-                v[i] = -1e9
-        x = v.argmax()
-        S.append(x)
-    S = sorted([runs[i] for i in S])
-    return S
-
 def select_policies(runs, metric_np, K):
     S = []
     n = len(runs)
@@ -96,6 +79,7 @@ def parse_args():
     parser.add_argument("--policy_pool_path", type=str, default="../policy_pool")
     parser.add_argument("-V", "--bias_agent_version", type=str, default="hsp")
     parser.add_argument("--policy_pool_version", type=str, default=None)
+    parser.add_argument("-f", "--fixed_pop", action="store_true", default=False)
 
     args = parser.parse_args()
     return args
@@ -147,75 +131,79 @@ if __name__ == "__main__":
             "score",
         ]
 
-    events = dict()
-    eval_result_dir = os.path.join(args.env.lower(), args.eval_result_dir, layout, "bias")
-    logger.info(f"eval result dir {eval_result_dir}")
-    logfiles = glob.glob(f"{eval_result_dir}/eval*{policy_version}*.json")
-    logfiles = [l_f for l_f in logfiles if "mid" not in l_f]
-    # logger.success(f"{logfiles}")
-    logger.success(f"{len(logfiles) // 2} models")
+    if args.fixed_pop:
+        runs = [i for i in range(1, args.S+1)]
+    else:
+        events = dict()
+        eval_result_dir = os.path.join(args.env.lower(), args.eval_result_dir, layout, "bias")
+        logger.info(f"eval result dir {eval_result_dir}")
+        logfiles = glob.glob(f"{eval_result_dir}/eval*{policy_version}*.json")
+        logfiles = [l_f for l_f in logfiles if "mid" not in l_f]
+        # logger.success(f"{logfiles}")
+        logger.success(f"{len(logfiles) // 2} models")
 
-    exclude = set(map(lambda x: f"hsp{x}", LAYOUTS_EXPS[layout]))
-    for logfile in logfiles:
-        for e in exclude:
-            if e in logfile:
-                logfiles.remove(logfile)
-                break
-    for logfile in logfiles:
-        for e in exclude:
-            if e in logfile:
-                continue
-        with open(logfile, "r", encoding="utf-8") as f:
-            eval_result = json.load(f)
-            #hsp_exp_name = os.path.basename(logfile).split("eval-")[1].split(".")[0]
-            hsp_exp_name = re.findall(r"(.+\d+)_final_.+_final_", next(iter(eval_result)))[0]
-            agents = []
-            for a_i in range(args.num_agents):
-                # example: hsp36_final_w0-hsp36_final_w1-hsp36_final_w2
-                agents.append(f"{hsp_exp_name}_final_w{a_i}")
-            exp_name = f"{hsp_exp_name}"
-            full_exp_name = "-".join(agents)
-            
-            #if eval_result[f"{full_exp_name}-eval_ep_sparse_r"] <= 0.1:
-            #    logger.warning(f"exp {exp_name} has 0 sparse reward")
-            #    exclude.add(hsp_exp_name)
-            #    continue
-            event_dict = defaultdict(list)
-            for k in event_types:
+        exclude = set(map(lambda x: f"hsp{x}", LAYOUTS_EXPS[layout]))
+        for logfile in logfiles:
+            for e in exclude:
+                if e in logfile:
+                    logfiles.remove(logfile)
+                    break
+        for logfile in logfiles:
+            for e in exclude:
+                if e in logfile:
+                    continue
+            with open(logfile, "r", encoding="utf-8") as f:
+                eval_result = json.load(f)
+                #hsp_exp_name = os.path.basename(logfile).split("eval-")[1].split(".")[0]
+                hsp_exp_name = re.findall(r"(.+\d+)_final_.+_final_", next(iter(eval_result)))[0]
+                agents = []
+                for a_i in range(args.num_agents):
+                    # example: hsp36_final_w0-hsp36_final_w1-hsp36_final_w2
+                    agents.append(f"{hsp_exp_name}_final_w{a_i}")
+                exp_name = f"{hsp_exp_name}"
+                full_exp_name = "-".join(agents)
                 
-                # only the events of the biased agent are recorded
-                agent_names = [f"{hsp_exp_name}_final_w{a_i}" for a_i in range(args.num_agents)]
-                pairs = permutations(agent_names)
-                
-                for pair in pairs:
-                    pair_name = "-".join(pair)
-                    w0_i = -1
-                    for a_i, a_name in enumerate(pair):
-                        if "w0" in a_name:
-                            w0_i = a_i
-                            break
-                    for a_i, a_name in enumerate(pair):
-                        if "w0" in a_name:
-                            continue
-                        event_dict[f"{w0_i}-{k}_by_agent{a_i}"].append(
-                            eval_result[f"{pair_name}-eval_ep_{k}_by_agent{a_i}"]
-                        )
-            for k, v in event_dict.items():
-                event_dict[k] = np.mean(v)
-            events[exp_name] = event_dict
+                #if eval_result[f"{full_exp_name}-eval_ep_sparse_r"] <= 0.1:
+                #    logger.warning(f"exp {exp_name} has 0 sparse reward")
+                #    exclude.add(hsp_exp_name)
+                #    continue
+                event_dict = defaultdict(list)
+                for k in event_types:
+                    
+                    # only the events of the biased agent are recorded
+                    agent_names = [f"{hsp_exp_name}_final_w{a_i}" for a_i in range(args.num_agents)]
+                    pairs = permutations(agent_names)
+                    
+                    for pair in pairs:
+                        pair_name = "-".join(pair)
+                        w0_i = -1
+                        for a_i, a_name in enumerate(pair):
+                            if "w0" in a_name:
+                                w0_i = a_i
+                                break
+                        for a_i, a_name in enumerate(pair):
+                            if "w0" in a_name:
+                                continue
+                            event_dict[f"{w0_i}-{k}_by_agent{a_i}"].append(
+                                eval_result[f"{pair_name}-eval_ep_{k}_by_agent{a_i}"]
+                            )
+                for k, v in event_dict.items():
+                    event_dict[k] = np.mean(v)
+                events[exp_name] = event_dict
 
-    logger.info(f"size {len(exclude)} {exclude}")
-    logger.info(f"exp num {len(events.keys())}")
-    for e in exclude:
-        for k in list(events.keys()):
-            if e == k:
-                events.pop(k)
-    logger.info(f"filtered exp num {len(events.keys())}")
+        logger.info(f"size {len(exclude)} {exclude}")
+        logger.info(f"exp num {len(events.keys())}")
+        for e in exclude:
+            for k in list(events.keys()):
+                if e == k:
+                    events.pop(k)
+        logger.info(f"filtered exp num {len(events.keys())}")
 
-    exps, metric_np, df = compute_metric(events, event_types, args.num_agents)
-    df.to_excel(f"{eval_result_dir}/event_count_{policy_version}.xlsx", sheet_name="Events")
+        exps, metric_np, df = compute_metric(events, event_types, args.num_agents)
+        df.to_excel(f"{eval_result_dir}/event_count_{policy_version}.xlsx", sheet_name="Events")
+        
+        runs = select_policies(exps, metric_np, K)
     
-    runs = select_policies(exps, metric_np, K)
     logger.success(f"selected runs: {runs}")
 
     # generate HSP training config

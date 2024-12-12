@@ -77,6 +77,7 @@ def select_policies(runs, metric_np, K):
 
 
 MEP_EXPS = {
+    0: "no_mep",
     5: "mep-S1-s5",
     10: "mep-S1-s10",
     15: "mep-S1-s15",

@@ -14,7 +14,8 @@ POLICY_POOL_PATH = "../policy_pool"
 
 def extract_sp_S1_models(layout, exp, env="Overcooked"):
     api = wandb.Api()
-    if "overcooked" in env.lower():
+    #if "overcooked" in env.lower():
+    if True:
         layout_config = "config.layout_name"
     else:
         layout_config = "config.scenario_name"

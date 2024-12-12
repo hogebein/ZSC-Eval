@@ -1100,7 +1100,7 @@ class Overcooked(gym.Env):
                 ).astype(np.float32)
                 # assert len(self.agent_utility) == len(self.w1) == len(SHAPED_INFOS) + 1
                 dense_reward = info["shaped_r_by_agent"]
-
+                
                 #logger.debug(self.agent_idx)
                 #logger.debug(self.agent_utility)
 

@@ -20,109 +20,84 @@ stage="S1"
 exp="hsp_plate_placement_shared-${stage}"
 
 
-if [[ "${layout}" == "random0" || "${layout}" == "random0_medium" || "${layout}" == "random1" || "${layout}" == "random3" || "${layout}" == "small_corridor" || "${layout}" == "unident_s" ]]; then
-    version="old"
-    # old layouts
-    #! positive reward shaping for "[op]_X" may crash the training, be careful
-    #! negative reward shaping for "put_X" may be meaningless
-    # "put_onion_on_X",
-    # "put_dish_on_X",
-    # "put_soup_on_X",
-    # "pickup_onion_from_X", random0_medium random0_hard
-    # "pickup_onion_from_O", all_old
-    # "pickup_dish_from_X",
-    # "pickup_dish_from_D", all_old
-    # "pickup_soup_from_X", random0 random0_medium random0_hard
-    # "USEFUL_DISH_PICKUP", default
-    # "SOUP_PICKUP", all_old default
-    # "PLACEMENT_IN_POT", all_old default
-    # "delivery", all_old
-    # "STAY", all_old
-    # "MOVEMENT",
-    # "IDLE_MOVEMENT",
-    # "IDLE_INTERACT_X",
-    # "IDLE_INTERACT_EMPTY",
-    # sparse_reward all_old
-    
-else 
-    version="new"
-    # 0 "put_onion_on_X",　　0
-    # 1 "put_tomato_on_X",　0
-    # 2 "put_dish_on_X",　　[-5:0:5]
-    # 3 "put_soup_on_X",　　0
-    # 4 "pickup_onion_from_X",　　0
-    # 5 "pickup_onion_from_O",　　0
-    # 6 "pickup_tomato_from_X",　0
-    # 7 "pickup_tomato_from_T",  0
-    # 8 "pickup_dish_from_X",   [-5:0:5]
-    # 9 "pickup_dish_from_D",  0
-    # 10 "pickup_soup_from_X", 0
-    # 11 "USEFUL_DISH_PICKUP",  # counted when #taken_dishes < #cooking_pots + #partially_full_pots and no dishes on the counter   3
-    # 12 "SOUP_PICKUP",  # counted when soup in the pot is picked up (not a soup placed on the table)    5
-    # 13 "PLACEMENT_IN_POT",  # counted when some ingredient is put into pot   3
-    # 14 "viable_placement",   0
-    # 15 "optimal_placement",  0
-    # 16 "catastrophic_placement",  0
-    # 17 "useless_placement",  0   # pot an ingredient to a useless recipe
-    # 18 "potting_onion",  [-20:0]
-    # 19 "potting_tomato",  [-20:0]
-    # 20 "cook",   0
-    # 21 "delivery",    0
-    # 22 "deliver_size_two_order",   [-5:0:20]
-    # 23 "deliver_size_three_order",   [-15:0:10]
-    # 24 "deliver_useless_order",  0 
-    # 25 "STAY",   [-0.1:0:0.1]
-    # 26 "MOVEMENT",    0
-    # 27 "IDLE_MOVEMENT", 0
-    # 28 "IDLE_INTERACT",  0
-    # 29 "place_onion_on_X",
-    # 30 "place_tomato_on_X",
-    # 31 "place_dish_on_X",
-    # 32 "place_soup_on_X",
-    # 33 "recieve_onion_via_X",
-    # 34 "recieve_tomato_via_X",
-    # 35 "recieve_dish_via_X",
-    # 36 "recieve_soup_via_X",
-    # 37 "onions_placed_on_X",
-    # 38 "tomatoes_placed_on_X",
-    # 39 "dishes_placed_on_X",
-    # 40 "soups_placed_on_X"
-    # 41 "sparse_reward  1　
+version="new"
+# 0 "put_onion_on_X",　　0
+# 1 "put_tomato_on_X",　0
+# 2 "put_dish_on_X",　　[-5:0:5]
+# 3 "put_soup_on_X",　　0
+# 4 "pickup_onion_from_X",　　0
+# 5 "pickup_onion_from_O",　　0
+# 6 "pickup_tomato_from_X",　0
+# 7 "pickup_tomato_from_T",  0
+# 8 "pickup_dish_from_X",   [-5:0:5]
+# 9 "pickup_dish_from_D",  0
+# 10 "pickup_soup_from_X", 0
+# 11 "USEFUL_DISH_PICKUP",  # counted when #taken_dishes < #cooking_pots + #partially_full_pots and no dishes on the counter   3
+# 12 "SOUP_PICKUP",  # counted when soup in the pot is picked up (not a soup placed on the table)    5
+# 13 "PLACEMENT_IN_POT",  # counted when some ingredient is put into pot   3
+# 14 "viable_placement",   0
+# 15 "optimal_placement",  0
+# 16 "catastrophic_placement",  0
+# 17 "useless_placement",  0   # pot an ingredient to a useless recipe
+# 18 "potting_onion",  [-20:0]
+# 19 "potting_tomato",  [-20:0]
+# 20 "cook",   0
+# 21 "delivery",    0
+# 22 "deliver_size_two_order",   [-5:0:20]
+# 23 "deliver_size_three_order",   [-15:0:10]
+# 24 "deliver_useless_order",  0 
+# 25 "STAY",   [-0.1:0:0.1]
+# 26 "MOVEMENT",    0
+# 27 "IDLE_MOVEMENT", 0
+# 28 "IDLE_INTERACT",  0
+# 29 "place_onion_on_X",
+# 30 "place_tomato_on_X",
+# 31 "place_dish_on_X",
+# 32 "place_soup_on_X",
+# 33 "recieve_onion_via_X",
+# 34 "recieve_tomato_via_X",
+# 35 "recieve_dish_via_X",
+# 36 "recieve_soup_via_X",
+# 37 "onions_placed_on_X",
+# 38 "tomatoes_placed_on_X",
+# 39 "dishes_placed_on_X",
+# 40 "soups_placed_on_X"
+# 41 "sparse_reward  1　
 
-    if [[ "${weight_pattern}" == "plate" ]]; then
-        w0="0,0,[-5:0:5],0,0,0,0,0,[-5:0:5],0,0,3,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0"
-        seed_begin=1
-        seed_max=72
-    elif [[ "${weight_pattern}" == "all" ]]; then
-        w0="0,0,[-5:0:5],0,0,0,0,0,[-5:0:5],0,0,3,5,3,0,0,0,0,[-0.2:0],[-20:0],0,0,[-5:0:20],[-15:0:10],0,[-0.1:0:0.1],0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0"
-        seed_begin=1
-        seed_max=124
-    elif [[ "${weight_pattern}" == "plate_placed" ]]; then
-        w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.04,0,0"
-        seed_begin=1
-        seed_max=5
+if [[ "${weight_pattern}" == "plate" ]]; then
+    w0="0,0,[-5:0:5],0,0,0,0,0,[-5:0:5],0,0,3,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0"
+    seed_begin=1
+    seed_max=72
+elif [[ "${weight_pattern}" == "all" ]]; then
+    w0="0,0,[-5:0:5],0,0,0,0,0,[-5:0:5],0,0,3,5,3,0,0,0,0,[-0.2:0],[-20:0],0,0,[-5:0:20],[-15:0:10],0,[-0.1:0:0.1],0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0"
+    seed_begin=1
+    seed_max=124
+elif [[ "${weight_pattern}" == "plate_placed" ]]; then
+    w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.04,0,0"
+    seed_begin=1
+    seed_max=5
 
-        reward_shaping_horizon="2e7"
-        num_env_steps="2e7"
+    reward_shaping_horizon="2e7"
+    num_env_steps="2e7"
 
-    elif [[ "${weight_pattern}" == "plate_place" ]]; then
-        w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0"
-        seed_begin=6
-        seed_max=10
-    elif [[ "${weight_pattern}" == "score" ]]; then
-        w0="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
-        seed_begin=1
-        seed_max=5
-    else
-        #w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,[0:3],0,0,0,0,0,0,0,[0:10],0,0"
+elif [[ "${weight_pattern}" == "plate_place" ]]; then
+    w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0"
+    seed_begin=6
+    seed_max=10
+elif [[ "${weight_pattern}" == "score" ]]; then
+    w0="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
+    seed_begin=1
+    seed_max=5
+else
+    #w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,[0:3],0,0,0,0,0,0,0,[0:10],0,0"
 
-        w0="0,0,0,0,[-20:0:10],0,[-20:0:10],0,3,5,3,[-20:0],[-0.1:0:0.1],0,0,0,0,[0.1:1],0,0,0,0,0,0,0,0,0,0,0,0"
-        seed_begin=1
-        seed_max=72
-    fi
-
-    w1="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
+    w0="0,0,0,0,[-20:0:10],0,[-20:0:10],0,3,5,3,[-20:0],[-0.1:0:0.1],0,0,0,0,[0.1:1],0,0,0,0,0,0,0,0,0,0,0,0"
+    seed_begin=1
+    seed_max=72
 fi
+
+w1="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
+
 
 echo "seed_max is ${seed_max}:"
 for seed in $(seq ${seed_begin} ${seed_max});

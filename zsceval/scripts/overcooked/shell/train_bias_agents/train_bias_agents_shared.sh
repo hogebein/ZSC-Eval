@@ -44,24 +44,6 @@ if [[ "${layout}" == "random0" || "${layout}" == "random0_medium" || "${layout}"
     # "IDLE_INTERACT_EMPTY",
     # sparse_reward all_old
     
-    w1="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
-    if [[ "${layout}" == "random0" ]]; then
-        w0="0,0,0,0,[0:10],0,[0:10],[-20:0],3,5,3,0,[-0.1:0:0.1],0,0,0,0,[0.1:1]"
-        seed_begin=1
-        seed_max=30
-    elif [[ "${layout}" == "random0_medium" ]]; then
-        w0="0,0,0,[-20:0],[-20:0:10],0,[0:10],[-20:0],3,5,3,0,[-0.1:0:0.1],0,0,0,0,[0.1:1]"
-        seed_begin=1
-        seed_max=54
-    elif [[ "${layout}" == "small_corridor" ]]; then
-        w0="0,0,0,0,[-20:0:5],0,[-20:0:5],0,3,5,3,[-20:0],[-0.1:0],0,0,0,0,[0.1:1]"
-        seed_begin=1
-        seed_max=124
-    else
-        w0="0,0,0,0,[-20:0:10],0,[-20:0:10],0,3,5,3,[-20:0],[-0.1:0:0.1],0,0,0,0,[0.1:1]"
-        seed_begin=1
-        seed_max=176
-    fi
 else 
     version="new"
     # 0 "put_onion_on_X",　　0

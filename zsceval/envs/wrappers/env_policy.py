@@ -146,8 +146,6 @@ class PartialPolicyEnv:
                 return False
 
         def reaction_planner():
-            
-            logger.debug("NULLLLL")
             r = 0
             # STAY
             if r == 0:

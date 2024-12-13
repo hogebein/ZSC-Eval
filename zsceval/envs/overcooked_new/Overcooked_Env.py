@@ -697,6 +697,7 @@ class Overcooked(gym.Env):
                 w_dict["we0"] = f"{self.we0}"
                 w_dict["we1"] = f"{self.we1}"
             logger.debug("hsp weights:\n" + pprint.pformat(w_dict, compact=True, width=120))
+        
         self.use_available_actions = getattr(all_args, "use_available_actions", True)
         self.use_render = all_args.use_render
         self.num_agents = all_args.num_agents
@@ -1100,7 +1101,7 @@ class Overcooked(gym.Env):
                 ).astype(np.float32)
                 # assert len(self.agent_utility) == len(self.w1) == len(SHAPED_INFOS) + 1
                 dense_reward = info["shaped_r_by_agent"]
-                
+
                 #logger.debug(self.agent_idx)
                 #logger.debug(self.agent_utility)
 
@@ -1147,6 +1148,7 @@ class Overcooked(gym.Env):
 
         if self.agent_idx == 1:
             reward = [[shaped_reward_p1], [shaped_reward_p0]]
+
 
         self.history_sa = self.history_sa[1:] + [
             [next_state, None],

@@ -10,7 +10,7 @@ if [[ "${layout}" == "random0" || "${layout}" == "random0_medium" || "${layout}"
 else
     version="new"
 fi
-if [[ ${population_size} == 12 ]]; then
+if [[ ${population_size} == 10 ]]; then
     entropy_coefs="0.2 0.05 0.01"
     entropy_coef_horizons="0 2.5e7 5e7"
     if [[ "${layout}" == "small_corridor" ]]; then

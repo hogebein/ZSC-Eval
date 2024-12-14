@@ -1122,8 +1122,6 @@ class Overcooked(gym.Env):
 
                 elif self.agent_idx == 1 and self.agent_utility[0]!=None:
 
-                    logger.debug("fail")
-
                     utility_reward = (
                         np.dot(self.agent_utility[0][:-1], vec_shaped_info[0]),
                     )
@@ -1144,8 +1142,6 @@ class Overcooked(gym.Env):
                 #logger.debug(utility_r_by_agent)
 
             else:
-
-                logger.debug("fail")
 
                 dense_reward = info["shaped_r_by_agent"]
                 shaped_reward_p0 = sparse_reward + self.reward_shaping_factor * dense_reward[0]

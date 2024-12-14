@@ -64,6 +64,10 @@ SHAPED_INFOS = [
     "tomato_placed_on_X",
     "dish_placed_on_X",
     "soup_placed_on_X",
+    "integral_onion_placed_on_X",
+    "integral_tomato_placed_on_X",
+    "integral_dish_placed_on_X",
+    "integral_soup_placed_on_X",
 ]
 
 NO_REW_SHAPING_PARAMS = {
@@ -1364,7 +1368,7 @@ class OvercookedGridworld(object):
         for player_idx, (player, action) in enumerate(zip(new_state.players, joint_action)):
             
             for obj_name in ["onion", "tomato", "dish", "soup"]:
-                shaped_info[player_idx][f"{obj_name}_placed_on_X"] += new_state.count_obj_on_X(self.terrain_mtx, obj_name)
+                shaped_info[player_idx][f"integral_{obj_name}_placed_on_X"] += new_state.count_obj_on_X(self.terrain_mtx, obj_name)
             
             if action != Action.INTERACT:
                 if action in Direction.ALL_DIRECTIONS:
@@ -1385,7 +1389,7 @@ class OvercookedGridworld(object):
                     self.log_object_drop(events_infos, new_state, obj_name, pot_states, player_idx)
                     shaped_info[player_idx][f"put_{obj_name}_on_X"] += 1
                     shaped_info[player_idx][f"place_{obj_name}_on_X"] += 1
-                    # shaped_info[player_idx][f"{obj_name}_placed_on_X"] += 1
+                    shaped_info[player_idx][f"{obj_name}_placed_on_X"] += 1
 
                     # Drop object on counter
                     obj = player.remove_object()
@@ -1396,7 +1400,7 @@ class OvercookedGridworld(object):
                     obj_name = new_state.get_object(i_pos).name
                     self.log_object_pickup(events_infos, new_state, obj_name, pot_states, player_idx)
                     shaped_info[player_idx][f"pickup_{obj_name}_from_X"] += 1
-                    # shaped_info[player_idx][f"{obj_name}_placed_on_X"] -= 1
+                    shaped_info[player_idx][f"{obj_name}_placed_on_X"] -= 1
 
                     # Pick up object from counter
                     obj = new_state.remove_object(i_pos)

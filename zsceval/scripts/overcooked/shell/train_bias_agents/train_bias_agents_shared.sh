@@ -17,7 +17,6 @@ num_env_steps="1e7"
 num_agents=2
 algo="mappo"
 stage="S1"
-exp="hsp_plate_placement_shared-${stage}"
 
 
 version="new"
@@ -61,33 +60,43 @@ version="new"
 # 37 "onions_placed_on_X",
 # 38 "tomatoes_placed_on_X",
 # 39 "dishes_placed_on_X",
-# 40 "soups_placed_on_X"
-# 41 "sparse_reward  1　
+# 40 "soups_placed_on_X",
+# 41 "integral_onion_placed_on_X",
+# 42 "integral_tomato_placed_on_X",
+# 43 "integral_dish_placed_on_X",
+# 44 "integral_soup_placed_on_X",
+# 45 "sparse_reward  1,
 
-if [[ "${weight_pattern}" == "plate" ]]; then
-    w0="0,0,[-5:0:5],0,0,0,0,0,[-5:0:5],0,0,3,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0"
-    seed_begin=1
-    seed_max=72
-elif [[ "${weight_pattern}" == "all" ]]; then
+w1="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
+
+if [[ "${weight_pattern}" == "all" ]]; then
     w0="0,0,[-5:0:5],0,0,0,0,0,[-5:0:5],0,0,3,5,3,0,0,0,0,[-0.2:0],[-20:0],0,0,[-5:0:20],[-15:0:10],0,[-0.1:0:0.1],0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0"
     seed_begin=1
     seed_max=124
 elif [[ "${weight_pattern}" == "plate_placed" ]]; then
-    w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.04,0,0"
+    w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0"
     seed_begin=1
     seed_max=5
 
-    reward_shaping_horizon="2e7"
-    num_env_steps="2e7"
+    reward_shaping_horizon="1e7"
+    num_env_steps="1e7"
+
+    exp="hsp_plate_placement_shared-${stage}"
 
 elif [[ "${weight_pattern}" == "plate_place" ]]; then
-    w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0"
+    w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3.5,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
     seed_begin=6
     seed_max=10
+
+    exp="hsp_plate_placement_shared-${stage}"
+
 elif [[ "${weight_pattern}" == "score" ]]; then
-    w0="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
+    w0="0,0,0,0,0,0,0,0,0,3,0,0,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
     seed_begin=1
     seed_max=5
+
+    exp="hsp_score-${stage}"
+
 else
     #w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,[0:3],0,0,0,0,0,0,0,[0:10],0,0"
 
@@ -96,7 +105,7 @@ else
     seed_max=72
 fi
 
-w1="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
+
 
 
 echo "seed_max is ${seed_max}:"

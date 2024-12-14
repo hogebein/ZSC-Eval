@@ -127,7 +127,7 @@ class PartialPolicyEnv:
             # PATTERN B : Agent that likes to place plates by itsself 
             if _utility[31] > 0:
                 # Complain when the opponent places a plate
-                dishes_placed_log = [i["place_dish_on_X"] for i in _infos_buffer[agent_id^1]]
+                dishes_placed_log = [i["pickup_dish_from_D"] for i in _infos_buffer[agent_id^1]]
                 if sum(dishes_placed_log) >= 1:
                     #logger.debug(dishes_placed_log)
                     return True

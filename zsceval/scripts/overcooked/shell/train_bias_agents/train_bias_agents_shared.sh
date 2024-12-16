@@ -93,8 +93,8 @@ elif [[ "${weight_pattern}" == "plate_place" ]]; then
 
 elif [[ "${weight_pattern}" == "score" ]]; then
     w0="0,0,0,0,0,0,0,0,0,3,0,0,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
-    seed_begin=1
-    seed_max=1
+    seed_begin=5
+    seed_max=5
     use_base_shaping_r=true
     exp="hsp_score-${stage}"
 

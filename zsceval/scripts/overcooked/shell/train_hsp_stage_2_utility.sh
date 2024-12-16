@@ -101,7 +101,6 @@ do
     --use_proper_time_limits \
     --wandb_name "hogebein" \
     --use_opponent_utility \
-    --cuda_id 0 \
-    --use_wandb
+    --cuda_id 0
 done
 

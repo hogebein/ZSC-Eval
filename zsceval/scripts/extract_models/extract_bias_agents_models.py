@@ -167,7 +167,8 @@ if __name__ == "__main__":
         "small_corridor" : "hsp-S1",
         "all" : "hsp_all_shared-S1",
         "random0" : "hsp-S1",
-        "plate_placement" : "hsp_plate_placement_shared-S1"
+        "plate_placement" : "hsp_plate_placement_shared-S1",
+        "score" : "hsp_score-S1",
     }
 
     # logger.add(f"./extract_log/extract_{layout}_hsp_S1_models.log")

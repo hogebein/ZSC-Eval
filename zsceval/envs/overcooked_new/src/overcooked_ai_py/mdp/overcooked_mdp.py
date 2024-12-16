@@ -1004,7 +1004,7 @@ class OvercookedGridworld(object):
         terrain,
         start_player_positions,
         start_bonus_orders=[],
-        rew_shaping_params=False,
+        rew_shaping_params=None,
         layout_name="unnamed_layout",
         start_all_orders=[],
         max_num_items_for_soup=3,
@@ -1038,7 +1038,7 @@ class OvercookedGridworld(object):
         self.start_player_positions = start_player_positions
         self.num_players = len(start_player_positions)
         self.start_bonus_orders = start_bonus_orders
-        self.reward_shaping_params = NO_REW_SHAPING_PARAMS if rew_shaping_params else BASE_REW_SHAPING_PARAMS
+        self.reward_shaping_params = NO_REW_SHAPING_PARAMS if rew_shaping_params==None else rew_shaping_params
         self.layout_name = layout_name
         self.order_bonus = order_bonus
         self.start_state = start_state

@@ -68,6 +68,7 @@ version="new"
 # 45 "sparse_reward  1,
 
 w1="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
+use_base_shaping_r=false
 
 if [[ "${weight_pattern}" == "all" ]]; then
     w0="0,0,[-5:0:5],0,0,0,0,0,[-5:0:5],0,0,3,5,3,0,0,0,0,[-0.2:0],[-20:0],0,0,[-5:0:20],[-15:0:10],0,[-0.1:0:0.1],0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0"
@@ -93,8 +94,8 @@ elif [[ "${weight_pattern}" == "plate_place" ]]; then
 elif [[ "${weight_pattern}" == "score" ]]; then
     w0="0,0,0,0,0,0,0,0,0,3,0,0,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
     seed_begin=1
-    seed_max=5
-
+    seed_max=1
+    use_base_shaping_r=true
     exp="hsp_score-${stage}"
 
 else
@@ -112,14 +113,37 @@ echo "seed_max is ${seed_max}:"
 for seed in $(seq ${seed_begin} ${seed_max});
 do
     echo "seed is ${seed}:"
-    python train/train_bias_agent.py --env_name ${env} --algorithm_name ${algo} --experiment_name "${exp}" --layout_name ${layout} --num_agents ${num_agents} \
-    --seed ${seed} --n_training_threads 2 --n_rollout_threads 100 --dummy_batch_size 2 --num_mini_batch 1 --episode_length 400 --num_env_steps ${num_env_steps} --reward_shaping_horizon ${reward_shaping_horizon} \
-    --overcooked_version ${version} \
-    --ppo_epoch 15 --entropy_coefs ${entropy_coefs} --entropy_coef_horizons ${entropy_coef_horizons} \
-    --use_hsp --w0 ${w0} --w1 ${w1} --random_index \
-    --cnn_layers_params "32,3,1,1 64,3,1,1 32,3,1,1" --use_recurrent_policy \
-    --use_proper_time_limits \
-    --save_interval 25 --log_interval 10 --use_eval --eval_interval 20 --n_eval_rollout_threads 20 \
-    --wandb_name "hogebein" \
-    --cuda_id 0
+
+    if "${use_base_shaping_r}"; then
+
+        python train/train_bias_agent.py --env_name ${env} --algorithm_name ${algo} --experiment_name "${exp}" --layout_name ${layout} --num_agents ${num_agents} \
+        --seed ${seed} --n_training_threads 2 --n_rollout_threads 100 --dummy_batch_size 2 --num_mini_batch 1 --episode_length 400 --num_env_steps ${num_env_steps} --reward_shaping_horizon ${reward_shaping_horizon} \
+        --overcooked_version ${version} \
+        --ppo_epoch 15 --entropy_coefs ${entropy_coefs} --entropy_coef_horizons ${entropy_coef_horizons} \
+        --use_hsp --w0 ${w0} --w1 ${w1} --random_index \
+        --cnn_layers_params "32,3,1,1 64,3,1,1 32,3,1,1" --use_recurrent_policy \
+        --use_proper_time_limits \
+        --save_interval 25 --log_interval 10 --use_eval --eval_interval 20 --n_eval_rollout_threads 20 \
+        --wandb_name "hogebein" \
+        --cuda_id 0 \
+        --use_base_shaping_r
+    
+    
+    else
+
+        python train/train_bias_agent.py --env_name ${env} --algorithm_name ${algo} --experiment_name "${exp}" --layout_name ${layout} --num_agents ${num_agents} \
+        --seed ${seed} --n_training_threads 2 --n_rollout_threads 100 --dummy_batch_size 2 --num_mini_batch 1 --episode_length 400 --num_env_steps ${num_env_steps} --reward_shaping_horizon ${reward_shaping_horizon} \
+        --overcooked_version ${version} \
+        --ppo_epoch 15 --entropy_coefs ${entropy_coefs} --entropy_coef_horizons ${entropy_coef_horizons} \
+        --use_hsp --w0 ${w0} --w1 ${w1} --random_index \
+        --cnn_layers_params "32,3,1,1 64,3,1,1 32,3,1,1" --use_recurrent_policy \
+        --use_proper_time_limits \
+        --save_interval 25 --log_interval 10 --use_eval --eval_interval 20 --n_eval_rollout_threads 20 \
+        --wandb_name "hogebein" \
+        --cuda_id 0
+
+
+    fi
+
+    
 done

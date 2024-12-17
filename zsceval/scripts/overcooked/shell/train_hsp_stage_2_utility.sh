@@ -83,7 +83,7 @@ fi
 
 num_agents=2
 algo="adaptive"
-exp="hsp_plate_placement_shared-S2-s${population_size}"
+exp="${pop}-S2-s${population_size}"
 stage="S2"
 seed_begin=1
 seed_max=5
@@ -91,7 +91,7 @@ path=../../policy_pool
 
 export POLICY_POOL=${path}
 
-n_training_threads=80
+n_training_threads=200
 
 ulimit -n 65536
 

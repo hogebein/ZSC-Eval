@@ -1389,7 +1389,8 @@ class OvercookedGridworld(object):
                     self.log_object_drop(events_infos, new_state, obj_name, pot_states, player_idx)
                     shaped_info[player_idx][f"put_{obj_name}_on_X"] += 1
                     shaped_info[player_idx][f"place_{obj_name}_on_X"] += 1
-                    shaped_info[player_idx][f"{obj_name}_placed_on_X"] += 1
+                    for i in new_state.players:
+                        shaped_info[i][f"{obj_name}_placed_on_X"] += 1
 
                     # Drop object on counter
                     obj = player.remove_object()
@@ -1400,7 +1401,8 @@ class OvercookedGridworld(object):
                     obj_name = new_state.get_object(i_pos).name
                     self.log_object_pickup(events_infos, new_state, obj_name, pot_states, player_idx)
                     shaped_info[player_idx][f"pickup_{obj_name}_from_X"] += 1
-                    shaped_info[player_idx][f"{obj_name}_placed_on_X"] -= 1
+                    for i in new_state.players:
+                        shaped_info[i][f"{obj_name}_placed_on_X"] -= 1
 
                     # Pick up object from counter
                     obj = new_state.remove_object(i_pos)

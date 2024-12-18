@@ -52,7 +52,7 @@ then
 elif [[ $2 == "hsp_react" ]];
 then
     algorithm="hsp"
-    exps=("hsp_plate_placement_shared-S2-s12" "reactive_hsp_plate_placement_shared-S3-s12")
+    exps=("hsp_plate_placement_shared-S2-s10" "reactive_hsp_plate_placement_shared-S3-s10")
 
 else
     echo "bash eval_with_bias_agents.sh {layout} {algo}"
@@ -89,7 +89,8 @@ ulimit -n 65536
 
 eval_exp_v=$3
 
-n_seed=5
+n_seed=1
+rollout_threads=40
 
 options=()
 
@@ -121,7 +122,7 @@ for (( i=0; i<$len; i++ )); do
             sed -e "s/agent_name/${agent_name}/g" -e "s/algorithm/${algorithm}/g" -e "s/population/${exp_name}/g" -e "s/seed/${seed}/g" "${options[@]}" "${bias_yml}" > "${yml}"
 
             python eval/eval_with_population.py --env_name ${env} --algorithm_name ${algo} --experiment_name "${eval_exp}" --layout_name "${layout}" \
-            --num_agents ${num_agents} --seed 1 --episode_length 400 --n_eval_rollout_threads 100 --eval_episodes $((${n} * 40)) --eval_stochastic --dummy_batch_size 1 \
+            --num_agents ${num_agents} --seed 1 --episode_length 400 --n_eval_rollout_threads "${rollout_threads}" --eval_episodes $((${n} * 40)) --eval_stochastic --dummy_batch_size 1 \
             --use_proper_time_limits \
             --use_wandb \
             --store_traj \
@@ -139,7 +140,7 @@ for (( i=0; i<$len; i++ )); do
             sed -e "s/agent_name/${agent_name}/g" -e "s/algorithm/${algorithm}/g" -e "s/population/${exp_name}/g" -e "s/seed/${seed}/g" "${options[@]}" "${bias_yml}" > "${yml}"
 
             python eval/eval_with_population.py --env_name ${env} --algorithm_name ${algo} --experiment_name "${eval_exp}" --layout_name "${layout}" \
-            --num_agents ${num_agents} --seed 1 --episode_length 400 --n_eval_rollout_threads 100 --eval_episodes $((${n} * 40)) --eval_stochastic --dummy_batch_size 1 \
+            --num_agents ${num_agents} --seed 1 --episode_length 400 --n_eval_rollout_threads "${rollout_threads}" --eval_episodes $((${n} * 40)) --eval_stochastic --dummy_batch_size 1 \
             --use_proper_time_limits \
             --use_wandb \
             --store_traj \

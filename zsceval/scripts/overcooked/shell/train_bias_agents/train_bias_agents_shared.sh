@@ -76,7 +76,7 @@ if [[ "${weight_pattern}" == "all" ]]; then
     seed_max=124
 elif [[ "${weight_pattern}" == "plate_placed" ]]; then
     w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3.5,0,0,0,0,0,0"
-    seed_begin=1
+    seed_begin=5
     seed_max=5
 
     reward_shaping_horizon="1e7"

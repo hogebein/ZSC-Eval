@@ -141,6 +141,7 @@ if __name__ == "__main__":
         "random3_m",
         "inverse_marshmallow_experiment",
         "subobjective",
+        "placement_coordination",
         "academy_3_vs_1_with_keeper",
         "all",
     ], layout

@@ -69,9 +69,10 @@ LAYOUTS_KS["random1"]=10
 LAYOUTS_KS["random3"]=10
 LAYOUTS_KS["small_corridor"]=10
 LAYOUTS_KS["unident_s"]=10
-LAYOUTS_KS["random0_m"]=15
-LAYOUTS_KS["random1_m"]=15
+LAYOUTS_KS["random0_m"]=10
+LAYOUTS_KS["random1_m"]=10
 LAYOUTS_KS["random3_m"]=10
+LAYOUTS_KS["placement_coordination"]=10
 
 path=../../policy_pool
 export POLICY_POOL=${path}

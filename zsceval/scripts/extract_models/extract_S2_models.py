@@ -168,6 +168,7 @@ if __name__ == "__main__":
         "subobjective",
 "random3_l_m",
         "forced_coordination_tomato",
+        "placement_coordination",
         "all",
     ]
     if layout == "all":

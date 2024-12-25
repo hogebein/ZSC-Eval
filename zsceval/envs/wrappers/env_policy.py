@@ -64,6 +64,8 @@ class PartialPolicyEnv:
         self.infos_buffer = [[] for _ in range(self.num_agents)]
         self.infos_previous = [None for _ in range(self.num_agents)]
 
+        self.FLAG = False
+
         return obs, share_obs, available_actions
 
     def load_policy(self, load_policy_config):
@@ -152,7 +154,12 @@ class PartialPolicyEnv:
                 return [4]
             # MOVE IN RANDOM DIRECTION
             else:
-                action = np.random.choice(4,1)
+                if self.FLAG:
+                    action = 2
+                    self.FLAG = True
+                else:
+                    action = 3
+                    self.FLAG = False
                 return [action]
 
         def update_infos_buffer(infos):

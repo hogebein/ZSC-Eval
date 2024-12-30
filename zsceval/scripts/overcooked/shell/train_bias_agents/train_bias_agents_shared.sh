@@ -100,14 +100,14 @@ elif [[ "${weight_pattern}" == "plate_place" ]]; then
 
     exp="hsp_plate_placement_shared-${stage}"
 
-elif [[ "${weight_pattern}" == "tomato_state" ]]; then
+elif [[ "${weight_pattern}" == "tomato_delivery" ]]; then
    w0="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0"
    seed_begin=1
    seed_max=5
    exp="hsp_tomato_state_shared-${stage}"
    use_base_shaping_r=true
 
-elif [[ "${weight_pattern}" == "tomato_self" ]]; then
+elif [[ "${weight_pattern}" == "tomato_delivery" ]]; then
    w0="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,0,0,0"
    seed_begin=6
    seed_max=10

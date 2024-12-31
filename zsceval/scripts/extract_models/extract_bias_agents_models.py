@@ -169,7 +169,7 @@ if __name__ == "__main__":
         "all" : "hsp_all_shared-S1",
         "random0" : "hsp-S1",
         "plate_placement" : "hsp_plate_placement_shared-S1",
-        "tomato_delivery" : "hsp_tomato_self_shared-S1",
+        "tomato_delivery" : "hsp_tomato_delivery_shared-S1",
         "score" : "hsp_score-S1",
     }
 

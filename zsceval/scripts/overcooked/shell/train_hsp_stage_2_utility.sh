@@ -31,7 +31,8 @@ elif [[ ${population_size} == 10 ]]; then
     fi
     reward_shaping_horizon="5e7"
     num_env_steps="5e7"
-    pop="hsp_plate_placement_shared"
+    pop="hsp_tomato_delivery_shared"
+    #pop="hsp_plate_placement_shared"
     mep_exp="no_mep"
 elif [[ ${population_size} == 12 ]]; then
     entropy_coefs="0.2 0.05 0.01"
@@ -111,6 +112,6 @@ do
     --use_proper_time_limits \
     --wandb_name "hogebein" \
     --use_opponent_utility \
-    --cuda_id 0
+    --cuda_id 1
 done
 

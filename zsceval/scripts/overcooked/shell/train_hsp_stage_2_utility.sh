@@ -11,6 +11,8 @@ else
     version="new"
 fi
 
+use_base_shaping_r=false
+
 if [[ ${population_size} == 5 ]]; then
     entropy_coefs="0.2 0.05 0.01"
     entropy_coef_horizons="0 2.5e7 5e7"
@@ -33,6 +35,7 @@ elif [[ ${population_size} == 10 ]]; then
     num_env_steps="5e7"
     pop="hsp_tomato_delivery_shared"
     #pop="hsp_plate_placement_shared"
+    use_base_shaping_r=true
     mep_exp="no_mep"
 elif [[ ${population_size} == 12 ]]; then
     entropy_coefs="0.2 0.05 0.01"
@@ -100,18 +103,40 @@ echo "env is ${env}, layout is ${layout}, algo is ${algo}, pop is ${pop}, exp is
 for seed in $(seq ${seed_begin} ${seed_max});
 # for seed in 1 2 5;
 do
-    python train/train_adaptive.py --env_name ${env} --algorithm_name ${algo} --experiment_name "${exp}" --layout_name ${layout} --num_agents ${num_agents} \
-    --seed ${seed} --n_training_threads 1 --num_mini_batch 1 --episode_length 200 --num_env_steps ${num_env_steps} --reward_shaping_horizon ${reward_shaping_horizon} \
-    --overcooked_version ${version} \
-    --n_rollout_threads ${n_training_threads} --dummy_batch_size 1 \
-    --ppo_epoch 15 --entropy_coefs ${entropy_coefs} --entropy_coef_horizons ${entropy_coef_horizons} \
-    --stage 2 \
-    --save_interval 25 --log_interval 1 --use_eval --eval_interval 20 --n_eval_rollout_threads $((population_size * 2)) --eval_episodes 5 \
-    --population_yaml_path ${path}/${layout}/hsp_react/s3/train-s${population_size}-${pop}_${mep_exp}-${seed}.yml \
-    --population_size ${population_size} --adaptive_agent_name hsp_adaptive --use_agent_policy_id \
-    --use_proper_time_limits \
-    --wandb_name "hogebein" \
-    --use_opponent_utility \
-    --cuda_id 1
+
+    if "${use_base_shaping_r}"; then
+
+    	python train/train_adaptive.py --env_name ${env} --algorithm_name ${algo} --experiment_name "${exp}" --layout_name ${layout} --num_agents ${num_agents} \
+    	--seed ${seed} --n_training_threads 1 --num_mini_batch 1 --episode_length 200 --num_env_steps ${num_env_steps} --reward_shaping_horizon ${reward_shaping_horizon} \
+    	--overcooked_version ${version} \
+    	--n_rollout_threads ${n_training_threads} --dummy_batch_size 1 \
+    	--ppo_epoch 15 --entropy_coefs ${entropy_coefs} --entropy_coef_horizons ${entropy_coef_horizons} \
+    	--stage 2 \
+    	--save_interval 25 --log_interval 1 --use_eval --eval_interval 20 --n_eval_rollout_threads $((population_size * 2)) --eval_episodes 5 \
+    	--population_yaml_path ${path}/${layout}/hsp_react/s3/train-s${population_size}-${pop}_${mep_exp}-${seed}.yml \
+    	--population_size ${population_size} --adaptive_agent_name hsp_adaptive --use_agent_policy_id \
+    	--use_proper_time_limits \
+    	--wandb_name "hogebein" \
+    	--use_opponent_utility \
+    	--cuda_id 1 \
+	--use_base_shaping_r
+
+    else 
+
+    	python train/train_adaptive.py --env_name ${env} --algorithm_name ${algo} --experiment_name "${exp}" --layout_name ${layout} --num_agents ${num_agents} \
+    	--seed ${seed} --n_training_threads 1 --num_mini_batch 1 --episode_length 200 --num_env_steps ${num_env_steps} --reward_shaping_horizon ${reward_shaping_horizon} \
+    	--overcooked_version ${version} \
+    	--n_rollout_threads ${n_training_threads} --dummy_batch_size 1 \
+    	--ppo_epoch 15 --entropy_coefs ${entropy_coefs} --entropy_coef_horizons ${entropy_coef_horizons} \
+    	--stage 2 \
+    	--save_interval 25 --log_interval 1 --use_eval --eval_interval 20 --n_eval_rollout_threads $((population_size * 2)) --eval_episodes 5 \
+    	--population_yaml_path ${path}/${layout}/hsp_react/s3/train-s${population_size}-${pop}_${mep_exp}-${seed}.yml \
+    	--population_size ${population_size} --adaptive_agent_name hsp_adaptive --use_agent_policy_id \
+    	--use_proper_time_limits \
+    	--wandb_name "hogebein" \
+    	--use_opponent_utility \
+	--cuda_id 1
+
+    fi
 done
 

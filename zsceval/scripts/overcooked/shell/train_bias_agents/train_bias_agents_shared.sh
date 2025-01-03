@@ -129,7 +129,7 @@ else
     seed_max=72
 fi
 
-rollout_threads=100
+rollout_threads=1
 
 
 echo "seed_max is ${seed_max}:"

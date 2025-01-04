@@ -76,7 +76,7 @@ if [[ "${weight_pattern}" == "all" ]]; then
     seed_max=124
 elif [[ "${weight_pattern}" == "plate_placed" ]]; then
     w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3.5,0,0,0,0,0,0,0,0,0,0"
-    seed_begin=5
+    seed_begin=4
     seed_max=5
 
     reward_shaping_horizon="1e7"
@@ -85,7 +85,7 @@ elif [[ "${weight_pattern}" == "plate_placed" ]]; then
     exp="hsp_plate_placement_shared-${stage}"
 elif [[ "${weight_pattern}" == "plate_placed_i" ]]; then
     w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.04,0,0,0,0,0,0"
-    seed_begin=1
+    seed_begin=3
     seed_max=5
 
     reward_shaping_horizon="1e7"
@@ -95,7 +95,7 @@ elif [[ "${weight_pattern}" == "plate_placed_i" ]]; then
 
 elif [[ "${weight_pattern}" == "plate_place" ]]; then
     w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
-    seed_begin=6
+    seed_begin=9
     seed_max=10
 
     exp="hsp_plate_placement_shared-${stage}"
@@ -129,7 +129,7 @@ else
     seed_max=72
 fi
 
-rollout_threads=1
+rollout_threads=80
 
 
 echo "seed_max is ${seed_max}:"

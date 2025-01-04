@@ -129,22 +129,22 @@ if __name__ == "__main__":
     layout = sys.argv[1]
     exp = sys.argv[2]
     env = sys.argv[3]
-    assert layout in [
-        "random0",
-        "random0_medium",
-        "random1",
-        "random3",
-        "small_corridor",
-        "unident_s",
-        "random0_m",
-        "random1_m",
-        "random3_m",
-        "inverse_marshmallow_experiment",
-        "subobjective",
-        "placement_coordination",
-        "academy_3_vs_1_with_keeper",
-        "all",
-    ], layout
+    #assert layout in [
+    #    "random0",
+    #    "random0_medium",
+    #    "random1",
+    #    "random3",
+    #    "small_corridor",
+    #    "unident_s",
+    #    "random0_m",
+    #    "random1_m",
+    #    "random3_m",
+    #    "inverse_marshmallow_experiment",
+    #    "subobjective",
+    #    "placement_coordination",
+    #    "academy_3_vs_1_with_keeper",
+    #    "all",
+    #], layout
     if layout == "all":
         layout = [
             "random0",

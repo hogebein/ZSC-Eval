@@ -4,6 +4,7 @@ env="Overcooked"
 
 layout=$1
 population_size=$2
+pop_version=$3
 
 if [[ "${layout}" == "random0" || "${layout}" == "random0_medium" || "${layout}" == "random1" || "${layout}" == "random3" || "${layout}" == "small_corridor" || "${layout}" == "unident_s" ]]; then
     version="old"
@@ -22,9 +23,12 @@ if [[ ${population_size} == 10 ]]; then
     fi
     reward_shaping_horizon="5e7"
     num_env_steps="5e7"
-    #pop="hsp_plate_placement_shared"
-    pop="hsp_tomato_delivery_shared"
-    use_base_shaping_r=true
+    if [[ ${pop_version} == "tomato_delivery" ]]; then
+        pop="hsp_tomato_delivery_shared"
+        use_base_shaping_r=true
+    else
+        pop="hsp_plate_placement_shared"
+    fi
     mep_exp="no_mep"
 elif [[ ${population_size} == 12 ]]; then
     entropy_coefs="0.2 0.05 0.01"
@@ -84,7 +88,7 @@ path=../../policy_pool
 
 export POLICY_POOL=${path}
 
-n_training_threads=200
+n_training_threads=1
 
 ulimit -n 65536
 
@@ -107,8 +111,9 @@ do
     	--wandb_name "hogebein" \
     	--use_reactive \
     	--use_opponent_utility \
-    	--cuda_id 1 \
-	--use_base_shaping_r
+    	--cuda_id 0 \
+	    --use_base_shaping_r \
+        --use_wandb
     else
 
     	python train/train_adaptive.py --env_name ${env} --algorithm_name ${algo} --experiment_name "${exp}" --layout_name ${layout} --num_agents ${num_agents} \
@@ -123,7 +128,8 @@ do
     	--use_proper_time_limits \
     	--wandb_name "hogebein" \
     	--use_reactive \
-	--cuda_id 1
+        --use_opponent_utility \
+	    --cuda_id 0
     fi
 done
 

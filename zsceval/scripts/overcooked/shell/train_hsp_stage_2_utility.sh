@@ -4,6 +4,7 @@ env="Overcooked"
 
 layout=$1
 population_size=$2
+pop_version=$3
 
 if [[ "${layout}" == "random0" || "${layout}" == "random0_medium" || "${layout}" == "random1" || "${layout}" == "random3" || "${layout}" == "small_corridor" || "${layout}" == "unident_s" ]]; then
     version="old"
@@ -33,9 +34,12 @@ elif [[ ${population_size} == 10 ]]; then
     fi
     reward_shaping_horizon="5e7"
     num_env_steps="5e7"
-    pop="hsp_tomato_delivery_shared"
-    #pop="hsp_plate_placement_shared"
-    use_base_shaping_r=true
+    if [[ ${pop_version} == "tomato_delivery" ]]; then
+        pop="hsp_tomato_delivery_shared"
+        use_base_shaping_r=true
+    else
+        pop="hsp_plate_placement_shared"
+    fi
     mep_exp="no_mep"
 elif [[ ${population_size} == 12 ]]; then
     entropy_coefs="0.2 0.05 0.01"

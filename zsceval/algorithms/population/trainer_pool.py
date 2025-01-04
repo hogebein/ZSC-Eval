@@ -213,12 +213,9 @@ class TrainerPool:
 
             for i, (e, a) in enumerate(self.control_agents[trainer_name]):
                 actions[e][a] = action[i][0]
-                agent_trainers[(e, a)] = trainer_name
 
-        if self.all_args.use_reactive:
-            return actions, agent_trainers
-        else:
-            return actions
+
+        return actions
 
     def insert_data(
         self,

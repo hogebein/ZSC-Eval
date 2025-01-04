@@ -1105,64 +1105,6 @@ class OvercookedRunner(Runner):
         WARNING: Currently do not support changing map_ea2t and map_ea2p when training. To implement this, we should take the first obs of next episode in the previous buffers and feed into the next buffers.
         """
 
-        def action_filter(infos_buffer, agent_trainers, map_ea2u):
-
-            logger.debug(f"{agent_trainers}")
-            # logger.debug(map_ea2u)
-
-            if len(infos_buffer) == 0:
-                return [False] * len(agent_trainers)
-
-            result = []
-
-            for agent in agent_trainers:
-                
-                if "bias" in agent_trainers:
-                    result.append(False)
-                    continue
-
-                if agent not in map_ea2u:
-                    result.append(False)
-                    continue
-
-                agent_id = agent[1]
-
-                # PATTERN B : Agent that likes to place plates by itsself 
-                if map_ea2u[agent][31] > 0:
-                    # Complain when the opponent places a plate
-                    dishes_placed_log = [i[agent_id^1]["place_dish_on_X"] for i in infos_buffer]
-                    if sum(dishes_placed_log) >= 1:
-                        result.append(True)
-                    else:
-                        result.append(False)
-                # PATTERN A : Agent that likes plates placed on the counter
-                elif map_ea2u[agent][39] > 0:
-                    # Complain when the opponent has taken a plate
-                    dishes_recieved_log = [i[agent_id^1]["pickup_dish_from_X"] for i in infos_buffer]
-                    if sum(dishes_recieved_log) >= 1:
-                        result.append(True)
-                    else:
-                        result.append(False)
-                else:
-                    result.append(False)
-                
-            logger.debug(result)
-
-            return result
-
-        def reaction_planner(agent_id):
-            r = 0
-            # STAY
-            if r == 0:
-                if agent_id==0:
-                    return [4, None]
-                else:
-                    return [None, 4]
-            # MOVE IN RANDOM DIRECTION
-            else:
-                action = np.random.choice(4,1)
-                return [action]
-
         start = time.time()
         episodes = int(self.num_env_steps) // self.episode_length // self.n_rollout_threads
         total_num_steps = 0
@@ -1213,7 +1155,7 @@ class OvercookedRunner(Runner):
             for step in range(self.episode_length):
 
                 # Sample trainer actions
-                actions, agent_trainers = self.trainer.step(step)
+                actions = self.trainer.step(step)
 
                 # Observe reward and next obs
                 (
@@ -1602,16 +1544,11 @@ class OvercookedRunner(Runner):
                 self.eval_envs.reset_featurize_type(featurize_type)
                 return map_ea2p
 
-            if self.all_args.use_reactive:
-                self.reactive_train_with_multi_policy(
-                    reset_map_ea2t_fn=mep_reset_map_ea2t_fn,
-                    reset_map_ea2p_fn=mep_reset_map_ea2p_fn,
-                )
-            else:
-                self.naive_train_with_multi_policy(
-                    reset_map_ea2t_fn=mep_reset_map_ea2t_fn,
-                    reset_map_ea2p_fn=mep_reset_map_ea2p_fn,
-                )
+
+            self.naive_train_with_multi_policy(
+                reset_map_ea2t_fn=mep_reset_map_ea2t_fn,
+                reset_map_ea2p_fn=mep_reset_map_ea2p_fn,
+            )
 
     def train_traj(self):
         assert self.all_args.population_size == len(self.trainer.population)

@@ -1217,7 +1217,7 @@ class Overcooked(gym.Env):
                 self.traj["ep_returns"].append(info["episode"]["ep_sparse_r"])
                 self.traj["mdp_params"].append(self.base_mdp.mdp_params)
                 self.traj["env_params"].append(self.base_env.env_params)
-                if self.rank is not None and self.rank <= 1:
+                if self.rank is None or self.rank <= 1:
                     self.render()
         if done:
             if self.store_traj:

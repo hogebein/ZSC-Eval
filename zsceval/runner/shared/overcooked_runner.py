@@ -279,7 +279,7 @@ class OvercookedRunner(Runner):
         else:
             policy_actor_state_dict = torch.load(str(self.model_dir), map_location=self.device)
             self.policy.actor.load_state_dict(policy_actor_state_dict)
-            if not (self.all_args.use_render or self.all_args.use_eval):
+            if not (self.all_args.use_eval):
                 policy_critic_state_dict = torch.load(str(self.model_dir) + "/critic.pt", map_location=self.device)
                 self.policy.critic.load_state_dict(policy_critic_state_dict)
 
@@ -777,12 +777,12 @@ class OvercookedRunner(Runner):
                             eval_infos[log_name].append(v[e])
 
         logger.success(
-            "eval average sparse rewards:\n{}".format(
+            "eval average shaped rewards:\n{}".format(
                 pprint.pformat(
                     {
                         k: f"{np.mean(v):.2f}"
                         for k, v in eval_infos.items()
-                        if "ep_sparse_r" in k and "by_agent" not in k
+                        if "ep_shaped_r" in k and "by_agent" not in k
                     },
                     compact=True,
                     width=200,
@@ -793,13 +793,13 @@ class OvercookedRunner(Runner):
         eval_infos2dump = {k: np.mean(v) for k, v in eval_infos.items()}
 
         if hasattr(self.trainer, "agent_name"):
-            br_sparse_r = f"either-{self.trainer.agent_name}-eval_ep_sparse_r"
-            br_sparse_r = np.mean(eval_infos[br_sparse_r])
+            br_shaped_r = f"either-{self.trainer.agent_name}-eval_ep_shaped_r"
+            br_shaped_r = np.mean(eval_infos[br_shaped_r])
 
-            if br_sparse_r >= self.br_best_sparse_r:
-                self.br_best_sparse_r = br_sparse_r
+            if br_shaped_r >= self.br_best_shaped_r:
+                self.br_best_shaped_r = br_shaped_r
                 logger.success(
-                    f"best eval br sparse reward {self.br_best_sparse_r:.2f} at {self.total_num_steps} steps"
+                    f"best eval br shaped reward {self.br_best_shaped_r:.2f} at {self.total_num_steps} steps"
                 )
                 self.br_eval_json = copy.deepcopy(eval_infos2dump)
 
@@ -867,7 +867,10 @@ class OvercookedRunner(Runner):
                             trainer_name = map_ea2t[(e, a)]
                             if trainer_name not in self.trainer.on_training:
                                 load_policy_cfg[e][a] = self.trainer.policy_pool.policy_info[trainer_name]
+                    logger.debug(load_policy_cfg)
                     self.envs.load_policy(load_policy_cfg)
+
+            
 
             # init env
             obs, share_obs, available_actions = self.envs.reset()
@@ -1046,13 +1049,13 @@ class OvercookedRunner(Runner):
                     if "average_episode_rewards" in k and "either" not in k
                 }
                 logger.info(f"average episode rewards is\n{pprint.pformat(average_ep_rew_dict, width=600)}")
-                average_ep_sparse_rew_dict = {
+                average_ep_shaped_rew_dict = {
                     k[: k.rfind("-")]: f"{np.mean(env_infos[k]):.3f}"
                     for k in env_infos.keys()
-                    if k.endswith("ep_sparse_r") and "either" not in k
+                    if k.endswith("ep_shaped_r") and "either" not in k
                 }
                 logger.info(
-                    f"average sparse episode rewards is\n{pprint.pformat(average_ep_sparse_rew_dict, width=600, compact=True)}"
+                    f"average shaped episode rewards is\n{pprint.pformat(average_ep_shaped_rew_dict, width=600, compact=True)}"
                 )
                 if self.all_args.algorithm_name == "traj":
                     if self.all_args.stage == 1:
@@ -1414,9 +1417,8 @@ class OvercookedRunner(Runner):
                 self.all_args.eval_episodes * self.population_size // self.all_args.eval_env_batch
             )
             self.eval_idx = 0
-            all_agent_pairs = list(itertools.product(self.population, [agent_name])) + list(
-                itertools.product([agent_name], self.population)
-            )
+            all_agent_pairs = list(itertools.product(self.population, [agent_name]))\
+            + list(itertools.product([agent_name], self.population))
             logger.info(f"all agent pairs: {all_agent_pairs}")
 
             running_avg_r = -np.ones((self.population_size * 2,), dtype=np.float32) * 1e9
@@ -1425,7 +1427,8 @@ class OvercookedRunner(Runner):
                 # Randomly select agents from population to be trained
                 # 1) consistent with MEP to train against one agent each episode 2) sample different agents to train against
                 sampling_prob_np = np.ones((self.population_size * 2,)) / self.population_size / 2
-                if self.all_args.use_advantage_prioritized_sampling:
+                
+                if self.all_args.use_advantage_prioritized_sampling: # Default:False
                     # logger.debug("use advantage prioritized sampling")
                     if episode > 0:
                         metric_np = np.array([self.avg_adv[agent_pair] for agent_pair in all_agent_pairs])
@@ -1437,7 +1440,7 @@ class OvercookedRunner(Runner):
                         while sampling_prob_np.max() > maxv + 1e-6:
                             sampling_prob_np = sampling_prob_np.clip(max=maxv)
                             sampling_prob_np /= sampling_prob_np.sum()
-                elif self.all_args.mep_use_prioritized_sampling:
+                elif self.all_args.mep_use_prioritized_sampling:   # Default:False
                     metric_np = np.zeros((self.population_size * 2,))
                     for i, agent_pair in enumerate(all_agent_pairs):
                         train_r = np.mean(self.env_info.get(f"{agent_pair[0]}-{agent_pair[1]}-ep_sparse_r", -1e9))
@@ -1508,7 +1511,7 @@ class OvercookedRunner(Runner):
 
                 n_selected = self.n_rollout_threads // self.all_args.train_env_batch
                 pair_idx = np.random.choice(2 * self.population_size, size=(n_selected,), p=sampling_prob_np)
-                if self.all_args.uniform_sampling_repeat > 0:
+                if self.all_args.uniform_sampling_repeat > 0:  # Default:0
                     assert n_selected >= 2 * self.population_size * self.all_args.uniform_sampling_repeat
                     i = 0
                     for r in range(self.all_args.uniform_sampling_repeat):

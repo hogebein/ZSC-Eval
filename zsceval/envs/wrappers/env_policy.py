@@ -132,8 +132,7 @@ class PartialPolicyEnv:
                 dishes_placed_log = [i["pickup_dish_from_D"] for i in _infos_buffer[agent_id^1]]
                 if sum(dishes_placed_log) >= 1:
                     #logger.debug(dishes_placed_log)
-                    # return True
-                    return False
+                    return True
                 else:
                     return False
             # PATTERN A : Agent that likes plates placed on the counter
@@ -142,8 +141,7 @@ class PartialPolicyEnv:
                 dishes_recieved_log = [i["pickup_dish_from_X"] for i in _infos_buffer[agent_id^1]]
                 if sum(dishes_recieved_log) >= 1:
                     #logger.debug(dishes_recieved_log)
-                    # return True
-                    return False
+                    return True
                 else:
                     return False
             else:
@@ -197,9 +195,10 @@ class PartialPolicyEnv:
                 else:
                     action_cand = actions[a]
 
-                if self.all_args.use_reactive:
+                if False:
                     filter_result = reaction_filter(self.infos_buffer, self.policy_utility[a], a)
                     if filter_result:
+                        #logger.debug("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
                         actions[a] = reaction_planner()
                     else:
                         actions[a] = action_cand

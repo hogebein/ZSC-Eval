@@ -146,7 +146,7 @@ class PolicyPool:
                     else:
                         path_prefix = ACTOR_POOL_PATH
                     model_path = add_path_prefix(path_prefix, population_config[policy_name]["model_path"])
-                    print(model_path)
+                    logger.info(model_path)
                     policy.load_checkpoint(model_path)
                 policy_train = False
                 if not evaluation and "train" in population_config[policy_name].keys():

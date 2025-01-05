@@ -10,8 +10,18 @@ if [[ "${layout}" == "random0" || "${layout}" == "random0_medium" || "${layout}"
 else
     version="new"
 fi
-
-if [[ ${population_size} == 12 ]]; then
+if [[ ${population_size} == 10 ]]; then
+    entropy_coefs="0.2 0.05 0.01"
+    entropy_coef_horizons="0 2.5e7 5e7"
+    if [[ "${layout}" == "small_corridor" ]]; then
+        entropy_coefs="0.2 0.05 0.01"
+        entropy_coef_horizons="0 4e7 5e7"
+    fi
+    reward_shaping_horizon="5e7"
+    num_env_steps="5e7"
+    pop="hsp_plate_placement_shared"
+    mep_exp="no_mep"
+elif [[ ${population_size} == 12 ]]; then
     entropy_coefs="0.2 0.05 0.01"
     entropy_coef_horizons="0 2.5e7 5e7"
     if [[ "${layout}" == "small_corridor" ]]; then

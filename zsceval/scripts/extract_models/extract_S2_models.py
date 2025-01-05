@@ -152,25 +152,25 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     layout = args.layout
-    assert layout in [
-        "random0",
-        "academy_3_vs_1_with_keeper",
-        "random0_medium",
-        "random1",
-        "random3",
-        "small_corridor",
-        "unident_s",
-        "random0_m",
-        "random1_m",
-        "random3_m",
-        "academy_3_vs_1_with_keeper",
-        "inverse_marshmallow_experiment",
-        "subobjective",
-"random3_l_m",
-        "forced_coordination_tomato",
-        "placement_coordination",
-        "all",
-    ]
+    #assert layout in [
+    #    "random0",
+    #    "academy_3_vs_1_with_keeper",
+    #    "random0_medium",
+    #    "random1",
+    #    "random3",
+    #    "small_corridor",
+    #    "unident_s",
+    #    "random0_m",
+    #    "random1_m",
+    #    "random3_m",
+    #    "academy_3_vs_1_with_keeper",
+    #    "inverse_marshmallow_experiment",
+    #    "subobjective",
+    #    "random3_l_m",
+    #    "forced_coordination_tomato",
+    #    "placement_coordination",
+    #    "all",
+    #]
     if layout == "all":
         layout = [
             "random0",
@@ -203,8 +203,10 @@ if __name__ == "__main__":
         "hsp": [
             "hsp-S2-s12",
             "hsp-S2-s24",
-            "hsp_plate_placement_shared-S2-s10",
-            "reactive_hsp_plate_placement_shared-S3-s10"
+            #"hsp_plate_placement_shared-S2-s10",
+            #"reactive_hsp_plate_placement_shared-S3-s10",
+            "hsp_tomato_delivery_shared-S2-s10",
+            "reactive_hsp_tomato_delivery_shared-S3-s10"
         ],
         "traj": [
             "traj-S2-s24",

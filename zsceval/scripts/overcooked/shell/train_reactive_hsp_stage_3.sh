@@ -88,7 +88,7 @@ path=../../policy_pool
 
 export POLICY_POOL=${path}
 
-n_training_threads=1
+n_training_threads=100
 
 ulimit -n 65536
 
@@ -111,9 +111,8 @@ do
     	--wandb_name "hogebein" \
     	--use_reactive \
     	--use_opponent_utility \
-    	--cuda_id 0 \
-	    --use_base_shaping_r \
-        --use_wandb
+    	--cuda_id 1 \
+	    --use_base_shaping_r 
     else
 
     	python train/train_adaptive.py --env_name ${env} --algorithm_name ${algo} --experiment_name "${exp}" --layout_name ${layout} --num_agents ${num_agents} \
@@ -129,7 +128,7 @@ do
     	--wandb_name "hogebein" \
     	--use_reactive \
         --use_opponent_utility \
-	    --cuda_id 0
+	    --cuda_id 1
     fi
 done
 

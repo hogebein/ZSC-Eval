@@ -867,7 +867,7 @@ class OvercookedRunner(Runner):
                             trainer_name = map_ea2t[(e, a)]
                             if trainer_name not in self.trainer.on_training:
                                 load_policy_cfg[e][a] = self.trainer.policy_pool.policy_info[trainer_name]
-                    logger.debug(load_policy_cfg)
+                    # logger.debug(load_policy_cfg)
                     self.envs.load_policy(load_policy_cfg)
 
             

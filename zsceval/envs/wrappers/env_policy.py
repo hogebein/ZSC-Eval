@@ -125,7 +125,7 @@ class PartialPolicyEnv:
             if _utility == None:
                 return False
 
-            #logger.debug([i for i in _infos_buffer[agent_id^1]])
+            # CASE_PLATE_PLACEMENT
             # PATTERN B : Agent that likes to place plates by itsself 
             if _utility[31] > 0:
                 # Complain when the opponent places a plate
@@ -144,6 +144,20 @@ class PartialPolicyEnv:
                     return True
                 else:
                     return False
+        
+            # CASE_TOMATO_DELIVERY
+            elif _utility[46] > 0:
+                # Complain when the opponent has taken a plate
+                dishes_recieved_log = [i["SOUP_PICKUP"] for i in _infos_buffer[agent_id^1]]
+                if sum(dishes_recieved_log) >= 1:
+                    #logger.debug(dishes_recieved_log)
+                    return True
+                else:
+                    return False
+
+            elif _utility[48] > 0:
+                return False
+
             else:
                 return False
 

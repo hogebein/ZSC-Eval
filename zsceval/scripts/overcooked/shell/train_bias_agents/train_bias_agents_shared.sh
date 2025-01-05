@@ -65,7 +65,11 @@ version="new"
 # 42 "integral_tomato_placed_on_X",
 # 43 "integral_dish_placed_on_X",
 # 44 "integral_soup_placed_on_X",
-# 45 "sparse_reward  1,
+# 45 "deliver_onion_order",
+# 46 "deliver_tomato_order",
+# 47 "onion_order_delivered",
+# 48 "tomato_order_delivered",
+# 49 "sparse_reward  1,
 
 w1="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
 use_base_shaping_r=false

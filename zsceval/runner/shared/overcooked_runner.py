@@ -32,6 +32,7 @@ class OvercookedRunner(Runner):
 
         # for training br
         self.br_best_sparse_r = 0
+        self.br_best_shaped_r = 0
         self.br_eval_json = {}
 
     def run(self):
@@ -568,8 +569,8 @@ class OvercookedRunner(Runner):
             br_sparse_r = f"either-{self.trainer.agent_name}-eval_ep_sparse_r"
             br_sparse_r = np.mean(eval_infos[br_sparse_r])
 
-            if br_sparse_r >= self.br_best_sparse_r:
-                self.br_best_sparse_r = br_sparse_r
+            if br_sparse_r >= self.br_best_shaped_r:
+                self.br_best_shaped_r = br_shaped_r
                 logger.success(
                     f"best eval br sparse reward {self.br_best_sparse_r:.2f} at {self.total_num_steps} steps"
                 )

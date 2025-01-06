@@ -111,8 +111,9 @@ do
     	--wandb_name "hogebein" \
     	--use_reactive \
     	--use_opponent_utility \
-    	--cuda_id 1 \
-	    --use_base_shaping_r 
+    	--use_base_shaping_r \
+        --cuda_id 1
+	    
     else
 
     	python train/train_adaptive.py --env_name ${env} --algorithm_name ${algo} --experiment_name "${exp}" --layout_name ${layout} --num_agents ${num_agents} \

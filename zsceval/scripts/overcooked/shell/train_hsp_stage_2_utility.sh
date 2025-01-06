@@ -122,8 +122,8 @@ do
     	--use_proper_time_limits \
     	--wandb_name "hogebein" \
     	--use_opponent_utility \
-    	--cuda_id 1 \
-        --use_base_shaping_r
+        --use_base_shaping_r \
+    	--cuda_id 1
 
     else 
 

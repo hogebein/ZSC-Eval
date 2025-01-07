@@ -866,6 +866,7 @@ class OvercookedRunner(Runner):
                     for e in range(self.n_rollout_threads):
                         for a in range(self.num_agents):
                             trainer_name = map_ea2t[(e, a)]
+                            # logger.debug(trainer_name)
                             if trainer_name not in self.trainer.on_training:
                                 load_policy_cfg[e][a] = self.trainer.policy_pool.policy_info[trainer_name]
                     # logger.debug(load_policy_cfg)
@@ -989,7 +990,7 @@ class OvercookedRunner(Runner):
             s_time = time.time()
             if self.all_args.stage == 2:
                 # update advantage moving average, used in stage2
-                if self.all_args.use_advantage_prioritized_sampling:
+                if self.all_args.use_advantage_prioritized_sampling:  # Default:False
                     if not hasattr(self, "avg_adv"):
                         self.avg_adv = defaultdict(float)
                     adv = self.trainer.compute_advantages()
@@ -1025,7 +1026,7 @@ class OvercookedRunner(Runner):
                 },
                 save_dir=self.save_dir,
             )
-
+            
             # log information
             if episode % self.log_interval == 0 or episode == episodes - 1:
                 end = time.time()
@@ -1067,7 +1068,7 @@ class OvercookedRunner(Runner):
                 self.log_env(env_infos, total_num_steps)
                 if self.use_wandb:
                     wandb.log({"train/ETA": eta_t}, step=total_num_steps)
-
+            
             # eval
             if episode > 0 and episode % self.eval_interval == 0 and self.use_eval or episode == episodes - 1:
                 if reset_map_ea2p_fn is not None:
@@ -1080,7 +1081,7 @@ class OvercookedRunner(Runner):
                 # logger.debug("eval_info: {}".format(pprint.pformat(eval_info)))
                 self.log_env(eval_info, total_num_steps)
                 self.eval_info.update(eval_info)
-
+            
             e_time = time.time()
             logger.trace(f"Post update models time: {e_time - s_time:.3f}s")
 

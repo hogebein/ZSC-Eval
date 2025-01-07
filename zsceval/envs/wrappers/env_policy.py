@@ -194,6 +194,8 @@ class PartialPolicyEnv:
                     self.infos_buffer[a].append(agent_diffs)
                     self.infos_previous[a] = agent_infos.copy()
 
+        reaction = [0 for _ in range(self.num_agents)]
+
         for a in range(self.num_agents):
             if self.policy[a] is not None:
                 if actions[a] is None: #  "Expected None action for policy already set in parallel envs."
@@ -209,10 +211,10 @@ class PartialPolicyEnv:
                 else:
                     action_cand = actions[a]
 
-                if False:
+                if self.all_args.use_reactive:
                     filter_result = reaction_filter(self.infos_buffer, self.policy_utility[a], a)
                     if filter_result:
-                        #logger.debug("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+                        reaction[a] = 1  
                         actions[a] = reaction_planner()
                     else:
                         actions[a] = action_cand
@@ -236,6 +238,8 @@ class PartialPolicyEnv:
         done = np.array(done)
         self.mask[done == True] = np.zeros(((done == True).sum(), 1), dtype=np.float32)
         
+        info["reaction_counter"] = reaction
+
         update_infos_buffer(info)
         
         return obs, share_obs, reward, done, info, available_actions

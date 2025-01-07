@@ -88,7 +88,7 @@ path=../../policy_pool
 
 export POLICY_POOL=${path}
 
-n_training_threads=100
+n_training_threads=200
 
 ulimit -n 65536
 
@@ -99,7 +99,7 @@ do
     if "${use_base_shaping_r}"; then
 
     	python train/train_adaptive.py --env_name ${env} --algorithm_name ${algo} --experiment_name "${exp}" --layout_name ${layout} --num_agents ${num_agents} \
-    	--seed ${seed} --n_training_threads 1 --num_mini_batch 1 --episode_length 200 --num_env_steps ${num_env_steps} --reward_shaping_horizon ${reward_shaping_horizon} \
+    	--seed ${seed} --n_training_threads 1 --num_mini_batch 1 --episode_length 400 --num_env_steps ${num_env_steps} --reward_shaping_horizon ${reward_shaping_horizon} \
     	--overcooked_version ${version} \
     	--n_rollout_threads ${n_training_threads} --dummy_batch_size 1 \
     	--ppo_epoch 15 --entropy_coefs ${entropy_coefs} --entropy_coef_horizons ${entropy_coef_horizons} \
@@ -117,7 +117,7 @@ do
     else
 
     	python train/train_adaptive.py --env_name ${env} --algorithm_name ${algo} --experiment_name "${exp}" --layout_name ${layout} --num_agents ${num_agents} \
-    	--seed ${seed} --n_training_threads 1 --num_mini_batch 1 --episode_length 200 --num_env_steps ${num_env_steps} --reward_shaping_horizon ${reward_shaping_horizon} \
+    	--seed ${seed} --n_training_threads 1 --num_mini_batch 1 --episode_length 400 --num_env_steps ${num_env_steps} --reward_shaping_horizon ${reward_shaping_horizon} \
     	--overcooked_version ${version} \
     	--n_rollout_threads ${n_training_threads} --dummy_batch_size 1 \
     	--ppo_epoch 15 --entropy_coefs ${entropy_coefs} --entropy_coef_horizons ${entropy_coef_horizons} \
@@ -130,6 +130,7 @@ do
     	--use_reactive \
         --use_opponent_utility \
 	    --cuda_id 1
+
     fi
 done
 

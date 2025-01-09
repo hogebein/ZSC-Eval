@@ -162,7 +162,7 @@ class PartialPolicyEnv:
                 return False
 
         def reaction_planner():
-            r = 0
+            r = 1
             # STAY
             if r == 0:
                 return [4]

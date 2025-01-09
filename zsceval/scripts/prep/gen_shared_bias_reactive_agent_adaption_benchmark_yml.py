@@ -23,7 +23,7 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
     layout = args.layout
-    assert layout in list(LAYOUTS_EXPS.keys()) + ["all"]
+    #assert layout in list(LAYOUTS_EXPS.keys()) + ["all"]
     if layout == "all":
         layout = list(LAYOUTS_EXPS.keys())
     else:

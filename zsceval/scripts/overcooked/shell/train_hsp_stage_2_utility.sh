@@ -32,13 +32,15 @@ elif [[ ${population_size} == 10 ]]; then
         entropy_coefs="0.2 0.05 0.01"
         entropy_coef_horizons="0 4e7 5e7"
     fi
-    reward_shaping_horizon="5e7"
-    num_env_steps="5e7"
     if [[ ${pop_version} == "tomato_delivery" ]]; then
         pop="hsp_tomato_delivery_shared"
+        reward_shaping_horizon="20e7"
+        num_env_steps="20e7"
         use_base_shaping_r=true
     else
         pop="hsp_plate_placement_shared"
+        reward_shaping_horizon="5e7"
+        num_env_steps="5e7"
     fi
     mep_exp="no_mep"
 elif [[ ${population_size} == 12 ]]; then

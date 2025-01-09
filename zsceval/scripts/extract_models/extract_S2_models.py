@@ -201,10 +201,10 @@ if __name__ == "__main__":
             "mep-S2-s36",
         ],
         "hsp": [
-            "hsp-S2-s12",
-            "hsp-S2-s24",
-            #"hsp_plate_placement_shared-S2-s10",
-            #"reactive_hsp_plate_placement_shared-S3-s10",
+            #"hsp-S2-s12",
+            #"hsp-S2-s24",
+            "hsp_plate_placement_shared-S2-s10",
+            "reactive_hsp_plate_placement_shared-S3-s10",
             "hsp_tomato_delivery_shared-S2-s10",
             "reactive_hsp_tomato_delivery_shared-S3-s10"
         ],

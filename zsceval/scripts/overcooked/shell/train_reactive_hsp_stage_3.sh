@@ -23,8 +23,8 @@ if [[ ${population_size} == 10 ]]; then
     fi
     if [[ ${pop_version} == "tomato_delivery" ]]; then
         pop="hsp_tomato_delivery_shared"
-        reward_shaping_horizon="20e7"
-        num_env_steps="20e7"
+        reward_shaping_horizon="15e7"
+        num_env_steps="15e7"
         use_base_shaping_r=true
     else
         pop="hsp_plate_placement_shared"

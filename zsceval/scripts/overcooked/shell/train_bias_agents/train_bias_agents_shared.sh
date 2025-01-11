@@ -80,7 +80,7 @@ if [[ "${weight_pattern}" == "all" ]]; then
     seed_max=124
 elif [[ "${weight_pattern}" == "plate_placed" ]]; then
     w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3.5,0,0,0,0,0,0,0,0,0,0"
-    seed_begin=4
+    seed_begin=1
     seed_max=5
 
     reward_shaping_horizon="1e7"
@@ -99,7 +99,7 @@ elif [[ "${weight_pattern}" == "plate_placed_i" ]]; then
 
 elif [[ "${weight_pattern}" == "plate_place" ]]; then
     w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
-    seed_begin=9
+    seed_begin=6
     seed_max=10
 
     exp="hsp_plate_placement_shared-${stage}"
@@ -152,7 +152,7 @@ do
         --use_proper_time_limits \
         --save_interval 25 --log_interval 10 --use_eval --eval_interval 20 --n_eval_rollout_threads 20 \
         --wandb_name "hogebein" \
-        --cuda_id 1 \
+        --cuda_id 0 \
         --use_base_shaping_r
     
     
@@ -167,7 +167,7 @@ do
         --use_proper_time_limits \
         --save_interval 25 --log_interval 10 --use_eval --eval_interval 20 --n_eval_rollout_threads 20 \
         --wandb_name "hogebein" \
-        --cuda_id 1
+        --cuda_id 0
 
 
     fi

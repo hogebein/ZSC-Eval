@@ -12,7 +12,7 @@ else
     version="new"
 fi
 
-use_base_shaping_r=false
+use_base_shaping_r=true
 
 if [[ ${population_size} == 10 ]]; then
     entropy_coefs="0.2 0.05 0.01"

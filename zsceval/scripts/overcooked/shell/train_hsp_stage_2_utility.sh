@@ -95,7 +95,7 @@ num_agents=2
 algo="adaptive"
 exp="${pop}-S2-s${population_size}"
 stage="S2"
-seed_begin=4
+seed_begin=1
 seed_max=5
 path=../../policy_pool
 

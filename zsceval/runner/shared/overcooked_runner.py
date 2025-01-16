@@ -588,53 +588,7 @@ class OvercookedRunner(Runner):
         return eval_infos
 
 
-    def evaluate_reactive_one_episode_with_multi_policy(self, policy_pool: Dict, policy_utility: Dict, map_ea2p: Dict):
-            
-        def reaction_filter(infos_buffer, agents, policy_name, utility):
-
-            if len(infos_buffer) == 0:
-                return [False] * len(agents)
-            
-            if "bias" in policy_name:
-                return [False] * len(agents)
-
-            if utility == None:
-                return [False] * len(agents)
-
-            result = []
-            for agent in agents:
-                agent_id = agent[1]
-                # PATTERN B : Agent that likes to place plates by itsself 
-                if utility[31] > 0:
-                    # Complain when the opponent places a plate
-                    dishes_placed_log = [i[agent_id^1]["place_dish_on_X"] for i in infos_buffer]
-                    if sum(dishes_placed_log) >= 1:
-                        result.append(True)
-                    else:
-                        result.append(False)
-                # PATTERN A : Agent that likes plates placed on the counter
-                elif utility[39] > 0:
-                    # Complain when the opponent has taken a plate
-                    dishes_recieved_log = [i[agent_id^1]["pickup_dish_from_X"] for i in infos_buffer]
-                    if sum(dishes_recieved_log) >= 1:
-                        result.append(True)
-                    else:
-                        result.append(False)
-                else:
-                    result.append(False)
-
-            return result
-
-        def reaction_planner():
-            
-            r = 0
-            # STAY
-            if r == 0:
-                return [4]
-            # MOVE IN RANDOM DIRECTION
-            else:
-                action = np.random.choice(4,1)
-                return [action]
+    def evaluate_opp_utility_one_episode_with_multi_policy(self, policy_pool: Dict, policy_utility: Dict, map_ea2p: Dict):
 
         """Evaluate one episode with different policy for each agent.
         Params:
@@ -642,6 +596,10 @@ class OvercookedRunner(Runner):
             map_ea2p (Dict): a mapping from (env_id, agent_id) to policy name
         """
         # warnings.warn("Evaluation with multi policy is not compatible with async done.")
+
+        ep_reaction_counter = []
+        for e in range(self.n_eval_rollout_threads):
+            ep_reaction_counter.append([0, 0])
 
         [policy.reset(self.n_eval_rollout_threads, self.num_agents) for _, policy in policy_pool.items()]
         if self.all_args.use_opponent_utility:
@@ -707,6 +665,8 @@ class OvercookedRunner(Runner):
                 eval_available_actions,
             ) = self.eval_envs.step(eval_actions)
             
+            for e in range(self.n_eval_rollout_threads):
+                ep_reaction_counter[e] = [x + y for (x, y) in zip(ep_reaction_counter[e], eval_infos[e]["reaction_counter"])]
 
         if self.all_args.overcooked_version == "old":
             from zsceval.envs.overcooked.overcooked_ai_py.mdp.overcooked_mdp import (
@@ -721,12 +681,15 @@ class OvercookedRunner(Runner):
 
             shaped_info_keys = SHAPED_INFOS
 
-        for eval_info in eval_infos:
+        for e, eval_info in enumerate(eval_infos):
             for a in range(self.num_agents):
                 for i, k in enumerate(shaped_info_keys):
                     eval_env_infos[f"eval_ep_{k}_by_agent{a}"].append(
                         eval_info["episode"]["ep_category_r_by_agent"][a][i]
                     )
+                eval_env_infos[f"eval_ep_reaction_by_agent{a}"].append(
+                    ep_reaction_counter[e][a]
+                )
                 eval_env_infos[f"eval_ep_sparse_r_by_agent{a}"].append(eval_info["episode"]["ep_sparse_r_by_agent"][a])
                 eval_env_infos[f"eval_ep_shaped_r_by_agent{a}"].append(eval_info["episode"]["ep_shaped_r_by_agent"][a])
                 eval_env_infos[f"eval_ep_utility_r_by_agent{a}"].append(eval_info["episode"]["ep_utility_r_by_agent"][a])
@@ -735,10 +698,11 @@ class OvercookedRunner(Runner):
             eval_env_infos["eval_ep_sparse_r"].append(eval_info["episode"]["ep_sparse_r"])
             eval_env_infos["eval_ep_shaped_r"].append(eval_info["episode"]["ep_shaped_r"])
             eval_env_infos["eval_ep_utility_r"].append(eval_info["episode"]["ep_utility_r"])
+        
         return eval_env_infos
 
 
-    def evaluate_reactive_policy_with_multi_policy(self, policy_pool=None, map_ea2p=None, num_eval_episodes=None):
+    def evaluate_opp_utility_policy_with_multi_policy(self, policy_pool=None, map_ea2p=None, num_eval_episodes=None):
         """Evaluate with different policy for each agent."""
 
         policy_pool = policy_pool or self.policy.policy_pool
@@ -752,7 +716,7 @@ class OvercookedRunner(Runner):
             range(max(1, num_eval_episodes // self.n_eval_rollout_threads)),
             desc="Evaluate with Population",
         ):
-            eval_env_info = self.evaluate_reactive_one_episode_with_multi_policy(policy_pool, policy_utility, map_ea2p)
+            eval_env_info = self.evaluate_opp_utility_one_episode_with_multi_policy(policy_pool, policy_utility, map_ea2p)
             for k, v in eval_env_info.items():
                 for e in range(self.n_eval_rollout_threads):
                     agent0, agent1 = map_ea2p[(e, 0)], map_ea2p[(e, 1)]
@@ -1087,7 +1051,7 @@ class OvercookedRunner(Runner):
                     map_ea2p = reset_map_ea2p_fn(episode)
                     self.policy.set_map_ea2p(map_ea2p, load_unused_to_cpu=True)
                 if self.all_args.use_opponent_utility:
-                    eval_info = self.evaluate_reactive_policy_with_multi_policy()
+                    eval_info = self.evaluate_opp_utility_policy_with_multi_policy()
                 else:
                     eval_info = self.evaluate_with_multi_policy()
                 # logger.debug("eval_info: {}".format(pprint.pformat(eval_info)))

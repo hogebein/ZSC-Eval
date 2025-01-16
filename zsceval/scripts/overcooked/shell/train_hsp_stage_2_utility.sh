@@ -118,7 +118,7 @@ do
     	--n_rollout_threads ${n_training_threads} --dummy_batch_size 1 \
     	--ppo_epoch 15 --entropy_coefs ${entropy_coefs} --entropy_coef_horizons ${entropy_coef_horizons} \
     	--stage 2 \
-    	--save_interval 25 --log_interval 1 --use_eval --eval_interval 20 --n_eval_rollout_threads $((population_size * 2)) --eval_episodes 20 \
+    	--save_interval 25 --log_interval 1 --use_eval --eval_interval 1 --n_eval_rollout_threads $((population_size * 2)) --eval_episodes 20 \
     	--population_yaml_path ${path}/${layout}/hsp_react/s3/train-s${population_size}-${pop}_${mep_exp}-${seed}.yml \
     	--population_size ${population_size} --adaptive_agent_name hsp_adaptive --use_agent_policy_id \
     	--use_proper_time_limits \
@@ -134,8 +134,8 @@ do
     	--overcooked_version ${version} \
     	--n_rollout_threads ${n_training_threads} --dummy_batch_size 1 \
     	--ppo_epoch 15 --entropy_coefs ${entropy_coefs} --entropy_coef_horizons ${entropy_coef_horizons} \
-    	--stage 2 
-    	--save_interval 25 --log_interval 1 --use_eval --eval_interval 20 --n_eval_rollout_threads $((population_size * 2)) --eval_episodes 20 \
+    	--stage 2 \
+    	--save_interval 25 --log_interval 1 --use_eval --eval_interval 5 --n_eval_rollout_threads $((population_size * 2)) --eval_episodes 20 \
     	--population_yaml_path ${path}/${layout}/hsp_react/s3/train-s${population_size}-${pop}_${mep_exp}-${seed}.yml \
     	--population_size ${population_size} --adaptive_agent_name hsp_adaptive --use_agent_policy_id \
     	--use_proper_time_limits \

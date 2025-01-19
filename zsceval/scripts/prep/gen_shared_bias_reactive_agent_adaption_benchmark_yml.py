@@ -4,7 +4,6 @@ from loguru import logger
 
 from zsceval.utils.bias_agent_vars import LAYOUTS_EXPS, LAYOUTS_KS
 
-
 def parse_args():
     parser = argparse.ArgumentParser(description="zsceval", formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("-l", "--layout", type=str, required=True, help="layout name")

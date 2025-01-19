@@ -148,6 +148,7 @@ class PolicyPool:
                     model_path = add_path_prefix(path_prefix, population_config[policy_name]["model_path"])
                     logger.info(model_path)
                     policy.load_checkpoint(model_path)
+
                 policy_train = False
                 if not evaluation and "train" in population_config[policy_name].keys():
                     policy_train = population_config[policy_name]["train"]
@@ -155,13 +156,14 @@ class PolicyPool:
                     policy.to_parallel()
                 if evaluation:
                     policy = EvalPolicy(policy_args, policy)
-                policy_utility = None
 
+                policy_utility = None
                 if utility and "utility" in population_config[policy_name].keys():
                     util_str = population_config[policy_name]["utility"]
                     util_str = util_str.split(",")
                     policy_utility = [float(i) for i in util_str]
                     population_config[policy_name]["utility"] = policy_utility
+
                 policy_info = [policy_name, population_config[policy_name]]
                 self.register_policy(policy_name, policy, policy_config, policy_train, policy_utility, policy_info)
                 featurize_type[policy_name] = population_config[policy_name]["featurize_type"]

@@ -238,10 +238,7 @@ def main(args):
         [(agent_featurize_type, agent_featurize_type) for _ in range(all_args.n_eval_rollout_threads)]
     )
 
-    if all_args.use_reactive:
-        runner.evaluate_reactive_policy_with_multi_policy()
-    else:
-        runner.evaluate_with_multi_policy()
+    runner.evaluate_with_multi_policy()
 
     if envs is not None:
         # post process

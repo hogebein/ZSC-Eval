@@ -52,10 +52,10 @@ then
 elif [[ $2 == "hsp_react" ]];
 then
     algorithm="hsp"
-    #exps=("hsp_plate_placement_shared-S2-s10" "reactive_hsp_plate_placement_shared-S3-s10")
-    #pop_agent_version="hsp_plate_placement_shared"
-    exps=("hsp_tomato_delivery_shared-S2-s10" "reactive_hsp_tomato_delivery_shared-S3-s10")
-    pop_agent_version="hsp_tomato_delivery_shared"
+    exps=("hsp_plate_placement_shared-S2-s10" "reactive_hsp_plate_placement_shared-S3-s10")
+    pop_agent_version="hsp_plate_placement_shared"
+    #exps=("hsp_tomato_delivery_shared-S2-s10" "reactive_hsp_tomato_delivery_shared-S3-s10")
+    #pop_agent_version="hsp_tomato_delivery_shared"
 else
     echo "bash eval_with_bias_agents.sh {layout} {algo}"
     exit 0
@@ -80,7 +80,8 @@ LAYOUTS_KS["placement_coordination"]=10
 path=../../policy_pool
 export POLICY_POOL=${path}
 
-K=$((LAYOUTS_KS[${layout}]))
+#K=$((LAYOUTS_KS[${layout}]))
+K=10
 bias_yml="${path}/${layout}/${pop_agent_algo}/s1/${pop_agent_version}/benchmarks-s${K}.yml"
 yml_dir=eval/eval_policy_pool/${layout}/results
 mkdir -p ${yml_dir}

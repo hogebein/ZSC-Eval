@@ -80,6 +80,7 @@ def parse_args():
     parser.add_argument("-V", "--bias_agent_version", type=str, default="hsp")
     parser.add_argument("--policy_pool_version", type=str, default=None)
     parser.add_argument("-f", "--fixed_pop", action="store_true", default=False)
+    parser.add_argument("-m", "--mixed_reactive_pop", action="store_true", default=False)
 
     args = parser.parse_args()
     return args
@@ -92,6 +93,13 @@ if __name__ == "__main__":
     if layout in ["random0_m", "random1_m", "random3_m"]:
         overcooked_version = "new"
     K = args.k
+    S = args.S
+    s = args.s
+    #if args.mixed_reactive_pop:
+    #    K *= 2
+    #    S *= 2
+    #    s *= 2
+
     policy_version = args.bias_agent_version
     np.random.seed(0)
     random.seed(0)
@@ -132,7 +140,7 @@ if __name__ == "__main__":
         ]
 
     if args.fixed_pop:
-        runs = [i for i in range(1, args.S+1)]
+        runs = [i for i in range(1, S+1)]
     else:
         events = dict()
         eval_result_dir = os.path.join(args.env.lower(), args.eval_result_dir, layout, "bias")
@@ -208,18 +216,20 @@ if __name__ == "__main__":
 
     # generate HSP training config
     os.makedirs(f"{args.policy_pool_path}/{layout}/hsp_react/s3", exist_ok=True)
-    mep_exp = MEP_EXPS[args.s]
+    mep_exp = MEP_EXPS[s]
     policy_pool_version = args.policy_pool_version if args.policy_pool_version != None else policy_version
     
     w0_open = open(f'{args.policy_pool_path}/{layout}/hsp/s1/{policy_pool_version}/w0.json', 'r')
     w0_load = json.load(w0_open)
 
     for seed in range(1, 6):
-        logger.info(f"Writing {args.policy_pool_path}/{layout}/hsp_react/s3/train-s{args.S}-{args.bias_agent_version}_{mep_exp}-{seed}.yml")
-        with open(
-            f"{args.policy_pool_path}/{layout}/hsp_react/s3/train-s{args.S}-{args.bias_agent_version}_{mep_exp}-{seed}.yml",
-            "w",
-        ) as f:
+        
+        if args.mixed_reactive_pop:
+            file_name = f"{args.policy_pool_path}/{layout}/hsp_react/s3/train-s{S*2}-{args.bias_agent_version}_{mep_exp}-{seed}.yml"
+        else:
+            file_name = f"{args.policy_pool_path}/{layout}/hsp_react/s3/train-s{S}-{args.bias_agent_version}_{mep_exp}-{seed}.yml"
+        logger.info(f"Writing {file_name}")
+        with open(file_name, "w") as f:
             f.write(
                 f"""\
 hsp_adaptive:
@@ -228,9 +238,9 @@ hsp_adaptive:
     train: True
 """
             )
-            assert (args.S - int(K)) % 3 == 0, (args.S, K)
-            POP_SIZE = (args.S - int(K)) // 3
-            TOTAL_SIZE = args.s
+            assert (S - int(K)) % 3 == 0, (S, K)
+            POP_SIZE = (S - int(K)) // 3
+            TOTAL_SIZE = s
             for p_i in range(1, POP_SIZE + 1):
                 pt_i = (TOTAL_SIZE // 5 * (seed - 1) + p_i - 1) % TOTAL_SIZE + 1
                 f.write(
@@ -255,14 +265,31 @@ mep{p_i}_3:
         actor: {os.path.join(layout, "mep", "s1", mep_exp, f"mep{pt_i}_final_actor.pt")}
 """
                 )
-            for i, run_i in enumerate(runs):
-                w0_i = w0_load[f"hsp{run_i}_final_actor"]
-                f.write(
-                    f"""\
+
+            if args.mixed_reactive_pop:
+                for i, run_i in enumerate(runs):
+                    w0_i = w0_load[f"hsp{run_i}_final_actor"]
+                    f.write(
+                        f"""\
 hsp{i+1}_final:
     policy_config_path: {layout}/policy_config/mlp_policy_config.pkl
     featurize_type: ppo
     train: False
+    reactive: False
+    model_path:
+        actor: {layout}/hsp/s1/{policy_pool_version}/hsp{run_i}_final_actor.pt
+    utility: {str(w0_i)}\n"""
+                )
+
+            for i, run_i in enumerate(runs):
+                w0_i = w0_load[f"hsp{run_i}_final_actor"]
+                f.write(
+                    f"""\
+hsp{i+len(runs)+1}_final:
+    policy_config_path: {layout}/policy_config/mlp_policy_config.pkl
+    featurize_type: ppo
+    train: False
+    reactive: True
     model_path:
         actor: {layout}/hsp/s1/{policy_pool_version}/hsp{run_i}_final_actor.pt
     utility: {str(w0_i)}\n"""

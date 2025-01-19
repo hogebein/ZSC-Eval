@@ -35,6 +35,8 @@ class PartialPolicyEnv:
 
         self.policy_utility = [None for _ in range(self.num_agents)]
 
+        self.policy_reactive = [False for _ in range(self.num_agents)]
+
         self.observation_space, self.share_observation_space, self.action_space = (
             self.__env.observation_space,
             self.__env.share_observation_space,
@@ -111,10 +113,11 @@ class PartialPolicyEnv:
 
                     self.policy_utility[a] = None
                     if "utility" in policy_info:
-                        self.policy_utility[a] = policy_info["utility"]                    
+                        self.policy_utility[a] = policy_info["utility"]
 
+                    if self.all_args.use_reactive and "reactive" in policy_info:     
+                        self.policy_reactive[a] = policy_info["reactive"]
                     
-
     def step(self, actions):
 
         def reaction_filter(_infos_buffer, _utility, agent_id):
@@ -211,10 +214,10 @@ class PartialPolicyEnv:
                 else:
                     action_cand = actions[a]
 
-                if self.all_args.use_reactive:
+                if self.all_args.use_reactive and self.policy_reactive[a]:
                     filter_result = reaction_filter(self.infos_buffer, self.policy_utility[a], a)
                     if filter_result:
-                        reaction[a] = 1  
+                        reaction[a] = 1
                         actions[a] = reaction_planner()
                     else:
                         actions[a] = action_cand

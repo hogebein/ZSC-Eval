@@ -96,12 +96,12 @@ algo="adaptive"
 exp="${pop}-S2-s${population_size}"
 stage="S2"
 seed_begin=1
-seed_max=5
+seed_max=1
 path=../../policy_pool
 
 export POLICY_POOL=${path}
 
-n_training_threads=200
+n_training_threads=80
 
 ulimit -n 65536
 
@@ -125,7 +125,7 @@ do
     	--wandb_name "hogebein" \
     	--use_opponent_utility \
         --use_base_shaping_r \
-    	--cuda_id 1
+    	--cuda_id 0
 
     else 
 
@@ -141,7 +141,7 @@ do
     	--use_proper_time_limits \
     	--wandb_name "hogebein" \
     	--use_opponent_utility \
-	    --cuda_id 1
+	    --cuda_id 0
     fi
 done
 

@@ -43,7 +43,20 @@ elif [[ ${population_size} == 12 ]]; then
     num_env_steps="8e7"
     pop="hsp_plate_placement_shared"
     mep_exp="mep-S1-s10"
-
+elif [[ ${population_size} == 20 ]]; then
+    entropy_coefs="0.2 0.05 0.01"
+    entropy_coef_horizons="0 4e7 8e7"
+    if [[ ${pop_version} == "tomato_delivery" ]]; then
+        pop="hsp_tomato_delivery_shared"
+        reward_shaping_horizon="20e7"
+        num_env_steps="20e7"
+        use_base_shaping_r=true
+    else
+        pop="hsp_plate_placement_shared"
+        reward_shaping_horizon="10e7"
+        num_env_steps="10e7"
+    fi
+    mep_exp="no_mep"
 elif [[ ${population_size} == 24 ]]; then
     entropy_coefs="0.2 0.05 0.01"
     entropy_coef_horizons="0 4e7 8e7"
@@ -90,7 +103,7 @@ path=../../policy_pool
 
 export POLICY_POOL=${path}
 
-n_training_threads=200
+n_training_threads=80
 
 ulimit -n 65536
 
@@ -114,7 +127,7 @@ do
     	--use_reactive \
     	--use_opponent_utility \
     	--use_base_shaping_r \
-        --cuda_id 1
+        --cuda_id 0
 	    
     else
 
@@ -131,7 +144,7 @@ do
     	--wandb_name "hogebein" \
     	--use_reactive \
         --use_opponent_utility \
-	    --cuda_id 1
+	    --cuda_id 0
 
     fi
 done

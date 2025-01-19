@@ -103,7 +103,7 @@ path=../../policy_pool
 
 export POLICY_POOL=${path}
 
-n_training_threads=80
+n_training_threads=200
 
 ulimit -n 65536
 
@@ -127,7 +127,7 @@ do
     	--use_reactive \
     	--use_opponent_utility \
     	--use_base_shaping_r \
-        --cuda_id 0
+        --cuda_id 1
 	    
     else
 
@@ -144,7 +144,7 @@ do
     	--wandb_name "hogebein" \
     	--use_reactive \
         --use_opponent_utility \
-	    --cuda_id 0
+	    --cuda_id 1
 
     fi
 done

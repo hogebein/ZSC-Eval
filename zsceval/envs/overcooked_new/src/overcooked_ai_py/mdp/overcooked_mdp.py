@@ -72,6 +72,10 @@ SHAPED_INFOS = [
     "deliver_tomato_order",
     "onion_order_delivered",
     "tomato_order_delivered",
+    "counter_filled_with_tomato",
+    "counter_filled_with_onion"
+    "counter_filled_with_dish",
+    "counter_filled_with_soup",
 ]
 
 NO_REW_SHAPING_PARAMS = {
@@ -904,7 +908,7 @@ class OvercookedState(object):
             return sum((obj.name == "dish" and grid[obj.position[1]][obj.position[0]] == "X" for obj in self.objects.values()))
         elif obj_name == "soup":
             return sum((obj.name == "soup" and grid[obj.position[1]][obj.position[0]] == "X" for obj in self.objects.values()))
-        
+
         
     @classmethod
     def from_players_pos_and_or(
@@ -1368,12 +1372,15 @@ class OvercookedGridworld(object):
         sparse_reward, shaped_reward = [0] * self.num_players, [0] * self.num_players
         # MARK
         shaped_info = [dict(zip(SHAPED_INFOS, [0 for _ in range(len(SHAPED_INFOS))])) for _ in range(self.num_players)]
-        
+
         for player_idx, (player, action) in enumerate(zip(new_state.players, joint_action)):
             
             for obj_name in ["onion", "tomato", "dish", "soup"]:
-                shaped_info[player_idx][f"integral_{obj_name}_placed_on_X"] += new_state.count_obj_on_X(self.terrain_mtx, obj_name)
-            
+                num_obj = new_state.count_obj_on_X(self.terrain_mtx, obj_name)
+                shaped_info[player_idx][f"integral_{obj_name}_placed_on_X"] += num_obj
+                if num_obj == self.get_num_x():
+                    shaped_info[player_idx][f"X_filled_with_{obj_name}"] += 1
+
             if action != Action.INTERACT:
                 if action in Direction.ALL_DIRECTIONS:
                     shaped_info[player_idx]["MOVEMENT"] += 1
@@ -1735,9 +1742,13 @@ class OvercookedGridworld(object):
     def get_counter_locations(self):
         return list(self.terrain_pos_dict["X"])
 
+    def get_num_x(self):
+        return len(list(self.terrain_pos_dict["X"]))
+
     @property
     def num_pots(self):
         return len(self.get_pot_locations())
+
 
     def get_pot_states(self, state):
         """Returns dict with structure:
@@ -1987,6 +1998,7 @@ class OvercookedGridworld(object):
         assert all_elements.count("S") >= 1, "'S' must be present at least once"
         assert all_elements.count("P") >= 1, "'P' must be present at least once"
         assert all_elements.count("O") >= 1 or all_elements.count("T") >= 1, "'O' or 'T' must be present at least once"
+
 
     ################################
     # EVENT LOGGING HELPER METHODS #

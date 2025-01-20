@@ -1089,7 +1089,7 @@ class Overcooked(gym.Env):
                     vec_shaped_info = np.array(
                         [[agent_info[k] for k in SHAPED_INFOS] for agent_info in shaped_info]
                     ).astype(np.float32)
-                    assert len(self.w0) == len(self.w1) == len(SHAPED_INFOS) + 1
+                    assert len(self.w0) == len(self.w1) == len(SHAPED_INFOS) + 1, f"{len(self.w0)}, {len(self.w1)}, {len(SHAPED_INFOS) + 1}"
                     dense_reward = info["shaped_r_by_agent"]
                     if self.agent_idx == 0:
                         utility_reward = (

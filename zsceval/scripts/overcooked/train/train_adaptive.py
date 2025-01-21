@@ -162,6 +162,8 @@ def parse_args(args, parser):
     parser.add_argument("--eval_policy", default="", type=str)
     parser.add_argument("--eval_result_path", default=None, type=str)
 
+    parser.add_argument("--fixed_index", default=None, type=int)
+
     # all_args = parser.parse_known_args(args)[0]
     all_args = parser.parse_args(args)
     from zsceval.overcooked_config import OLD_LAYOUTS

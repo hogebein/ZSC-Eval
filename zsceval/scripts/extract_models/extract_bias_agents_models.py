@@ -171,6 +171,7 @@ if __name__ == "__main__":
         "plate_placement" : "hsp_plate_placement_shared-S1",
         "tomato_delivery" : "hsp_tomato_delivery_shared-S1",
         "score" : "hsp_score-S1",
+        "tomato_onion" : "hsp_tomato_onion_shared-S1",
     }
 
     # logger.add(f"./extract_log/extract_{layout}_hsp_S1_models.log")

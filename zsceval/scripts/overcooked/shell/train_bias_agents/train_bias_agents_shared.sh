@@ -6,13 +6,18 @@ weight_pattern=$2
 
 entropy_coefs="0.2 0.05 0.001"
 entropy_coef_horizons="0 6e6 1e7"
+reward_shaping_horizon="1e7"
+num_env_steps="1e7"
+
 if [[ "${layout}" == "small_corridor" ]]; then
     entropy_coefs="0.2 0.05 0.001"
     entropy_coef_horizons="0 8e6 1e7"
 fi
 
-reward_shaping_horizon="1e7"
-num_env_steps="1e7"
+if [[ "${layout}" == "random9" ]]; then
+    reward_shaping_horizon="5e6"
+    num_env_steps="5e6"
+fi
 
 num_agents=2
 algo="mappo"
@@ -75,15 +80,14 @@ version="new"
 # 52 "counter_filled_with_soup",
 # 53 "sparse_reward  1,
 
-w1="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
 use_base_shaping_r=false
 
 if [[ "${weight_pattern}" == "all" ]]; then
-    w0="0,0,[-5:0:5],0,0,0,0,0,[-5:0:5],0,0,3,5,3,0,0,0,0,[-0.2:0],[-20:0],0,0,[-5:0:20],[-15:0:10],0,[-0.1:0:0.1],0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
+    w0="0,0,[-5:0:5],0,0,0,0,0,[-5:0:5],0,0,3,5,3,0,0,0,0,[-0.2:0],[-20:0],0,0,[-5:0:20],[-15:0:10],0,[-0.1:0:0.1],0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
     seed_begin=1
     seed_max=124
 elif [[ "${weight_pattern}" == "plate_placed" ]]; then
-    w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.5,0,0,0,0,0,0,0,0,0,0,20,0,0"
+    w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.5,0,0,0,0,0,0,0,0,0,0,0,20,0,0"
     seed_begin=1
     seed_max=5
     reward_shaping_horizon="1e7"
@@ -91,7 +95,7 @@ elif [[ "${weight_pattern}" == "plate_placed" ]]; then
 
     exp="hsp_plate_placement_shared-${stage}"
 elif [[ "${weight_pattern}" == "plate_placed_i" ]]; then
-    w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.04,0,0,0,0,0,0,0,0,0"
+    w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.04,0,0,0,0,0,0,0,0,0,0"
     seed_begin=1
     seed_max=5
     reward_shaping_horizon="1e7"
@@ -100,30 +104,36 @@ elif [[ "${weight_pattern}" == "plate_placed_i" ]]; then
     exp="hsp_plate_placement_shared-${stage}"
 
 elif [[ "${weight_pattern}" == "plate_place" ]]; then
-    w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
+    w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
     seed_begin=6
     seed_max=10
 
     exp="hsp_plate_placement_shared-${stage}"
 
 elif [[ "${weight_pattern}" == "tomato_state" ]]; then
-   w0="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0"
+   w0="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0"
    seed_begin=1
    seed_max=5
    exp="hsp_tomato_delivery_shared-${stage}"
    use_base_shaping_r=true
 
 elif [[ "${weight_pattern}" == "tomato_self" ]]; then
-   w0="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0"
+   w0="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0"
    seed_begin=6
    seed_max=10
    exp="hsp_tomato_delivery_shared-${stage}"
    use_base_shaping_r=true
-elif [[ "${weight_pattern}" == "onion_hate" ]]; then
-   w0="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-30,0,0,0,0,0,1"
+elif [[ "${weight_pattern}" == "onion_lover" ]]; then
+   w0="0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
    seed_begin=1
    seed_max=5
-   exp="hsp_onion_hate_shared-${stage}"
+   exp="hsp_onion_tomato_shared-${stage}"
+   use_base_shaping_r=true
+elif [[ "${weight_pattern}" == "tomato_lover" ]]; then
+   w0="0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
+   seed_begin=6
+   seed_max=10
+   exp="hsp_onion_tomato_shared-${stage}"
    use_base_shaping_r=true
 elif [[ "${weight_pattern}" == "score" ]]; then
     w0="0,0,0,0,0,0,0,0,0,3,0,0,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
@@ -133,12 +143,14 @@ elif [[ "${weight_pattern}" == "score" ]]; then
     exp="hsp_score-${stage}"
 
 else
-    #w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,[0:3],0,0,0,0,0,0,0,[0:10],0,0,0,0,0,0,0,0,0"
+    #w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,[0:3],0,0,0,0,0,0,0,[0:10],0,0,0,0,0,0,0,0,0,0"
 
-    w0="0,0,0,0,[-20:0:10],0,[-20:0:10],0,3,5,3,[-20:0],[-0.1:0:0.1],0,0,0,0,[0.1:1],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
+    w0="0,0,0,0,[-20:0:10],0,[-20:0:10],0,3,5,3,[-20:0],[-0.1:0:0.1],0,0,0,0,[0.1:1],0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
     seed_begin=1
     seed_max=72
 fi
+
+w1=${w0}
 
 rollout_threads=80
 
@@ -160,7 +172,8 @@ do
         --save_interval 25 --log_interval 10 --use_eval --eval_interval 20 --n_eval_rollout_threads 20 \
         --wandb_name "hogebein" \
         --cuda_id 0 \
-        --use_base_shaping_r
+        --use_base_shaping_r \
+        --use_wandb
     
     
     else
@@ -174,7 +187,8 @@ do
         --use_proper_time_limits \
         --save_interval 25 --log_interval 10 --use_eval --eval_interval 20 --n_eval_rollout_threads 20 \
         --wandb_name "hogebein" \
-        --cuda_id 0
+        --cuda_id 0 \
+        --use_wandb
 
 
     fi

@@ -1119,17 +1119,30 @@ class OvercookedRunner(Runner):
                 self.all_args.eval_episodes * self.population_size // self.all_args.eval_env_batch
             )
             self.eval_idx = 0
-            all_agent_pairs = list(itertools.product(self.population, [agent_name]))\
-            + list(itertools.product([agent_name], self.population))
-            logger.info(f"all agent pairs: {all_agent_pairs}")
 
-            running_avg_r = -np.ones((self.population_size * 2,), dtype=np.float32) * 1e9
+            if self.all_args.fixed_index == None:
+                all_agent_pairs = list(itertools.product(self.population, [agent_name]))\
+                + list(itertools.product([agent_name], self.population))
+                logger.info(f"all agent pairs: {all_agent_pairs}")
+
+                population_size = self.population_size * 2
+            else:
+                if self.all_args.fixed_index == 0:
+                    all_agent_pairs = list(itertools.product(self.population, [agent_name]))
+                else:
+                    all_agent_pairs = list(itertools.product([agent_name], self.population))
+                population_size = self.population_size
+
+            running_avg_r = -np.ones((population_size,), dtype=np.float32) * 1e9
 
             def mep_reset_map_ea2t_fn(episode):
                 # Randomly select agents from population to be trained
                 # 1) consistent with MEP to train against one agent each episode 2) sample different agents to train against
-                sampling_prob_np = np.ones((self.population_size * 2,)) / self.population_size / 2
-                
+                if self.all_args.fixed_index == None:
+                    sampling_prob_np = np.ones((population_size,)) / self.population_size / 2
+                else:
+                    sampling_prob_np = np.ones((population_size,)) / self.population_size
+
                 if self.all_args.use_advantage_prioritized_sampling: # Default:False
                     # logger.debug("use advantage prioritized sampling")
                     if episode > 0:
@@ -1138,12 +1151,12 @@ class OvercookedRunner(Runner):
                         sampling_rank_np = rankdata(metric_np, method="dense")
                         sampling_prob_np = sampling_rank_np / sampling_rank_np.sum()
                         sampling_prob_np /= sampling_prob_np.sum()
-                        maxv = 1.0 / (self.population_size * 2) * 10
+                        maxv = 1.0 / (population_size) * 10
                         while sampling_prob_np.max() > maxv + 1e-6:
                             sampling_prob_np = sampling_prob_np.clip(max=maxv)
                             sampling_prob_np /= sampling_prob_np.sum()
                 elif self.all_args.mep_use_prioritized_sampling:   # Default:False
-                    metric_np = np.zeros((self.population_size * 2,))
+                    metric_np = np.zeros((population_size,))
                     for i, agent_pair in enumerate(all_agent_pairs):
                         train_r = np.mean(self.env_info.get(f"{agent_pair[0]}-{agent_pair[1]}-ep_shaped_r", -1e9))
                         eval_r = np.mean(
@@ -1212,12 +1225,13 @@ class OvercookedRunner(Runner):
                     wandb.log(sampling_prob_dict, step=self.total_num_steps)
 
                 n_selected = self.n_rollout_threads // self.all_args.train_env_batch
-                pair_idx = np.random.choice(2 * self.population_size, size=(n_selected,), p=sampling_prob_np)
+                pair_idx = np.random.choice(population_size, size=(n_selected,), p=sampling_prob_np)
+
                 if self.all_args.uniform_sampling_repeat > 0:  # Default:0
-                    assert n_selected >= 2 * self.population_size * self.all_args.uniform_sampling_repeat
+                    assert n_selected >= population_size * self.all_args.uniform_sampling_repeat
                     i = 0
                     for r in range(self.all_args.uniform_sampling_repeat):
-                        for x in range(2 * self.population_size):
+                        for x in range(population_size):
                             pair_idx[i] = x
                             i += 1
                 map_ea2t = {
@@ -1236,19 +1250,18 @@ class OvercookedRunner(Runner):
                 else:
                     map_ea2p = {
                         (e, a): all_agent_pairs[
-                            (self.eval_idx + e // self.all_args.eval_env_batch) % (self.population_size * 2)
+                            (self.eval_idx + e // self.all_args.eval_env_batch) % (population_size)
                         ][a]
                         for e, a in itertools.product(range(self.n_eval_rollout_threads), range(self.num_agents))
                     }
                     self.eval_idx += self.n_eval_rollout_threads // self.all_args.eval_env_batch
-                    self.eval_idx %= self.population_size * 2
+                    self.eval_idx %= population_size
                 featurize_type = [
                     [self.policy.featurize_type[map_ea2p[(e, a)]] for a in range(self.num_agents)]
                     for e in range(self.n_eval_rollout_threads)
                 ]
                 self.eval_envs.reset_featurize_type(featurize_type)
                 return map_ea2p
-
 
             self.naive_train_with_multi_policy(
                 reset_map_ea2t_fn=mep_reset_map_ea2t_fn,

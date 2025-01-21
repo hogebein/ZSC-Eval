@@ -72,10 +72,10 @@ SHAPED_INFOS = [
     "deliver_tomato_order",
     "onion_order_delivered",
     "tomato_order_delivered",
-    "counter_filled_with_tomato",
-    "counter_filled_with_onion"
-    "counter_filled_with_dish",
-    "counter_filled_with_soup",
+    "X_filled_with_tomato",
+    "X_filled_with_onion",
+    "X_filled_with_dish",
+    "X_filled_with_soup",
 ]
 
 NO_REW_SHAPING_PARAMS = {
@@ -1360,6 +1360,7 @@ class OvercookedGridworld(object):
             infos["phi_s_prime"] = self.potential_function(new_state, motion_planner)
         return new_state, infos
 
+
     def resolve_interacts(self, new_state, joint_action, events_infos):
         """
         Resolve any INTERACT actions, if present.
@@ -1373,13 +1374,17 @@ class OvercookedGridworld(object):
         # MARK
         shaped_info = [dict(zip(SHAPED_INFOS, [0 for _ in range(len(SHAPED_INFOS))])) for _ in range(self.num_players)]
 
+        both_player_obj_flag = {}
+
         for player_idx, (player, action) in enumerate(zip(new_state.players, joint_action)):
             
             for obj_name in ["onion", "tomato", "dish", "soup"]:
+
+                both_player_obj_flag[obj_name] = 0
+
                 num_obj = new_state.count_obj_on_X(self.terrain_mtx, obj_name)
                 shaped_info[player_idx][f"integral_{obj_name}_placed_on_X"] += num_obj
-                if num_obj == self.get_num_x():
-                    shaped_info[player_idx][f"X_filled_with_{obj_name}"] += 1
+
 
             if action != Action.INTERACT:
                 if action in Direction.ALL_DIRECTIONS:
@@ -1400,8 +1405,8 @@ class OvercookedGridworld(object):
                     self.log_object_drop(events_infos, new_state, obj_name, pot_states, player_idx)
                     shaped_info[player_idx][f"put_{obj_name}_on_X"] += 1
                     shaped_info[player_idx][f"place_{obj_name}_on_X"] += 1
-                    for i in range(len(new_state.players)):
-                        shaped_info[i][f"{obj_name}_placed_on_X"] += 1
+
+                    both_player_obj_flag[obj_name] = 1
 
                     # Drop object on counter
                     obj = player.remove_object()
@@ -1412,8 +1417,6 @@ class OvercookedGridworld(object):
                     obj_name = new_state.get_object(i_pos).name
                     self.log_object_pickup(events_infos, new_state, obj_name, pot_states, player_idx)
                     shaped_info[player_idx][f"pickup_{obj_name}_from_X"] += 1
-                    for i in range(len(new_state.players)):
-                        shaped_info[i][f"{obj_name}_placed_on_X"] -= 1
 
                     # Pick up object from counter
                     obj = new_state.remove_object(i_pos)
@@ -1421,7 +1424,9 @@ class OvercookedGridworld(object):
                         shaped_info[player_idx][f"place_{obj_name}_on_X"] -= 1
                     else:
                         shaped_info[player_idx][f"recieve_{obj_name}_via_X"] += 1
-
+                    
+                    both_player_obj_flag[obj_name] = -1
+                    
                     player.set_object(obj)
 
                 else:
@@ -1542,9 +1547,16 @@ class OvercookedGridworld(object):
             else:
                 shaped_info[player_idx]["IDLE_INTERACT"] += 1
 
-            
-
-
+        
+        for i in range(len(new_state.players)):
+            for obj_name in ["onion", "tomato", "dish", "soup"]:
+                if both_player_obj_flag[obj_name] != 0:
+                    shaped_info[i][f"{obj_name}_placed_on_X"] += both_player_obj_flag[obj_name]
+                    
+                    num_obj = new_state.count_obj_on_X(self.terrain_mtx, obj_name)
+                    if num_obj == len(self.get_available_counter_pos()):
+                        shaped_info[i][f"X_filled_with_{obj_name}"] += both_player_obj_flag[obj_name]
+                
         return sparse_reward, shaped_reward, shaped_info
 
     def get_recipe_value(
@@ -1742,8 +1754,18 @@ class OvercookedGridworld(object):
     def get_counter_locations(self):
         return list(self.terrain_pos_dict["X"])
 
-    def get_num_x(self):
-        return len(list(self.terrain_pos_dict["X"]))
+    def get_available_counter_pos(self):
+        
+        all_counter_pos = self.get_counter_locations()
+        available_counter_pos = []
+        for pos in all_counter_pos:
+            east_space = pos[0] != 0 and self.terrain_mtx[pos[1]][pos[0]-1] == " "
+            west_space = pos[0] != self.width-1 and self.terrain_mtx[pos[1]][pos[0]+1] == " "
+            north_space = pos[1] != 0 and self.terrain_mtx[pos[1]-1][pos[0]] == " "
+            south_space = pos[1] != self.height-1 and self.terrain_mtx[pos[1]+1][pos[0]] == " "
+            if east_space or west_space or north_space or south_space:
+                available_counter_pos.append(pos)
+        return available_counter_pos
 
     @property
     def num_pots(self):
@@ -1880,6 +1902,32 @@ class OvercookedGridworld(object):
             ):
                 free_counters_valid_for_both.append(free_counter)
         return free_counters_valid_for_both
+    
+    def find_free_counters_valid_for_either_players(self, state, mlam):
+        """Finds all empty counter locations that are accessible to both players"""
+        one_player, other_player = state.players
+        free_counters = self.get_empty_counter_locations(state)
+        free_counters_valid_for_either = []
+        for free_counter in free_counters:
+            goals = mlam.motion_planner.motion_goals_for_pos[free_counter]
+            if any(
+                [mlam.motion_planner.is_valid_motion_start_goal_pair(one_player.pos_and_or, goal) for goal in goals]
+            ) or any(
+                [mlam.motion_planner.is_valid_motion_start_goal_pair(other_player.pos_and_or, goal) for goal in goals]
+            ):
+                free_counters_valid_for_either.append(free_counter)
+
+        free_counters_valid_for_both = []
+        for free_counter in free_counters:
+            goals = mlam.motion_planner.motion_goals_for_pos[free_counter]
+            if any(
+                [mlam.motion_planner.is_valid_motion_start_goal_pair(one_player.pos_and_or, goal) for goal in goals]
+            ) and any(
+                [mlam.motion_planner.is_valid_motion_start_goal_pair(other_player.pos_and_or, goal) for goal in goals]
+            ):
+                free_counters_valid_for_both.append(free_counter)
+            
+        return list(set(free_counters_valid_for_either) - set(free_counters_valid_for_both))
 
     def _get_optimal_possible_recipe(self, state, recipe, discounted, potential_params, return_value):
         """

@@ -19,6 +19,8 @@ from zsceval.envs.overcooked_new.Overcooked_Env import Overcooked as Overcooked_
 from zsceval.overcooked_config import get_overcooked_args
 from zsceval.utils.train_util import get_base_run_dir, setup_seed
 
+from zsceval.envs.overcooked_new.src.overcooked_ai_py.mdp.overcooked_mdp import SHAPED_INFOS
+
 
 def make_train_env(all_args, run_dir):
     def get_env_fn(rank):
@@ -158,20 +160,54 @@ def main(args):
             w0 = w0_candidates[(all_args.seed) % len(w0_candidates)]
 
         all_args.w0 = ""
-        for s in w0:
+        w0_label = []
+        for i, s in enumerate(w0):
             all_args.w0 += str(s) + ","
+            if int(s) != 0 and i != len(SHAPED_INFOS):
+                w0_label.append(SHAPED_INFOS[i])
+            elif i == len(SHAPED_INFOS):
+                w0_label.append("SCORE")
+
         all_args.w0 = all_args.w0[:-1]
 
         w1 = []
-        for s in all_args.w1.split(","):
-            w1.append(parse_value(s))
-        w1_candidates = list(map(list, product(*w1)))
-        logger.debug(f"w1_candidates:\n {pprint.pformat(w1_candidates, compact=True, width=200)}")
-        w1 = w1_candidates[(all_args.seed) % len(w1_candidates)]
+        bias_index = []
+        for s_i, s in enumerate(all_args.w1.split(",")):
+            s = parse_value(s)
+            w1.append(s)
+            if len(s) > 1:
+                bias_index.append(s_i)
+        if len(bias_index) > 0:
+            bias_index = np.array(bias_index)
+            logger.info(f"bias index {bias_index}")
+            w1_candidates = list(map(list, product(*w1)))
+            w1_candidates = [cand for cand in w1_candidates if sum(np.array(cand)[bias_index] != 0) <= 3]
+            logger.info(f"num w1_candidates {len(w1_candidates)}")
+            candidates_str = ""
+            for c_i in range(len(w1_candidates)):
+                candidates_str += f"{c_i+1}: {w1_candidates[c_i]}\n"
+            # logger.info(
+            #     f"w1_candidates:\n {pprint.pformat(w1_candidates, width=150, compact=True)}"
+            # )
+            logger.info(f"w1_candidates:\n{candidates_str}")
+            w1 = w1_candidates[(all_args.seed + all_args.w1_offset) % len(w1_candidates)]
+        else:
+            w1_candidates = list(map(list, product(*w1)))
+            logger.debug(f"w1_candidates:\n {pprint.pformat(w1_candidates, compact=True, width=200)}")
+            w1 = w1_candidates[(all_args.seed) % len(w1_candidates)]
+    
         all_args.w1 = ""
-        for s in w1:
+        w1_label = []
+        for i, s in enumerate(w1):
             all_args.w1 += str(s) + ","
+            if int(s) != 0 and i != len(SHAPED_INFOS):
+                w1_label.append(SHAPED_INFOS[i])
+            elif i == len(SHAPED_INFOS):
+                w1_label.append("SCORE")
         all_args.w1 = all_args.w1[:-1]
+
+        logger.info(f"Non 0 events in w0 : {w0_label}")
+        logger.info(f"Non 0 events in w1 : {w1_label}")
 
     # cuda
     if all_args.cuda and torch.cuda.is_available():

@@ -116,7 +116,7 @@ fi
 
 num_agents=2
 algo="adaptive"
-exp="${pop}-S2-s${population_size}"
+exp="primitive_${pop}-S2-s${population_size}"
 stage="S2"
 seed_begin=1
 seed_max=1
@@ -124,7 +124,7 @@ path=../../policy_pool
 
 export POLICY_POOL=${path}
 
-n_training_threads=1
+n_training_threads=200
 
 ulimit -n 65536
 
@@ -147,6 +147,8 @@ do
     	--use_proper_time_limits \
     	--wandb_name "hogebein" \
         --use_base_shaping_r \
+        --use_opponent_utility \
+        --use_primitive_hsp \
         --fixed_index ${index} \
     	--cuda_id 1
 
@@ -164,6 +166,8 @@ do
     	--use_proper_time_limits \
     	--wandb_name "hogebein" \
         --fixed_index ${index} \
+        --use_opponent_utility \
+        --use_primitive_hsp \
 	    --cuda_id 1
     fi
 done

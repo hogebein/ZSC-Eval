@@ -995,13 +995,22 @@ class OvercookedRunner(Runner):
                     self.trainer.save(total_num_steps, save_dir=self.save_dir)
                     # self.trainer.save(episode, save_dir=self.save_dir)
 
-            self.trainer.update_best_r(
-                {
-                    trainer_name: np.mean(self.env_info.get(f"either-{trainer_name}-ep_shaped_r", -1e9))
-                    for trainer_name in self.trainer.active_trainers
-                },
-                save_dir=self.save_dir,
-            )
+            if self.all_args.use_primitive_hsp:
+                                self.trainer.update_best_r(
+                    {
+                        trainer_name: np.mean(self.env_info.get(f"either-{trainer_name}-ep_sparse_r", -1e9))
+                        for trainer_name in self.trainer.active_trainers
+                    },
+                    save_dir=self.save_dir,
+                )
+            else:
+                self.trainer.update_best_r(
+                    {
+                        trainer_name: np.mean(self.env_info.get(f"either-{trainer_name}-ep_shaped_r", -1e9))
+                        for trainer_name in self.trainer.active_trainers
+                    },
+                    save_dir=self.save_dir,
+                )
             
             # log information
             if episode % self.log_interval == 0 or episode == episodes - 1:

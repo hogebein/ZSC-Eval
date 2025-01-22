@@ -580,6 +580,19 @@ class OvercookedRunner(Runner):
                     logger.debug("dump eval_infos to {}".format(self.all_args.eval_result_path))
                     with open(self.all_args.eval_result_path, "w", encoding="utf-8") as f:
                         json.dump(self.br_eval_json, f)
+
+            if br_sparse_r >= self.br_best_sparse_r:
+                self.br_best_sparse_r = br_sparse_r
+                logger.success(
+                    f"best eval br shaped reward {self.br_best_sparse_r:.2f} at {self.total_num_steps} steps"
+                )
+                self.br_eval_json = copy.deepcopy(eval_infos2dump)
+
+                if getattr(self.all_args, "eval_result_path", None):
+                    logger.debug("dump eval_infos to {}".format(self.all_args.eval_result_path))
+                    with open(self.all_args.eval_result_path, "w", encoding="utf-8") as f:
+                        json.dump(self.br_eval_json, f)
+            
         elif getattr(self.all_args, "eval_result_path", None):
             logger.debug("dump eval_infos to {}".format(self.all_args.eval_result_path))
             with open(self.all_args.eval_result_path, "w", encoding="utf-8") as f:
@@ -772,6 +785,19 @@ class OvercookedRunner(Runner):
                     logger.debug("dump eval_infos to {}".format(self.all_args.eval_result_path))
                     with open(self.all_args.eval_result_path, "w", encoding="utf-8") as f:
                         json.dump(self.br_eval_json, f)
+
+            if br_sparse_r >= self.br_best_sparse_r:
+                self.br_best_sparse_r = br_sparse_r
+                logger.success(
+                    f"best eval br shaped reward {self.br_best_sparse_r:.2f} at {self.total_num_steps} steps"
+                )
+                self.br_eval_json = copy.deepcopy(eval_infos2dump)
+
+                if getattr(self.all_args, "eval_result_path", None):
+                    logger.debug("dump eval_infos to {}".format(self.all_args.eval_result_path))
+                    with open(self.all_args.eval_result_path, "w", encoding="utf-8") as f:
+                        json.dump(self.br_eval_json, f)
+
         elif getattr(self.all_args, "eval_result_path", None):
             logger.debug("dump eval_infos to {}".format(self.all_args.eval_result_path))
             with open(self.all_args.eval_result_path, "w", encoding="utf-8") as f:
@@ -1167,7 +1193,10 @@ class OvercookedRunner(Runner):
                 elif self.all_args.mep_use_prioritized_sampling:   # Default:False
                     metric_np = np.zeros((population_size,))
                     for i, agent_pair in enumerate(all_agent_pairs):
-                        train_r = np.mean(self.env_info.get(f"{agent_pair[0]}-{agent_pair[1]}-ep_shaped_r", -1e9))
+                        if self.all_args.use_primitive_hsp:
+                            train_r = np.mean(self.env_info.get(f"{agent_pair[0]}-{agent_pair[1]}-ep_sparse_r", -1e9))
+                        else:
+                            train_r = np.mean(self.env_info.get(f"{agent_pair[0]}-{agent_pair[1]}-ep_shaped_r", -1e9))
                         eval_r = np.mean(
                             self.eval_info.get(
                                 f"{agent_pair[0]}-{agent_pair[1]}-eval_ep_shaped_r",

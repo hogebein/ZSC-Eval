@@ -13,8 +13,6 @@ else
     version="new"
 fi
 
-use_base_shaping_r=true
-
 use_base_shaping_r=false
 
 if [[ ${population_size} == 5 ]]; then
@@ -26,7 +24,7 @@ if [[ ${population_size} == 5 ]]; then
         num_env_steps="15e7"
         use_base_shaping_r=true
     elif [[ ${pop_version} == "tomato_lover" ]]; then
-        pop="hsp_tomato_delivery_shared"
+        pop="hsp_tomato_lover_shared"
         reward_shaping_horizon="5e7"
         num_env_steps="5e7"
         use_base_shaping_r=true
@@ -52,13 +50,11 @@ elif [[ ${population_size} == 10 ]]; then
         reward_shaping_horizon="15e7"
         num_env_steps="15e7"
         use_base_shaping_r=true
-    elif [[ ${pop_version} == "tomato_onion" ]]; then
-        pop="hsp_tomato_delivery_shared"
+    elif [[ ${pop_version} == "onion_tomato" ]]; then
+        pop="hsp_onion_tomato_shared"
         reward_shaping_horizon="5e7"
         num_env_steps="5e7"
         use_base_shaping_r=true
-    elif [[ ${pop_version} == "t" ]]; then
-
     else
         pop="hsp_plate_placement_shared"
         reward_shaping_horizon="5e7"

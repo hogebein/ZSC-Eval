@@ -25,7 +25,7 @@ if [[ ${population_size} == 5 ]]; then
         num_env_steps="15e7"
         use_base_shaping_r=true
     elif [[ ${pop_version} == "tomato_lover" ]]; then
-        pop="hsp_tomato_delivery_shared"
+        pop="hsp_tomato_lover_shared"
         reward_shaping_horizon="5e7"
         num_env_steps="5e7"
         use_base_shaping_r=true
@@ -51,13 +51,11 @@ elif [[ ${population_size} == 10 ]]; then
         reward_shaping_horizon="15e7"
         num_env_steps="15e7"
         use_base_shaping_r=true
-    elif [[ ${pop_version} == "tomato_onion" ]]; then
-        pop="hsp_tomato_delivery_shared"
+    elif [[ ${pop_version} == "onion_tomato" ]]; then
+        pop="hsp_onion_tomato_shared"
         reward_shaping_horizon="5e7"
         num_env_steps="5e7"
         use_base_shaping_r=true
-    elif [[ ${pop_version} == "t" ]]; then
-
     else
         pop="hsp_plate_placement_shared"
         reward_shaping_horizon="5e7"
@@ -65,7 +63,7 @@ elif [[ ${population_size} == 10 ]]; then
         use_base_shaping_r=true
     fi
     mep_exp="no_mep"
-
+    
 elif [[ ${population_size} == 12 ]]; then
     entropy_coefs="0.2 0.05 0.01"
     entropy_coef_horizons="0 4e7 8e7"

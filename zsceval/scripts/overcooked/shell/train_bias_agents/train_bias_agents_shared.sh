@@ -15,8 +15,8 @@ if [[ "${layout}" == "small_corridor" ]]; then
 fi
 
 if [[ "${layout}" == "random9" ]]; then
-    reward_shaping_horizon="5e6"
-    num_env_steps="5e6"
+    reward_shaping_horizon="7e6"
+    num_env_steps="7e6"
 fi
 
 num_agents=2

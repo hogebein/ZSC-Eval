@@ -124,7 +124,7 @@ elif [[ "${weight_pattern}" == "tomato_self" ]]; then
    exp="hsp_tomato_delivery_shared-${stage}"
    use_base_shaping_r=true
 elif [[ "${weight_pattern}" == "onion_lover" ]]; then
-   w0="-1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
+   w0="[-1],0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
    seed_begin=1
    seed_max=3
    exp="hsp_onion_tomato_shared-${stage}"

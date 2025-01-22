@@ -281,11 +281,26 @@ hsp{i+1}_final:
     utility: {str(w0_i)}\n"""
                 )
 
-            for i, run_i in enumerate(runs):
-                w0_i = w0_load[f"hsp{run_i}_final_actor"]
-                f.write(
-                    f"""\
+                for i, run_i in enumerate(runs):
+                    w0_i = w0_load[f"hsp{run_i}_final_actor"]
+                    f.write(
+                        f"""\
 hsp{i+len(runs)+1}_final:
+    policy_config_path: {layout}/policy_config/mlp_policy_config.pkl
+    featurize_type: ppo
+    train: False
+    reactive: True
+    model_path:
+        actor: {layout}/hsp/s1/{policy_pool_version}/hsp{run_i}_final_actor.pt
+    utility: {str(w0_i)}\n"""
+                )
+
+            else:
+                for i, run_i in enumerate(runs):
+                    w0_i = w0_load[f"hsp{run_i}_final_actor"]
+                    f.write(
+                        f"""\
+hsp{i+1}_final:
     policy_config_path: {layout}/policy_config/mlp_policy_config.pkl
     featurize_type: ppo
     train: False

@@ -581,6 +581,9 @@ class OvercookedRunner(Runner):
                     with open(self.all_args.eval_result_path, "w", encoding="utf-8") as f:
                         json.dump(self.br_eval_json, f)
 
+            br_sparse_r = f"either-{self.trainer.agent_name}-eval_ep_sparse_r"
+            br_sparse_r = np.mean(eval_infos[br_sparse_r])
+
             if br_sparse_r >= self.br_best_sparse_r:
                 self.br_best_sparse_r = br_sparse_r
                 logger.success(
@@ -785,6 +788,9 @@ class OvercookedRunner(Runner):
                     logger.debug("dump eval_infos to {}".format(self.all_args.eval_result_path))
                     with open(self.all_args.eval_result_path, "w", encoding="utf-8") as f:
                         json.dump(self.br_eval_json, f)
+
+            br_sparse_r = f"either-{self.trainer.agent_name}-eval_ep_sparse_r"
+            br_sparse_r = np.mean(eval_infos[br_sparse_r])
 
             if br_sparse_r >= self.br_best_sparse_r:
                 self.br_best_sparse_r = br_sparse_r

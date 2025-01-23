@@ -160,7 +160,7 @@ class Runner(object):
 
         if self.model_dir is not None:
             self.restore()
-
+        
         # algorithm
         self.trainer = TrainAlgo(self.all_args, self.policy, device=self.device)
 

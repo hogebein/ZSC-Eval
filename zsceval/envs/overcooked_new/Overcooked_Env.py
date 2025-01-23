@@ -684,6 +684,7 @@ class Overcooked(gym.Env):
         self.use_expectation = all_args.use_expectation
         self.use_reactive = all_args.use_reactive
         self.use_opponent_utility = all_args.use_opponent_utility
+        self.use_primitive_hsp = all_args.use_primitive_hsp
         self.store_traj = getattr(all_args, "store_traj", False)
         self.rank = rank
         self.random_index = all_args.random_index
@@ -1117,6 +1118,8 @@ class Overcooked(gym.Env):
                         utility_r_by_agent = [0, utility_reward[1]]
 
             elif self.use_opponent_utility:
+
+
                 shaped_info = info["shaped_info_by_agent"]
                 vec_shaped_info = np.array(
                     [[agent_info[k] for k in SHAPED_INFOS] for agent_info in shaped_info]
@@ -1135,13 +1138,17 @@ class Overcooked(gym.Env):
                     hidden_reward = (
                         utility_reward[0] + sparse_reward * self.agent_utility[1][-1],
                     )
-                    shaped_reward_p0 = hidden_reward[0]
-                    # shaped_reward_p1 = sparse_reward + self.reward_shaping_factor * dense_reward[1]
-                    shaped_reward_p1 = 0
+                    if self.use_primitive_hsp:
+                        shaped_reward_p0 = sparse_reward + self.reward_shaping_factor * dense_reward[0]
+                        shaped_reward_p1 = sparse_reward + self.reward_shaping_factor * dense_reward[1]
+                    else:
+                        shaped_reward_p0 = hidden_reward[0]
+                        shaped_reward_p1 = 0
+                    
                     utility_r_by_agent = [utility_reward[0], 0]
 
                 elif self.agent_idx == 1 and self.agent_utility[0]!=None:
-
+                    
                     utility_reward = (
                         np.dot(self.agent_utility[0][:-1], vec_shaped_info[0]),
                     )
@@ -1149,8 +1156,13 @@ class Overcooked(gym.Env):
                         utility_reward[0] + sparse_reward * self.agent_utility[0][-1],
                     )
                     # shaped_reward_p0 = sparse_reward + self.reward_shaping_factor * dense_reward[0]
-                    shaped_reward_p0 = 0
-                    shaped_reward_p1 = hidden_reward[0]
+                    if self.use_primitive_hsp:
+                        shaped_reward_p0 = sparse_reward + self.reward_shaping_factor * dense_reward[1]
+                        shaped_reward_p1 = sparse_reward + self.reward_shaping_factor * dense_reward[0]
+                    else:
+                        shaped_reward_p0 = 0
+                        shaped_reward_p1 = hidden_reward[0]
+
                     utility_r_by_agent = [0, utility_reward[0]]
                 else:
                     dense_reward = info["shaped_r_by_agent"]

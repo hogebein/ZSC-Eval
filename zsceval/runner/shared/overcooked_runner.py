@@ -1700,10 +1700,16 @@ class OvercookedRunner(Runner):
                             episode_env_infos[log_name].append(info["episode"][k])
                     if agent0_trainer != self.trainer.agent_name:
                         # suitable for both stage 1 and stage 2
-                        ep_returns_per_trainer[agent1_trainer][1].append(info["episode"]["ep_shaped_r"])
+                        if self.all_args.use_primitive_hsp:
+                            ep_returns_per_trainer[agent1_trainer][1].append(info["episode"]["ep_sparse_r"])
+                        else:
+                            ep_returns_per_trainer[agent1_trainer][1].append(info["episode"]["ep_shaped_r"])
                         e2ta[e] = (agent1_trainer, 1)
                     elif agent1_trainer != self.trainer.agent_name:
-                        ep_returns_per_trainer[agent0_trainer][0].append(info["episode"]["ep_shaped_r"])
+                        if self.all_args.use_primitive_hsp:
+                            ep_returns_per_trainer[agent1_trainer][1].append(info["episode"]["ep_sparse_r"])
+                        else:
+                            ep_returns_per_trainer[agent0_trainer][0].append(info["episode"]["ep_shaped_r"])
                         e2ta[e] = (agent0_trainer, 0)
                 logger.debug(episode_env_infos)
                 env_infos.update(episode_env_infos)

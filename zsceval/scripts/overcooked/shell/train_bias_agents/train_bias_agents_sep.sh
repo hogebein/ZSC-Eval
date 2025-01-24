@@ -117,8 +117,8 @@ elif [[ "${weight_pattern}" == "onion_lover" ]]; then
    if [[ "${layout}" == "random9_d" ]]; then
       w0="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
    fi
-   seed_begin=1
-   seed_max=3
+   seed_begin=4
+   seed_max=5
    exp="hsp_onion_tomato-${stage}"
 elif [[ "${weight_pattern}" == "tomato_lover" ]]; then
    #w0="0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"

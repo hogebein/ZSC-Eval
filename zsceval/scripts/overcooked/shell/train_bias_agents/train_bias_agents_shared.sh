@@ -14,7 +14,7 @@ if [[ "${layout}" == "small_corridor" ]]; then
     entropy_coef_horizons="0 8e6 1e7"
 fi
 
-if [[ "${layout}" == "random9" ]]; then
+if [[ "${layout}" == "random9" || "${layout}" == "random9_d" ]]; then
     reward_shaping_horizon="7e6"
     num_env_steps="7e6"
 fi
@@ -166,7 +166,7 @@ do
         --use_proper_time_limits \
         --save_interval 25 --log_interval 10 --use_eval --eval_interval 20 --n_eval_rollout_threads 20 \
         --wandb_name "hogebein" \
-        --cuda_id 1 \
+        --cuda_id 0 \
         --use_base_shaping_r
     
     
@@ -181,7 +181,7 @@ do
         --use_proper_time_limits \
         --save_interval 25 --log_interval 10 --use_eval --eval_interval 20 --n_eval_rollout_threads 20 \
         --wandb_name "hogebein" \
-        --cuda_id 1
+        --cuda_id 0
 
     fi
 

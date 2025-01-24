@@ -1,7 +1,7 @@
 {
     "grid":  """XXXXX
-                O D1X
-                X2X P
+                O2D1X
+                X X P
                 T D X
                 XXXSX""",
     "start_all_orders" : [

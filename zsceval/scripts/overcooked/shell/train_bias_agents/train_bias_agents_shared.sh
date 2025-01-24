@@ -90,56 +90,43 @@ elif [[ "${weight_pattern}" == "plate_placed" ]]; then
     w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.5,0,0,0,0,0,0,0,0,0,0,0,20,0,0"
     seed_begin=1
     seed_max=5
-    reward_shaping_horizon="1e7"
-    num_env_steps="1e7"
-
     exp="hsp_plate_placement_shared-${stage}"
 elif [[ "${weight_pattern}" == "plate_placed_i" ]]; then
     w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.04,0,0,0,0,0,0,0,0,0,0"
     seed_begin=1
     seed_max=5
-    reward_shaping_horizon="1e7"
-    num_env_steps="1e7"
-
     exp="hsp_plate_placement_shared-${stage}"
-
 elif [[ "${weight_pattern}" == "plate_place" ]]; then
     w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
     seed_begin=6
     seed_max=10
-
     exp="hsp_plate_placement_shared-${stage}"
-
 elif [[ "${weight_pattern}" == "tomato_state" ]]; then
    w0="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0"
    seed_begin=1
    seed_max=5
    exp="hsp_tomato_delivery_shared-${stage}"
-   use_base_shaping_r=true
-
 elif [[ "${weight_pattern}" == "tomato_self" ]]; then
    w0="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0"
    seed_begin=6
    seed_max=10
    exp="hsp_tomato_delivery_shared-${stage}"
-   use_base_shaping_r=true
 elif [[ "${weight_pattern}" == "onion_lover" ]]; then
-   w0="0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
+   #w0="0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
+   w0="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
    seed_begin=1
    seed_max=3
    exp="hsp_onion_tomato_shared-${stage}"
-   use_base_shaping_r=true
 elif [[ "${weight_pattern}" == "tomato_lover" ]]; then
-   w0="0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
+   #w0="0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
+   w0="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
    seed_begin=6
    seed_max=10
    exp="hsp_onion_tomato_shared-${stage}"
-   use_base_shaping_r=true
 elif [[ "${weight_pattern}" == "score" ]]; then
     w0="0,0,0,0,0,0,0,0,0,3,0,0,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
     seed_begin=1
     seed_max=5
-    use_base_shaping_r=true
     exp="hsp_score-${stage}"
 
 else
@@ -150,10 +137,9 @@ else
     seed_max=72
 fi
 
-w1=${w0}
+w1="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
 
 rollout_threads=80
-
 
 echo "seed_max is ${seed_max}:"
 for seed in $(seq ${seed_begin} ${seed_max});

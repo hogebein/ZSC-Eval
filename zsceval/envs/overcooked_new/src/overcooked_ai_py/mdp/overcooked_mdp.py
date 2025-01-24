@@ -1383,7 +1383,10 @@ class OvercookedGridworld(object):
                 both_player_obj_flag[obj_name] = 0
 
                 num_obj = new_state.count_obj_on_X(self.terrain_mtx, obj_name)
-                shaped_info[player_idx][f"integral_{obj_name}_placed_on_X"] += num_obj
+                #shaped_info[player_idx][f"integral_{obj_name}_placed_on_X"] += num_obj
+
+                if num_obj == len(self.get_available_counter_pos()):
+                    shaped_info[i][f"X_filled_with_{obj_name}"] += both_player_obj_flag[obj_name]
 
 
             if action != Action.INTERACT:
@@ -1552,10 +1555,7 @@ class OvercookedGridworld(object):
             for obj_name in ["onion", "tomato", "dish", "soup"]:
                 if both_player_obj_flag[obj_name] != 0:
                     shaped_info[i][f"{obj_name}_placed_on_X"] += both_player_obj_flag[obj_name]
-                    
-                    num_obj = new_state.count_obj_on_X(self.terrain_mtx, obj_name)
-                    if num_obj == len(self.get_available_counter_pos()):
-                        shaped_info[i][f"X_filled_with_{obj_name}"] += both_player_obj_flag[obj_name]
+                
                 
         return sparse_reward, shaped_reward, shaped_info
 

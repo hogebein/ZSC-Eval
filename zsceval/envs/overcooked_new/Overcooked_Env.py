@@ -1145,7 +1145,7 @@ class Overcooked(gym.Env):
             shaped_info = info["shaped_info_by_agent"]
             for k, v in shaped_info[i].items():
                 self.cumulative_shaped_info[i][k] += v
-            self.cumulative_utility_r[i] += utility_r_by_agent[i]
+            #self.cumulative_utility_r[i] += utility_r_by_agent[i]
             self.cumulative_shaped_r[i] +=  reward[i][0]
         
         info["shaped_info_by_agent"] = self.cumulative_shaped_info

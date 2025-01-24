@@ -14,9 +14,9 @@ if [[ "${layout}" == "small_corridor" ]]; then
     entropy_coef_horizons="0 8e6 1e7"
 fi
 
-if [[ "${layout}" == "random9" ]]; then
-    reward_shaping_horizon="7e6"
-    num_env_steps="7e6"
+if [[ "${layout}" == "random9" || "${layout}" == "random9_d" ]]; then
+    reward_shaping_horizon="5e6"
+    num_env_steps="5e6"
 fi
 
 num_agents=2
@@ -90,39 +90,48 @@ elif [[ "${weight_pattern}" == "plate_placed" ]]; then
     w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.5,0,0,0,0,0,0,0,0,0,0,0,20,0,0"
     seed_begin=1
     seed_max=5
-    exp="hsp_plate_placement_shared-${stage}"
+    exp="hsp_plate_placement-${stage}"
 elif [[ "${weight_pattern}" == "plate_placed_i" ]]; then
     w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.04,0,0,0,0,0,0,0,0,0,0"
     seed_begin=1
     seed_max=5
-    exp="hsp_plate_placement_shared-${stage}"
+    exp="hsp_plate_placement-${stage}"
 elif [[ "${weight_pattern}" == "plate_place" ]]; then
     w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
     seed_begin=6
     seed_max=10
-    exp="hsp_plate_placement_shared-${stage}"
+    exp="hsp_plate_placement-${stage}"
 elif [[ "${weight_pattern}" == "tomato_state" ]]; then
    w0="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0"
    seed_begin=1
    seed_max=5
-   exp="hsp_tomato_delivery_shared-${stage}"
+   exp="hsp_tomato_delivery-${stage}"
 elif [[ "${weight_pattern}" == "tomato_self" ]]; then
    w0="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0"
    seed_begin=6
    seed_max=10
-   exp="hsp_tomato_delivery_shared-${stage}"
+   exp="hsp_tomato_delivery-${stage}"
 elif [[ "${weight_pattern}" == "onion_lover" ]]; then
    #w0="0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
    w0="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
+   if [[ "${layout}" == "random9_d" ]]; then
+      w0="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
+   fi
    seed_begin=1
    seed_max=3
-   exp="hsp_onion_tomato_shared-${stage}"
+   exp="hsp_onion_tomato-${stage}"
 elif [[ "${weight_pattern}" == "tomato_lover" ]]; then
    #w0="0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
    w0="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
-   seed_begin=6
-   seed_max=10
-   exp="hsp_onion_tomato_shared-${stage}"
+   seed_begin=1
+   seed_max=2
+   if [[ "${layout}" == "random9_d" ]]; then
+      w0="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,0,0,0,0,0,1"
+      seed_begin=6
+      seed_max=10
+   fi
+   
+   exp="hsp_onion_tomato-${stage}"
 elif [[ "${weight_pattern}" == "score" ]]; then
     w0="0,0,0,0,0,0,0,0,0,3,0,0,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
     seed_begin=1

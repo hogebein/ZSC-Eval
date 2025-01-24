@@ -1386,7 +1386,7 @@ class OvercookedGridworld(object):
                 #shaped_info[player_idx][f"integral_{obj_name}_placed_on_X"] += num_obj
 
                 if num_obj == len(self.get_available_counter_pos()):
-                    shaped_info[i][f"X_filled_with_{obj_name}"] += both_player_obj_flag[obj_name]
+                    shaped_info[player_idx][f"X_filled_with_{obj_name}"] += both_player_obj_flag[obj_name]
 
 
             if action != Action.INTERACT:

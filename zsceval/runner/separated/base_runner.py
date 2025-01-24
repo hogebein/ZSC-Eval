@@ -321,10 +321,10 @@ class Runner(object):
                 if len(v) == 0:
                     continue
                 v = np.mean(v)
-                if self.use_wandb:
-                    wandb.log({k: v}, step=total_num_steps)
-                else:
-                    self.writter.add_scalars(k, {k: v}, total_num_steps)
+            if self.use_wandb:
+                wandb.log({k: v}, step=total_num_steps)
+            else:
+                self.writter.add_scalars(k, {k: v}, total_num_steps)
 
     def log_system(self):
         pass

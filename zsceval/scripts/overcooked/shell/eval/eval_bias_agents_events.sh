@@ -44,7 +44,7 @@ do
     --use_render \
     --population_yaml_path ${yml} --population_size 2 \
     --agent0_policy_name ${agent0_policy_name} \
-    --agent1_policy_name ${agent1_policy_name} --overcooked_version ${version} --eval_result_path eval/results/${layout}/bias/${exp}.json
-    #--store_traj --use_render \
+    --agent1_policy_name ${agent1_policy_name} --overcooked_version ${version} --eval_result_path eval/results/${layout}/bias/${exp}.json \
+    --use_render 
     echo "########################################"
 done

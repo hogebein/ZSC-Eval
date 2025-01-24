@@ -1028,7 +1028,7 @@ class OvercookedRunner(Runner):
                     # self.trainer.save(episode, save_dir=self.save_dir)
 
             if self.all_args.use_primitive_hsp:
-                                self.trainer.update_best_r(
+                self.trainer.update_best_r(
                     {
                         trainer_name: np.mean(self.env_info.get(f"either-{trainer_name}-ep_sparse_r", -1e9))
                         for trainer_name in self.trainer.active_trainers

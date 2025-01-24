@@ -1046,78 +1046,26 @@ class Overcooked(gym.Env):
             next_state, sparse_reward, done, info = self.base_env.step(joint_action, display_phi=False)
             
             if self.use_hsp:
-                if self.use_expectation:
-                    shaped_info = info["shaped_info_by_agent"]
-                    vec_shaped_info = np.array(
-                        [[agent_info[k] for k in SHAPED_INFOS] for agent_info in shaped_info]
-                    ).astype(np.float32)
-                    assert len(self.w0) == len(self.w1) == len(SHAPED_INFOS) + 1
-                    dense_reward = info["shaped_r_by_agent"]
-
-                    if self.agent_idx == 0:
-                        utility_reward = (
-                            np.dot(self.w0[:-1], vec_shaped_info[0]),
-                            np.dot(self.w1[:-1], vec_shaped_info[1]),
-                            np.dot(self.we0[:-1], vec_shaped_info[1]),
-                            np.dot(self.we1[:-1], vec_shaped_info[0])
-                        )
-                        hidden_reward = (
-                            utility_reward[0] + sparse_reward * self.w0[-1],
-                            utility_reward[1] + sparse_reward * self.w1[-1],
-                            utility_reward[2] + sparse_reward * self.we0[-1],
-                            utility_reward[3] + sparse_reward * self.we1[-1],
-                        )
-                        shaped_reward_p0 = hidden_reward[0] + hidden_reward[2]
-                        shaped_reward_p1 = hidden_reward[1] + hidden_reward[3] + self.reward_shaping_factor * dense_reward[1]
-                        utility_r_by_agent = [utility_reward[0] + utility_reward[2], 0]
-                    else:
-                        utility_reward = (
-                            np.dot(self.w0[:-1], vec_shaped_info[0]),
-                            np.dot(self.w1[:-1], vec_shaped_info[1]),
-                            np.dot(self.we0[:-1], vec_shaped_info[1]),
-                            np.dot(self.we1[:-1], vec_shaped_info[0])
-                        )
-                        hidden_reward = (
-                            utility_reward[0] + sparse_reward * self.w1[-1],
-                            utility_reward[1] + sparse_reward * self.w0[-1],
-                            utility_reward[2] + sparse_reward * self.we1[-1],
-                            utility_reward[3] + sparse_reward * self.we0[-1],
-                        )
-                        shaped_reward_p0 = hidden_reward[0] + hidden_reward[2] + self.reward_shaping_factor * dense_reward[0]
-                        shaped_reward_p1 = hidden_reward[1] + hidden_reward[3]
-                        utility_r_by_agent = [0, utility_reward[1] + utility_reward[3]]
+                shaped_info = info["shaped_info_by_agent"]
+                vec_shaped_info = np.array(
+                    [[agent_info[k] for k in SHAPED_INFOS] for agent_info in shaped_info]
+                ).astype(np.float32)
+                assert len(self.w0) == len(self.w1) == len(SHAPED_INFOS) + 1
+                dense_reward = info["shaped_r_by_agent"]
+                if self.agent_idx == 0:
+                    hidden_reward = (
+                        np.dot(self.w0[:-1], vec_shaped_info[0]) + sparse_reward * self.w0[-1],
+                        np.dot(self.w1[:-1], vec_shaped_info[1]) + sparse_reward * self.w1[-1],
+                    )
+                    shaped_reward_p0 = hidden_reward[0]
+                    shaped_reward_p1 = hidden_reward[1] + self.reward_shaping_factor * dense_reward[1]
                 else:
-                    
-                    shaped_info = info["shaped_info_by_agent"]
-                    vec_shaped_info = np.array(
-                        [[agent_info[k] for k in SHAPED_INFOS] for agent_info in shaped_info]
-                    ).astype(np.float32)
-                    assert len(self.w0) == len(self.w1) == len(SHAPED_INFOS) + 1, f"{len(self.w0)}, {len(self.w1)}, {len(SHAPED_INFOS) + 1}"
-                    dense_reward = info["shaped_r_by_agent"]
-                    if self.agent_idx == 0:
-                        utility_reward = (
-                            np.dot(self.w0[:-1], vec_shaped_info[0]),
-                            np.dot(self.w1[:-1], vec_shaped_info[1])
-                        )
-                        hidden_reward = (
-                            utility_reward[0] + sparse_reward * self.w0[-1],
-                            utility_reward[1] + sparse_reward * self.w1[-1],
-                        )
-                        shaped_reward_p0 = hidden_reward[0]
-                        shaped_reward_p1 = hidden_reward[1] + self.reward_shaping_factor * dense_reward[1]
-                        utility_r_by_agent = [utility_reward[0], 0]
-                    else:
-                        utility_reward = (
-                            np.dot(self.w1[:-1], vec_shaped_info[0]),
-                            np.dot(self.w0[:-1], vec_shaped_info[1])
-                        )
-                        hidden_reward = (
-                            utility_reward[0] + sparse_reward * self.w1[-1],
-                            utility_reward[1] + sparse_reward * self.w0[-1],
-                        )
-                        shaped_reward_p0 = hidden_reward[0] + self.reward_shaping_factor * dense_reward[0]
-                        shaped_reward_p1 = hidden_reward[1]
-                        utility_r_by_agent = [0, utility_reward[1]]
+                    hidden_reward = (
+                        np.dot(self.w1[:-1], vec_shaped_info[0]) + sparse_reward * self.w1[-1],
+                        np.dot(self.w0[:-1], vec_shaped_info[1]) + sparse_reward * self.w0[-1],
+                    )
+                    shaped_reward_p0 = hidden_reward[0] + self.reward_shaping_factor * dense_reward[0]
+                    shaped_reward_p1 = hidden_reward[1]
 
             elif self.use_opponent_utility:
 

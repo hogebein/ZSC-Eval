@@ -163,15 +163,19 @@ if __name__ == "__main__":
 
     hostname = socket.gethostname()
     exp_names = {
-        "plate": "hsp_plate_shared-S1",
-        "adp_plate" : "adaptive_hsp_plate-S1",
         "small_corridor" : "hsp-S1",
         "all" : "hsp_all_shared-S1",
         "random0" : "hsp-S1",
-        "plate_placement" : "hsp_plate_placement_shared-S1",
-        "tomato_delivery" : "hsp_tomato_delivery_shared-S1",
+        
+        "plate_placement" : "hsp_plate_placement-S1",
+        "tomato_delivery" : "hsp_tomato_delivery-S1",
         "score" : "hsp_score-S1",
-        "onion_tomato" : "hsp_onion_tomato_shared-S1",
+        "onion_tomato_s" : "hsp_onion_tomato-S1",
+
+        "plate_placement_s" : "hsp_plate_placement_shared-S1",
+        "tomato_delivery_s" : "hsp_tomato_delivery_shared-S1",
+        "score_s" : "hsp_score_shared-S1",
+        "onion_tomato_s" : "hsp_onion_tomato_shared-S1",
     }
 
     # logger.add(f"./extract_log/extract_{layout}_hsp_S1_models.log")

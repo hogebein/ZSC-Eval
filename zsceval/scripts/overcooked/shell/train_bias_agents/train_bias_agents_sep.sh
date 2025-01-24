@@ -14,7 +14,7 @@ if [[ "${layout}" == "small_corridor" ]]; then
     entropy_coef_horizons="0 8e6 1e7"
 fi
 
-if [[ "${layout}" == "random9" || "${layout}" == "random9_d" ]]; then
+if [[ "${layout}" == "random9" || "${layout}" == "random9_d" || "${layout}" == "random9_p" ]]; then
     reward_shaping_horizon="5e6"
     num_env_steps="5e6"
 fi

@@ -1053,7 +1053,7 @@ class Overcooked(gym.Env):
                     ).astype(np.float32)
                     assert len(self.w0) == len(self.w1) == len(SHAPED_INFOS) + 1
                     dense_reward = info["shaped_r_by_agent"]
-                    
+
                     if self.agent_idx == 0:
                         utility_reward = (
                             np.dot(self.w0[:-1], vec_shaped_info[0]),
@@ -1094,7 +1094,6 @@ class Overcooked(gym.Env):
                     ).astype(np.float32)
                     assert len(self.w0) == len(self.w1) == len(SHAPED_INFOS) + 1, f"{len(self.w0)}, {len(self.w1)}, {len(SHAPED_INFOS) + 1}"
                     dense_reward = info["shaped_r_by_agent"]
-
                     if self.agent_idx == 0:
                         utility_reward = (
                             np.dot(self.w0[:-1], vec_shaped_info[0]),

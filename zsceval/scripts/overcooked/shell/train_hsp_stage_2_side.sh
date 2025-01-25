@@ -25,7 +25,7 @@ if [[ ${population_size} == 5 ]]; then
         num_env_steps="15e7"
         use_base_shaping_r=true
     elif [[ ${pop_version} == "tomato_lover" ]]; then
-        pop="hsp_tomato_lover"
+        pop="hsp_onion_tomato"
         reward_shaping_horizon="5e7"
         num_env_steps="5e7"
         use_base_shaping_r=true

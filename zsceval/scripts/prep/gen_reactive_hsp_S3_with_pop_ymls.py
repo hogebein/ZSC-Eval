@@ -297,7 +297,7 @@ hsp{i+len(runs)+1}_final:
 
             else:
                 for i, run_i in enumerate(runs):
-                    w0_i = w0_load[f"hsp{run_i}_final_actor"]
+                    w0_i = w0_load[f"hsp{run_i}_final_w0_actor"]
                     f.write(
                         f"""\
 hsp{i+1}_final:

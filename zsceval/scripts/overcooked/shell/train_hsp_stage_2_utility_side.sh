@@ -52,7 +52,7 @@ elif [[ ${population_size} == 10 ]]; then
         use_base_shaping_r=true
     elif [[ ${pop_version} == "onion_tomato" ]]; then
         pop="hsp_onion_tomato_shared"
-        reward_shaping_horizon="10e7
+        reward_shaping_horizon="10e7"
         num_env_steps="10e7"
         use_base_shaping_r=true
     else

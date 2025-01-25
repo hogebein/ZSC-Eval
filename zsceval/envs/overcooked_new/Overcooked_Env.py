@@ -1070,6 +1070,7 @@ class Overcooked(gym.Env):
                         shaped_reward_p0 = hidden_reward[0] + hidden_reward[2]
                         shaped_reward_p1 = hidden_reward[1] + hidden_reward[3] + self.reward_shaping_factor * dense_reward[1]
                         utility_r_by_agent = [utility_reward[0] + utility_reward[2], 0]
+                        hidden_r_by_agent = [hidden_reward[0] + hidden_reward[2], 0]
                     else:
                         utility_reward = (
                             np.dot(self.w0[:-1], vec_shaped_info[0]),
@@ -1086,6 +1087,7 @@ class Overcooked(gym.Env):
                         shaped_reward_p0 = hidden_reward[0] + hidden_reward[2] + self.reward_shaping_factor * dense_reward[0]
                         shaped_reward_p1 = hidden_reward[1] + hidden_reward[3]
                         utility_r_by_agent = [0, utility_reward[1] + utility_reward[3]]
+                        hidden_r_by_agent = [0, hidden_reward[1] + hidden_reward[3]]
                 else:
                     
                     shaped_info = info["shaped_info_by_agent"]
@@ -1106,6 +1108,7 @@ class Overcooked(gym.Env):
                         shaped_reward_p0 = hidden_reward[0]
                         shaped_reward_p1 = hidden_reward[1] + self.reward_shaping_factor * dense_reward[1]
                         utility_r_by_agent = [utility_reward[0], utility_reward[1]]
+                        hidden_r_by_agent = [hidden_reward[0], hidden_reward[1]]
                     else:
                         utility_reward = (
                             np.dot(self.w1[:-1], vec_shaped_info[0]),
@@ -1118,6 +1121,7 @@ class Overcooked(gym.Env):
                         shaped_reward_p0 = hidden_reward[0] + self.reward_shaping_factor * dense_reward[0]
                         shaped_reward_p1 = hidden_reward[1]
                         utility_r_by_agent = [utility_reward[0], utility_reward[1]]
+                        hidden_r_by_agent = [hidden_reward[0], hidden_reward[1]]
 
             elif self.use_opponent_utility:
 
@@ -1147,7 +1151,8 @@ class Overcooked(gym.Env):
                         shaped_reward_p0 = hidden_reward[0]
                         shaped_reward_p1 = 0
                     
-                    utility_r_by_agent = [utility_reward[0], 0]
+                    utility_r_by_agent = [0,utility_reward[0]]
+                    hidden_r_by_agent = [0,hidden_reward[0]]
 
                 elif self.agent_idx == 1 and self.agent_utility[0]!=None:
                     
@@ -1165,12 +1170,15 @@ class Overcooked(gym.Env):
                         shaped_reward_p0 = 0
                         shaped_reward_p1 = hidden_reward[0]
 
-                    utility_r_by_agent = [0, utility_reward[0]]
-                else:
+                    utility_r_by_agent = [utility_reward[0],0]
+                    hidden_r_by_agent = [hidden_reward[0],0]
+                    
+                else:  # vs MEP agent
                     dense_reward = info["shaped_r_by_agent"]
                     shaped_reward_p0 = sparse_reward + self.reward_shaping_factor * dense_reward[0]
                     shaped_reward_p1 = sparse_reward + self.reward_shaping_factor * dense_reward[1]
                     utility_r_by_agent = [0, 0]
+                    hidden_r_by_agent = [0,0]
 
                 #logger.debug(info["shaped_info_by_agent"][self.agent_idx]["dish_placed_on_X"])
                 #logger.debug(utility_r_by_agent)
@@ -1181,7 +1189,7 @@ class Overcooked(gym.Env):
                 shaped_reward_p0 = sparse_reward + self.reward_shaping_factor * dense_reward[0]
                 shaped_reward_p1 = sparse_reward + self.reward_shaping_factor * dense_reward[1]
                 utility_r_by_agent = [0, 0]
-
+                hidden_r_by_agent = [0,0]
         
         reward = [[shaped_reward_p0], [shaped_reward_p1]]
 
@@ -1198,10 +1206,12 @@ class Overcooked(gym.Env):
             for k, v in shaped_info[i].items():
                 self.cumulative_shaped_info[i][k] += v
             self.cumulative_utility_r[i] += utility_r_by_agent[i]
+            self.cumulative_hidden_r[i] += hidden_r_by_agent[i]
             self.cumulative_shaped_r[i] +=  reward[i][0]
         
         info["shaped_info_by_agent"] = self.cumulative_shaped_info
         info["total_utility_reward_by_agent"] = self.cumulative_utility_r
+        info["total_hidden_reward_by_agent"] = self.cumulative_hidden_r
 
         if self.store_traj:
             #self.traj_to_store.append(info["shaped_info_by_agent"])
@@ -1236,8 +1246,8 @@ class Overcooked(gym.Env):
         if done:
             if self.store_traj:
                 self._store_trajectory()
-            if self.use_hsp:
-                info["episode"]["ep_hidden_r_by_agent"] = self.cumulative_hidden_reward
+
+            info["episode"]["ep_hidden_r_by_agent"] = self.cumulative_hidden_r
             info["episode"]["ep_utility_r_by_agent"] = self.cumulative_utility_r
             info["episode"]["ep_shaped_r_by_agent"] = self.cumulative_shaped_r
             info["episode"]["ep_utility_r"] = sum(self.cumulative_utility_r)
@@ -1288,6 +1298,7 @@ class Overcooked(gym.Env):
             self.cumulative_shaped_info = [defaultdict(int), defaultdict(int)]
             self.cumulative_shaped_r = np.zeros(2)
             self.cumulative_utility_r = np.zeros(2)
+            self.cumulative_hidden_r = np.zeros(2)
 
         if self.random_index:
             old_idx = self.agent_idx
@@ -1319,9 +1330,6 @@ class Overcooked(gym.Env):
             self.traj_to_store["ep_state"] = []
             self.traj_to_store["ep_action"] = []
             self.traj_to_store["ep_state"].append(self.base_env.state.to_dict())
-
-        if self.use_hsp:
-            self.cumulative_hidden_reward = np.zeros(2)
 
         share_obs = self._gen_share_observation(self.base_env.state)
         available_actions = self._get_available_actions()

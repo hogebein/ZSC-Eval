@@ -1250,9 +1250,7 @@ class Overcooked(gym.Env):
             info["episode"]["ep_hidden_r_by_agent"] = self.cumulative_hidden_r
             info["episode"]["ep_utility_r_by_agent"] = self.cumulative_utility_r
             info["episode"]["ep_shaped_r_by_agent"] = self.cumulative_shaped_r
-            info["episode"]["ep_sparse_r_by_agent"] = self.cumulative_sparse_r
 
-            info["episode"]["ep_sparse_r"] = sum(self.cumulative_sparse_r)
             info["episode"]["ep_shaped_r"] = sum(self.cumulative_shaped_r)
             info["episode"]["ep_utility_r"] = sum(self.cumulative_utility_r)
             info["episode"]["ep_hidden_r"] = sum(self.cumulative_hidden_r)

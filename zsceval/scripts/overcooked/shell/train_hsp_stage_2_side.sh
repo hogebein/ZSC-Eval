@@ -14,18 +14,18 @@ else
     version="new"
 fi
 
-use_base_shaping_r=false
+use_base_shaping_r=true
 
 if [[ ${population_size} == 5 ]]; then
     entropy_coefs="0.2 0.05 0.01"
     entropy_coef_horizons="0 2.5e7 5e7"
     if [[ ${pop_version} == "tomato_delivery" ]]; then
-        pop="hsp_tomato_delivery_shared"
+        pop="hsp_tomato_delivery"
         reward_shaping_horizon="15e7"
         num_env_steps="15e7"
         use_base_shaping_r=true
     elif [[ ${pop_version} == "tomato_lover" ]]; then
-        pop="hsp_tomato_lover_shared"
+        pop="hsp_tomato_lover"
         reward_shaping_horizon="5e7"
         num_env_steps="5e7"
         use_base_shaping_r=true
@@ -35,7 +35,7 @@ if [[ ${population_size} == 5 ]]; then
         pop="hsp_score"
         use_base_shaping_r=true
     else
-        pop="hsp_plate_placement_shared"
+        pop="hsp_plate_placement"
         reward_shaping_horizon="5e7"
         num_env_steps="5e7"
         use_base_shaping_r=true
@@ -47,17 +47,17 @@ elif [[ ${population_size} == 10 ]]; then
     entropy_coef_horizons="0 2.5e7 5e7"
 
     if [[ ${pop_version} == "tomato_delivery" ]]; then
-        pop="hsp_tomato_delivery_shared"
+        pop="hsp_tomato_delivery"
         reward_shaping_horizon="15e7"
         num_env_steps="15e7"
         use_base_shaping_r=true
     elif [[ ${pop_version} == "onion_tomato" ]]; then
-        pop="hsp_onion_tomato_shared"
-        reward_shaping_horizon="5e7"
-        num_env_steps="5e7"
+        pop="hsp_onion_tomato"
+        reward_shaping_horizon="10e7"
+        num_env_steps="10e7"
         use_base_shaping_r=true
     else
-        pop="hsp_plate_placement_shared"
+        pop="hsp_plate_placement"
         reward_shaping_horizon="5e7"
         num_env_steps="5e7"
         use_base_shaping_r=true
@@ -73,7 +73,7 @@ elif [[ ${population_size} == 12 ]]; then
     fi
     reward_shaping_horizon="8e7"
     num_env_steps="8e7"
-    pop="hsp_plate_placement_shared"
+    pop="hsp_plate_placement"
     mep_exp="mep-S1-s10"
 
 elif [[ ${population_size} == 24 ]]; then

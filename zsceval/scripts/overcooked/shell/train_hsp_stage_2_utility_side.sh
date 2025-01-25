@@ -13,7 +13,7 @@ else
     version="new"
 fi
 
-use_base_shaping_r=false
+use_base_shaping_r=true
 
 if [[ ${population_size} == 5 ]]; then
     entropy_coefs="0.2 0.05 0.01"
@@ -52,8 +52,8 @@ elif [[ ${population_size} == 10 ]]; then
         use_base_shaping_r=true
     elif [[ ${pop_version} == "onion_tomato" ]]; then
         pop="hsp_onion_tomato_shared"
-        reward_shaping_horizon="5e7"
-        num_env_steps="5e7"
+        reward_shaping_horizon="10e7
+        num_env_steps="10e7"
         use_base_shaping_r=true
     else
         pop="hsp_plate_placement_shared"

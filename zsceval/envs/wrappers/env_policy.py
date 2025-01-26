@@ -147,8 +147,30 @@ class PartialPolicyEnv:
                     return True
                 else:
                     return False
-        
+
+            # CASE ONION_TOMATO
+            elif _utility[45] > 0:
+                # Complain when the opponent has taken a plate
+                log = [i["pickup_tomato_from_T"] for i in _infos_buffer[agent_id^1]]
+                if sum(log) >= 1:
+                    #logger.debug(dishes_recieved_log)
+                    return True
+                else:
+                    return False
+            elif _utility[46] > 0:
+                # Complain when the opponent has taken a plate
+                dishes_recieved_log = [i["pickup_onion_from_O"] for i in _infos_buffer[agent_id^1]]
+                if sum(log) >= 1:
+                    #logger.debug(dishes_recieved_log)
+                    return True
+                else:
+                    return False
+
+            else:
+                return False
+            '''
             # CASE_TOMATO_DELIVERY
+            
             elif _utility[46] > 0:
                 # Complain when the opponent has taken a plate
                 dishes_recieved_log = [i["SOUP_PICKUP"] for i in _infos_buffer[agent_id^1]]
@@ -160,9 +182,11 @@ class PartialPolicyEnv:
 
             elif _utility[48] > 0:
                 return False
-
-            else:
-                return False
+            '''
+            
+            
+            
+            
 
         def reaction_planner():
             r = self.all_args.reaction_type

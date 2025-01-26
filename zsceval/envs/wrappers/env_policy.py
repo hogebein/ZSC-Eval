@@ -165,7 +165,7 @@ class PartialPolicyEnv:
                 return False
 
         def reaction_planner():
-            r = 1
+            r = self.all_args.reaction_type
             # STAY
             if r == 0:
                 return [4]

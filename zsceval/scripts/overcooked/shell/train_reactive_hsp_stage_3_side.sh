@@ -146,7 +146,8 @@ do
     	--use_opponent_utility \
     	--use_base_shaping_r \
         --fixed_index ${index} \
-        --cuda_id 1
+        --cuda_id 1 \
+        --reaction_type 0
 	    
     else
 
@@ -164,7 +165,8 @@ do
     	--use_reactive \
         --use_opponent_utility \
         --fixed_index ${index} \
-	    --cuda_id 1
+	    --cuda_id 1 \
+        --reaction_type 0
 
     fi
 done

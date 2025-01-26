@@ -76,6 +76,8 @@ SHAPED_INFOS = [
     "X_filled_with_onion",
     "X_filled_with_dish",
     "X_filled_with_soup",
+    "deliver_onion_only_order",
+    "deliver_tomato_only_order",
 ]
 
 NO_REW_SHAPING_PARAMS = {
@@ -1535,15 +1537,23 @@ class OvercookedGridworld(object):
                         shaped_info[player_idx][f"deliver_size_{_map[len(obj.ingredients)]}_order"] += 1
                     if delivery_rew <= 0:
                         shaped_info[player_idx]["deliver_useless_order"] += 1
+
                     if "onion" in obj.ingredients:
                         shaped_info[player_idx]["deliver_onion_order"] += 1
                         for i in range(len(new_state.players)):
                             shaped_info[i]["onion_order_delivered"] += 1
+
+                        if "tomato" not in obj.ingredients:
+                            shaped_info[player_idx]["deliver_tomato_only_order"] += 1
+
                     if "tomato" in obj.ingredients:
                         shaped_info[player_idx]["deliver_tomato_order"] += 1
                         for i in range(len(new_state.players)):
                              shaped_info[i]["tomato_order_delivered"] += 1
 
+                        if "onion" not in obj.ingredients:
+                            shaped_info[player_idx]["deliver_onion_only_order"] += 1
+                            
 
                     # Log soup delivery
                     events_infos["soup_delivery"][player_idx] = True

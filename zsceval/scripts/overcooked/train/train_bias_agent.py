@@ -163,6 +163,8 @@ def main(args):
         w0_label = []
         for i, s in enumerate(w0):
             all_args.w0 += str(s) + ","
+            logger.debug(len(w0))
+            logger.debug(len(SHAPED_INFOS))
             if int(s) != 0 and i != len(SHAPED_INFOS):
                 w0_label.append(SHAPED_INFOS[i])
             elif i == len(SHAPED_INFOS):

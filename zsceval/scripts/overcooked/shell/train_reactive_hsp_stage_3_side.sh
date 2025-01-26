@@ -147,7 +147,8 @@ do
     	--use_base_shaping_r \
         --fixed_index ${index} \
         --cuda_id 1 \
-        --reaction_type 0
+        --reaction_type 0 \
+        --use_wandb
 	    
     else
 

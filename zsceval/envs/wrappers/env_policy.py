@@ -152,16 +152,18 @@ class PartialPolicyEnv:
             elif _utility[45] > 0:
                 # Complain when the opponent has taken a plate
                 log = [i["pickup_tomato_from_T"] for i in _infos_buffer[agent_id^1]]
+                logger.debug("45")
                 if sum(log) >= 1:
-                    logger.debug("45")
+                    
                     return True
                 else:
                     return False
             elif _utility[46] > 0:
                 # Complain when the opponent has taken a plate
                 log = [i["pickup_onion_from_O"] for i in _infos_buffer[agent_id^1]]
+                logger.debug("46")
                 if sum(log) >= 1:
-                    logger.debug("46")
+                    
                     return True
                 else:
                     return False

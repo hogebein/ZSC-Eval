@@ -121,7 +121,7 @@ path=../../policy_pool
 
 export POLICY_POOL=${path}
 
-n_training_threads=200
+n_training_threads=1
 
 ulimit -n 65536
 

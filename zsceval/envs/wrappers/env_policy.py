@@ -128,6 +128,7 @@ class PartialPolicyEnv:
             if _utility == None:
                 return False
 
+            logger.debug(_utility)
             # CASE_PLATE_PLACEMENT
             # PATTERN B : Agent that likes to place plates by itsself 
             if _utility[31] > 0:

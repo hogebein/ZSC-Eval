@@ -91,6 +91,7 @@ elif [[ "${weight_pattern}" == "plate_placed" ]]; then
     seed_begin=1
     seed_max=5
     exp="hsp_plate_placement-${stage}"
+    use_base_shaping_r=false
 elif [[ "${weight_pattern}" == "plate_placed_i" ]]; then
     w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.04,0,0,0,0,0,0,0,0,0,0"
     seed_begin=1

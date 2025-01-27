@@ -965,6 +965,7 @@ class OvercookedRunner(Runner):
                             episode_env_infos[f"{log_name}-ep_reaction_by_agent{a}"].append(
                                 ep_reaction_counter[e][a]
                             )
+                            logger.debug(ep_reaction_counter[e][a])
                             episode_env_infos[f"{log_name}-ep_sparse_r_by_agent{a}"].append(
                                 info["episode"]["ep_sparse_r_by_agent"][a]
                             )

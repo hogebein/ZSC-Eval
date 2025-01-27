@@ -1544,7 +1544,7 @@ class OvercookedGridworld(object):
                             shaped_info[i]["onion_order_delivered"] += 1
 
                         if "tomato" not in obj.ingredients:
-                            shaped_info[player_idx]["deliver_tomato_only_order"] += 1
+                            shaped_info[player_idx]["deliver_onion_only_order"] += 1
 
                     if "tomato" in obj.ingredients:
                         shaped_info[player_idx]["deliver_tomato_order"] += 1
@@ -1552,7 +1552,7 @@ class OvercookedGridworld(object):
                              shaped_info[i]["tomato_order_delivered"] += 1
 
                         if "onion" not in obj.ingredients:
-                            shaped_info[player_idx]["deliver_onion_only_order"] += 1
+                            shaped_info[player_idx]["deliver_tomato_only_order"] += 1
                             
 
                     # Log soup delivery

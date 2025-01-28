@@ -216,7 +216,7 @@ class PartialPolicyEnv:
                     agent_diffs = {k:0 for k in agent_infos.keys()}
                     for key in agent_diffs.keys():
                         if key=="pickup_onion_from_O":
-                            logger.debug(agent_infos[key])
+                            logger.debug(agent_infos[key] - self.infos_previous[a][key])
                         agent_diffs[key] = agent_infos[key] - self.infos_previous[a][key]
                     self.infos_buffer[a].append(agent_diffs)
                     self.infos_previous[a] = agent_infos.copy()

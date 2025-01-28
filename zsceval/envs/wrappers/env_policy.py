@@ -63,8 +63,6 @@ class PartialPolicyEnv:
                 policy.reset(1, 1)
                 policy.register_control_agent(0, 0)
 
-        logger.debug(self.infos_buffer)
-        logger.debug(self.infos_previous)
         self.infos_buffer = [[] for _ in range(self.num_agents)]
         self.infos_previous = [None for _ in range(self.num_agents)]
 
@@ -122,9 +120,9 @@ class PartialPolicyEnv:
                     
     def step(self, actions):
 
-        def reaction_filter(_infos_buffer, _utility, agent_id):
+        def reaction_filter(_utility, agent_id):
 
-            if len(_infos_buffer[0]) == 0 or len(_infos_buffer[1])==0:
+            if len(self.infos_buffer[0]) == 0 or len(self.infos_buffer[1])==0:
                 return False
 
             if _utility == None:
@@ -136,7 +134,7 @@ class PartialPolicyEnv:
                 # P : Agent that likes to place plates by itsself 
                 if _utility[31] > 0:
                     # Complain when the opponent places a plate
-                    dishes_placed_log = [i["put_dish_on_X"] for i in _infos_buffer[agent_id^1]]
+                    dishes_placed_log = [i["put_dish_on_X"] for i in self.infos_buffer[agent_id^1]]
                     if sum(dishes_placed_log) >= 1:
                         #logger.debug(dishes_placed_log)
                         return True
@@ -145,7 +143,7 @@ class PartialPolicyEnv:
                 # F : Agent that likes plates placed on the counter
                 elif _utility[51] > 0:
                     # Complain when the opponent has taken a plate
-                    dishes_recieved_log = [i["SOUP_PICKUP"] for i in _infos_buffer[agent_id^1]]
+                    dishes_recieved_log = [i["SOUP_PICKUP"] for i in self.infos_buffer[agent_id^1]]
                     if sum(dishes_recieved_log) >= 1:
                         #logger.debug(dishes_recieved_log)
                         return True
@@ -157,7 +155,7 @@ class PartialPolicyEnv:
                 # CASE ONION_TOMATO
                 if _utility[18] > 0:
                     # Complain when the opponent has taken a plate
-                    log = [i["pickup_tomato_from_T"] for i in _infos_buffer[agent_id^1]]
+                    log = [i["pickup_tomato_from_T"] for i in self.infos_buffer[agent_id^1]]
                     if sum(log) == 1:
                       logger.debug(sum(log))
                     #logger.debug(agent_id)
@@ -167,7 +165,7 @@ class PartialPolicyEnv:
                         return False
                 elif _utility[19] > 0:
                     # Complain when the opponent has taken a plate
-                    log = [i["pickup_onion_from_O"] for i in _infos_buffer[agent_id^1]]
+                    log = [i["pickup_onion_from_O"] for i in self.infos_buffer[agent_id^1]]
                     if sum(log) == 1:
                         logger.debug(sum(log))
                     #logger.debug(agent_id)
@@ -181,7 +179,7 @@ class PartialPolicyEnv:
             
                 if _utility[46] > 0:
                     # Complain when the opponent has taken a plate
-                    dishes_recieved_log = [i["SOUP_PICKUP"] for i in _infos_buffer[agent_id^1]]
+                    dishes_recieved_log = [i["SOUP_PICKUP"] for i in self.infos_buffer[agent_id^1]]
                     if sum(dishes_recieved_log) >= 1:
                         #logger.debug(dishes_recieved_log)
                         return True
@@ -229,6 +227,9 @@ class PartialPolicyEnv:
                     self.infos_buffer[a].append(agent_diffs)
                     self.infos_previous[a] = agent_infos.copy()
 
+
+
+
         reaction = [0 for _ in range(self.num_agents)]
 
         for a in range(self.num_agents):
@@ -247,7 +248,7 @@ class PartialPolicyEnv:
                     action_cand = actions[a]
 
                 if self.all_args.use_reactive and self.policy_reactive[a]:
-                    filter_result = reaction_filter(self.infos_buffer, self.policy_utility[a], a)
+                    filter_result = reaction_filter(self.policy_utility[a], a)
                     if filter_result:
                         logger.debug("react")
                         reaction[a] = 1

@@ -122,6 +122,7 @@ class PartialPolicyEnv:
 
         def reaction_filter(_utility, agent_id):
 
+            logger.debug(agent_id)
             if len(self.infos_buffer[0]) == 0 or len(self.infos_buffer[1])==0:
                 return False
 

@@ -144,7 +144,8 @@ do
         --fixed_index ${index} \
         --cuda_id 1 \
         --reaction_type ${reaction_type} \
-        --filter_type ${filter_type}
+        --filter_type ${filter_type} \
+        --use_wandb
 	    
     else
 

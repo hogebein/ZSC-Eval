@@ -1185,7 +1185,7 @@ class OvercookedRunner(Runner):
 
                 population_size = self.population_size * 2
             else:
-                if self.all_args.fixed_index == 0:
+                if self.all_args.fixed_index == 1:
                     all_agent_pairs = list(itertools.product(self.population, [agent_name]))
                 else:
                     all_agent_pairs = list(itertools.product([agent_name], self.population))

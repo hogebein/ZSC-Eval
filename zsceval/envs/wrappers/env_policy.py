@@ -251,7 +251,6 @@ class PartialPolicyEnv:
                 if self.all_args.use_reactive and self.policy_reactive[a]:
                     filter_result = reaction_filter(self.policy_utility[a], a)
                     if filter_result:
-                        logger.debug("react")
                         reaction[a] = 1
                         actions[a] = reaction_planner()
                     else:

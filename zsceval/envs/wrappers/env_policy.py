@@ -134,7 +134,7 @@ class PartialPolicyEnv:
                 # P : Agent that likes to place plates by itsself 
                 if _utility[31] > 0:
                     # Complain when the opponent places a plate
-                    dishes_placed_log = [i["put_dish_on_X"] for i in _infos_buffer[agent_id^1]]
+                    dishes_placed_log = [i["put_dish_on_X"] for i in _infos_buffer[agent_id]]
                     if sum(dishes_placed_log) >= 1:
                         #logger.debug(dishes_placed_log)
                         return True
@@ -143,7 +143,7 @@ class PartialPolicyEnv:
                 # F : Agent that likes plates placed on the counter
                 elif _utility[51] > 0:
                     # Complain when the opponent has taken a plate
-                    dishes_recieved_log = [i["SOUP_PICKUP"] for i in _infos_buffer[agent_id^1]]
+                    dishes_recieved_log = [i["SOUP_PICKUP"] for i in _infos_buffer[agent_id]]
                     if sum(dishes_recieved_log) >= 1:
                         #logger.debug(dishes_recieved_log)
                         return True
@@ -219,8 +219,8 @@ class PartialPolicyEnv:
                 else:
                     agent_diffs = {k:0 for k in agent_infos.keys()}
                     for key in agent_diffs.keys():
-                        if key=="pickup_onion_from_O":
-                            logger.debug(agent_infos[key] - self.infos_previous[a][key])
+                        #if key=="pickup_onion_from_O":
+                        #    logger.debug(agent_infos[key] - self.infos_previous[a][key])
                         agent_diffs[key] = agent_infos[key] - self.infos_previous[a][key]
                     self.infos_buffer[a].append(agent_diffs)
                     self.infos_previous[a] = agent_infos.copy()

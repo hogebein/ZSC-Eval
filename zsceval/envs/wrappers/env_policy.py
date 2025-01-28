@@ -63,6 +63,7 @@ class PartialPolicyEnv:
                 policy.reset(1, 1)
                 policy.register_control_agent(0, 0)
 
+        logger.debug("reset")
         self.infos_buffer = [[] for _ in range(self.num_agents)]
         self.infos_previous = [None for _ in range(self.num_agents)]
 
@@ -155,7 +156,7 @@ class PartialPolicyEnv:
                 # CASE ONION_TOMATO
                 if _utility[18] > 0:
                     # Complain when the opponent has taken a plate
-                    log = [i["pickup_tomato_from_T"] for i in _infos_buffer[agent_id]]
+                    log = [i["pickup_tomato_from_T"] for i in _infos_buffer[agent_id^1]]
                     if sum(log) == 1:
                       logger.debug(sum(log))
                     #logger.debug(agent_id)
@@ -165,7 +166,7 @@ class PartialPolicyEnv:
                         return False
                 elif _utility[19] > 0:
                     # Complain when the opponent has taken a plate
-                    log = [i["pickup_onion_from_O"] for i in _infos_buffer[agent_id]]
+                    log = [i["pickup_onion_from_O"] for i in _infos_buffer[agent_id^1]]
                     if sum(log) == 1:
                         logger.debug(sum(log))
                     #logger.debug(agent_id)

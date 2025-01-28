@@ -131,19 +131,19 @@ class PartialPolicyEnv:
             if self.all_args.filter_type == 0:
 
                 # CASE_PLATE_PLACEMENT
-                # PATTERN B : Agent that likes to place plates by itsself 
+                # P : Agent that likes to place plates by itsself 
                 if _utility[31] > 0:
                     # Complain when the opponent places a plate
-                    dishes_placed_log = [i["pickup_dish_from_D"] for i in _infos_buffer[agent_id^1]]
+                    dishes_placed_log = [i["put_dish_on_X"] for i in _infos_buffer[agent_id^1]]
                     if sum(dishes_placed_log) >= 1:
                         #logger.debug(dishes_placed_log)
                         return True
                     else:
                         return False
-                # PATTERN A : Agent that likes plates placed on the counter
-                elif _utility[39] > 0:
+                # F : Agent that likes plates placed on the counter
+                elif _utility[51] > 0:
                     # Complain when the opponent has taken a plate
-                    dishes_recieved_log = [i["pickup_dish_from_X"] for i in _infos_buffer[agent_id^1]]
+                    dishes_recieved_log = [i["SOUP_PICKUP"] for i in _infos_buffer[agent_id^1]]
                     if sum(dishes_recieved_log) >= 1:
                         #logger.debug(dishes_recieved_log)
                         return True

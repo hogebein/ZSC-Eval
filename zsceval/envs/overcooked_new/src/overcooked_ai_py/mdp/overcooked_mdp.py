@@ -1438,7 +1438,7 @@ class OvercookedGridworld(object):
             elif terrain_type == "O" and player.held_object is None:
                 self.log_object_pickup(events_infos, new_state, "onion", pot_states, player_idx)
                 shaped_info[player_idx][f"pickup_onion_from_O"] += 1
-
+                logger.debug("onion")
                 # Onion pickup from dispenser
                 obj = ObjectState("onion", pos)
                 player.set_object(obj)
@@ -1447,7 +1447,7 @@ class OvercookedGridworld(object):
                 shaped_info[player_idx][f"pickup_tomato_from_T"] += 1
                 # Tomato pickup from dispenser
                 player.set_object(ObjectState("tomato", pos))
-
+                logger.debug("tomato")
             elif terrain_type == "D" and player.held_object is None:
                 self.log_object_pickup(events_infos, new_state, "dish", pot_states, player_idx)
                 shaped_info[player_idx][f"pickup_dish_from_D"] += 1

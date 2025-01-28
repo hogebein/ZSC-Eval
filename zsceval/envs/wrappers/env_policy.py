@@ -128,62 +128,64 @@ class PartialPolicyEnv:
             if _utility == None:
                 return False
 
-            # CASE_PLATE_PLACEMENT
-            # PATTERN B : Agent that likes to place plates by itsself 
-            if _utility[31] > 0:
-                # Complain when the opponent places a plate
-                dishes_placed_log = [i["pickup_dish_from_D"] for i in _infos_buffer[agent_id^1]]
-                if sum(dishes_placed_log) >= 1:
-                    #logger.debug(dishes_placed_log)
-                    return True
-                else:
-                    return False
-            # PATTERN A : Agent that likes plates placed on the counter
-            elif _utility[39] > 0:
-                # Complain when the opponent has taken a plate
-                dishes_recieved_log = [i["pickup_dish_from_X"] for i in _infos_buffer[agent_id^1]]
-                if sum(dishes_recieved_log) >= 1:
-                    #logger.debug(dishes_recieved_log)
-                    return True
-                else:
+            if self.all_args.filter_type == 0:
+
+                # CASE_PLATE_PLACEMENT
+                # PATTERN B : Agent that likes to place plates by itsself 
+                if _utility[31] > 0:
+                    # Complain when the opponent places a plate
+                    dishes_placed_log = [i["pickup_dish_from_D"] for i in _infos_buffer[agent_id^1]]
+                    if sum(dishes_placed_log) >= 1:
+                        #logger.debug(dishes_placed_log)
+                        return True
+                    else:
+                        return False
+                # PATTERN A : Agent that likes plates placed on the counter
+                elif _utility[39] > 0:
+                    # Complain when the opponent has taken a plate
+                    dishes_recieved_log = [i["pickup_dish_from_X"] for i in _infos_buffer[agent_id^1]]
+                    if sum(dishes_recieved_log) >= 1:
+                        #logger.debug(dishes_recieved_log)
+                        return True
+                    else:
+                        return False
+
+            elif self.all_args.filter_type == 1:            
+
+                # CASE ONION_TOMATO
+                if _utility[18] > 0:
+                    # Complain when the opponent has taken a plate
+                    log = [i["pickup_tomato_from_T"] for i in _infos_buffer[agent_id^1]]
+                    logger.debug("18")
+                    if sum(log) >= 1:
+                        return True
+                    else:
+                        return False
+                elif _utility[19] > 0:
+                    # Complain when the opponent has taken a plate
+                    log = [i["pickup_onion_from_O"] for i in _infos_buffer[agent_id^1]]
+                    logger.debug("19")
+                    if sum(log) >= 1:
+                        return True
+                    else:
+                        return False
+
+            elif self.all_args.filter_type == 2:
+                # CASE_TOMATO_DELIVERY
+            
+                if _utility[46] > 0:
+                    # Complain when the opponent has taken a plate
+                    dishes_recieved_log = [i["SOUP_PICKUP"] for i in _infos_buffer[agent_id^1]]
+                    if sum(dishes_recieved_log) >= 1:
+                        #logger.debug(dishes_recieved_log)
+                        return True
+                    else:
+                        return False
+
+                elif _utility[48] > 0:
                     return False
 
-            # CASE ONION_TOMATO
-            elif _utility[18] > 0:
-                # Complain when the opponent has taken a plate
-                log = [i["pickup_tomato_from_T"] for i in _infos_buffer[agent_id^1]]
-                if sum(log) >= 1:      
-                    return True
-                else:
-                    return False
-            elif _utility[19] > 0:
-                # Complain when the opponent has taken a plate
-                log = [i["pickup_onion_from_O"] for i in _infos_buffer[agent_id^1]]
-                if sum(log) >= 1:
-                    return True
-                else:
-                    return False
-
-            else:
-                return False
-            '''
-            # CASE_TOMATO_DELIVERY
-            
-            elif _utility[46] > 0:
-                # Complain when the opponent has taken a plate
-                dishes_recieved_log = [i["SOUP_PICKUP"] for i in _infos_buffer[agent_id^1]]
-                if sum(dishes_recieved_log) >= 1:
-                    #logger.debug(dishes_recieved_log)
-                    return True
-                else:
-                    return False
-
-            elif _utility[48] > 0:
-                return False
-            '''
-            
-            
-            
+            return False          
             
 
         def reaction_planner():
@@ -239,6 +241,7 @@ class PartialPolicyEnv:
                 if self.all_args.use_reactive and self.policy_reactive[a]:
                     filter_result = reaction_filter(self.infos_buffer, self.policy_utility[a], a)
                     if filter_result:
+                        logger.debug("react")
                         reaction[a] = 1
                         actions[a] = reaction_planner()
                     else:

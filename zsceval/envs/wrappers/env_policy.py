@@ -63,7 +63,8 @@ class PartialPolicyEnv:
                 policy.reset(1, 1)
                 policy.register_control_agent(0, 0)
 
-        logger.debug("reset")
+        logger.debug(self.infos_buffer)
+        logger.debug(self.infos_previous)
         self.infos_buffer = [[] for _ in range(self.num_agents)]
         self.infos_previous = [None for _ in range(self.num_agents)]
 

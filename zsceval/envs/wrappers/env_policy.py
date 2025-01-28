@@ -122,7 +122,7 @@ class PartialPolicyEnv:
 
         def reaction_filter(_utility, agent_id):
 
-            logger.debug(agent_id)
+            #logger.debug(agent_id)
             if len(self.infos_buffer[0]) == 0 or len(self.infos_buffer[1])==0:
                 return False
 
@@ -157,8 +157,8 @@ class PartialPolicyEnv:
                 if _utility[18] > 0:
                     # Complain when the opponent has taken a plate
                     log = [i["pickup_tomato_from_T"] for i in self.infos_buffer[agent_id^1]]
-                    if sum(log) == 1:
-                      logger.debug(f"{sum(log)}, {agent_id}")
+                    #if sum(log) == 1:
+                      #logger.debug(f"{sum(log)}, {agent_id}")
                     #logger.debug(agent_id)
                     if sum(log) >= 1:
                         return True
@@ -167,8 +167,8 @@ class PartialPolicyEnv:
                 elif _utility[19] > 0:
                     # Complain when the opponent has taken a plate
                     log = [i["pickup_onion_from_O"] for i in self.infos_buffer[agent_id^1]]
-                    if sum(log) == 1:
-                        logger.debug(sum(log))
+                    #if sum(log) == 1:
+                        #logger.debug(sum(log))
                     #logger.debug(agent_id)
                     if sum(log) >= 1:
                         return True
@@ -222,8 +222,8 @@ class PartialPolicyEnv:
                 else:
                     agent_diffs = {k:0 for k in agent_infos.keys()}
                     for key in agent_diffs.keys():
-                        if key=="pickup_onion_from_O" and agent_infos[key] - self.infos_previous[a][key] == 1:
-                            logger.debug(f"{agent_infos[key] - self.infos_previous[a][key]}, {a}")
+                        #if key=="pickup_onion_from_O" and agent_infos[key] - self.infos_previous[a][key] == 1:
+                        #    logger.debug(f"{agent_infos[key] - self.infos_previous[a][key]}, {a}")
                         agent_diffs[key] = agent_infos[key] - self.infos_previous[a][key]
                     self.infos_buffer[a].append(agent_diffs)
                     self.infos_previous[a] = agent_infos.copy()

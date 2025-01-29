@@ -1158,6 +1158,7 @@ class Overcooked(gym.Env):
                             if self.use_primitive_hsp:
                                 shaped_r_by_agent[a] = sparse_reward + self.reward_shaping_factor * dense_reward[a]
                             else:
+                                logger.debug(f"{hidden_r_by_agent[a]},{self.reward_shaping_factor * dense_reward[a]}")
                                 shaped_r_by_agent[a] = hidden_r_by_agent[a] + self.reward_shaping_factor * dense_reward[a]
                     
 
@@ -1173,7 +1174,7 @@ class Overcooked(gym.Env):
                             if self.use_primitive_hsp:
                                 shaped_r_by_agent[a] = sparse_reward + self.reward_shaping_factor * dense_reward[a^1]
                             else:
-                                shaped_r_by_agent[a] = hidden_reward[a] + self.reward_shaping_factor * dense_reward[a^1]
+                                shaped_r_by_agent[a] = hidden_r_by_agent[a] + self.reward_shaping_factor * dense_reward[a^1]
                     
                 else:  
 

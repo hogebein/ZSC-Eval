@@ -48,6 +48,7 @@ class PartialPolicyEnv:
 
         self.__env._set_agent_policy_id(self.agent_policy_id)
         if self.all_args.use_opponent_utility:
+            
             self.__env._set_agent_utility(self.policy_utility.copy())
         obs, share_obs, available_actions = self.__env.reset(reset_choose)
 

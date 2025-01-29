@@ -1153,7 +1153,7 @@ class Overcooked(gym.Env):
                         if utility != None:
 
                             utility_r_by_agent[a] =  np.dot(self.agent_utility[a][:-1], vec_shaped_info[a])
-                            hidden_r_by_agent[a] = utility_reward + sparse_reward * self.agent_utility[a][-1],
+                            hidden_r_by_agent[a] = utility_r_by_agent[a] + sparse_reward * self.agent_utility[a][-1],
 
                             if self.use_primitive_hsp:
                                 shaped_r_by_agent[a] = sparse_reward + self.reward_shaping_factor * dense_reward[a]
@@ -1168,7 +1168,7 @@ class Overcooked(gym.Env):
                         if utility != None:
 
                             utility_r_by_agent[a] =  np.dot(self.agent_utility[a][:-1], vec_shaped_info[a^1])
-                            hidden_r_by_agent[a] = utility_reward + sparse_reward * self.agent_utility[a][-1],
+                            hidden_r_by_agent[a] = utility_r_by_agent[a] + sparse_reward * self.agent_utility[a][-1],
 
                             if self.use_primitive_hsp:
                                 shaped_r_by_agent[a] = sparse_reward + self.reward_shaping_factor * dense_reward[a^1]

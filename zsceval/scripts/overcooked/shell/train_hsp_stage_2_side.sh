@@ -123,6 +123,7 @@ path=../../policy_pool
 export POLICY_POOL=${path}
 
 n_training_threads=200
+cuda=1
 
 ulimit -n 65536
 
@@ -148,7 +149,7 @@ do
         --use_opponent_utility \
         --use_primitive_hsp \
         --fixed_index ${index} \
-    	--cuda_id 1
+    	--cuda_id ${cuda}
 
     else 
 
@@ -166,7 +167,7 @@ do
         --fixed_index ${index} \
         --use_opponent_utility \
         --use_primitive_hsp \
-	    --cuda_id 1
+	    --cuda_id ${cuda}
     fi
 done
 

@@ -1427,6 +1427,7 @@ class OvercookedGridworld(object):
                         shaped_info[player_idx][f"place_{obj_name}_on_X"] -= 1
                     else:
                         shaped_info[player_idx][f"recieve_{obj_name}_via_X"] += 1
+                        shaped_reward[player_idx] += self.reward_shaping_params["RECIEVE_DISH_REW"]
                     
                     both_player_obj_flag[obj_name] = -1
                     

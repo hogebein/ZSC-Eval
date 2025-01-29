@@ -724,15 +724,17 @@ class Overcooked(gym.Env):
                 "DISH_DISP_DISTANCE_REW": 0,
                 "POT_DISTANCE_REW": 0,
                 "SOUP_DISTANCE_REW": 0,
+                "RECIEVE_DISH_REW": 0
             }
         elif all_args.use_placement_shaping_r:
             rew_shaping_params = {
-                "PLACEMENT_IN_POT_REW": 3,
-                "DISH_PICKUP_REWARD": 3,
-                "SOUP_PICKUP_REWARD": 5,
+                "PLACEMENT_IN_POT_REW": 0,
+                "DISH_PICKUP_REWARD": 0,
+                "SOUP_PICKUP_REWARD": 0,
                 "DISH_DISP_DISTANCE_REW": 0,
                 "POT_DISTANCE_REW": 0,
                 "SOUP_DISTANCE_REW": 0,
+                "RECIEVE_DISH_REW": 3
             }
         else:
             rew_shaping_params = {
@@ -742,6 +744,7 @@ class Overcooked(gym.Env):
                 "DISH_DISP_DISTANCE_REW": 0,
                 "POT_DISTANCE_REW": 0,
                 "SOUP_DISTANCE_REW": 0,
+                "RECIEVE_DISH_REW": 0
             }
         # MARK: use reward shaping
         mdp_params.update(

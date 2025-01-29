@@ -122,7 +122,7 @@ path=../../policy_pool
 export POLICY_POOL=${path}
 
 n_training_threads=1
-cuda=1
+cuda=0
 
 ulimit -n 65536
 

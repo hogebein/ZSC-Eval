@@ -1183,6 +1183,8 @@ class Overcooked(gym.Env):
                     utility_r_by_agent = [0, 0]
                     hidden_r_by_agent = [0,0]
 
+                    raise NotImplementedError
+
                 #logger.debug(info["shaped_info_by_agent"][self.agent_idx]["dish_placed_on_X"])
                 #logger.debug(utility_r_by_agent)
 
@@ -1258,6 +1260,12 @@ class Overcooked(gym.Env):
             info["episode"]["ep_utility_r"] = sum(self.cumulative_utility_r)
             info["episode"]["ep_hidden_r"] = sum(self.cumulative_hidden_r)
             info["bad_transition"] = True
+
+            logger.debug(self.cumulative_hidden_r)
+            logger.debug(self.cumulative_utility_r)
+            logger.debug(self.cumulative_shaped_r)
+
+
         else:
             info["bad_transition"] = False
 

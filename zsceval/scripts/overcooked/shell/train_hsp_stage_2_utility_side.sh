@@ -121,7 +121,8 @@ path=../../policy_pool
 
 export POLICY_POOL=${path}
 
-n_training_threads=200
+n_training_threads=1
+cuda=1
 
 ulimit -n 65536
 
@@ -146,7 +147,8 @@ do
     	--use_opponent_utility \
         --use_base_shaping_r \
         --fixed_index ${index} \
-    	--cuda_id 1
+    	--cuda_id ${cuda} \
+        --use_wandb
 
     else 
 
@@ -163,7 +165,7 @@ do
     	--wandb_name "hogebein" \
     	--use_opponent_utility \
         --fixed_index ${index} \
-	    --cuda_id 1
+	    --cuda_id ${cuda}
     fi
 done
 

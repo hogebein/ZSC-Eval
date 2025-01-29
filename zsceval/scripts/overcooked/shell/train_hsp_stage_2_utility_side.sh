@@ -121,8 +121,8 @@ path=../../policy_pool
 
 export POLICY_POOL=${path}
 
-n_training_threads=1
-cuda=0
+n_training_threads=200
+cuda=1
 
 ulimit -n 65536
 
@@ -147,8 +147,7 @@ do
     	--use_opponent_utility \
         --use_base_shaping_r \
         --fixed_index ${index} \
-    	--cuda_id ${cuda} \
-        --use_wandb
+    	--cuda_id ${cuda}
 
     else 
 

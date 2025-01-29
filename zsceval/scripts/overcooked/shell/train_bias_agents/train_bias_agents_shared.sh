@@ -81,7 +81,7 @@ version="new"
 # 53 "sparse_reward  1,
 
 use_base_shaping_r=true
-use_plate_shaping_r=false
+use_placement_shaping_r=false
 
 if [[ "${weight_pattern}" == "all" ]]; then
     w0="0,0,[-5:0:5],0,0,0,0,0,[-5:0:5],0,0,3,5,3,0,0,0,0,[-0.2:0],[-20:0],0,0,[-5:0:20],[-15:0:10],0,[-0.1:0:0.1],0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
@@ -93,7 +93,7 @@ elif [[ "${weight_pattern}" == "plate_placed" ]]; then
     seed_max=5
     exp="hsp_plate_placement_shared-${stage}"
     use_base_shaping_r=false
-    use_plate_shaping_r=true
+    use_placement_shaping_r=true
 elif [[ "${weight_pattern}" == "plate_placed_i" ]]; then
     w0="0,0,0,0,0,0,0,0,-3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.04,0,0,0,0,0,0,0,0,0,0"
     seed_begin=1

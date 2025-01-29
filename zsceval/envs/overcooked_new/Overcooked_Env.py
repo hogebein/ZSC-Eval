@@ -1180,7 +1180,7 @@ class Overcooked(gym.Env):
                     raise NotImplementedError
 
                 shaped_reward_p0 = shaped_r_by_agent[0]
-                shaped_reward_p0 = shaped_r_by_agent[1]
+                shaped_reward_p1 = shaped_r_by_agent[1]
 
             else:
 

@@ -1151,8 +1151,8 @@ class Overcooked(gym.Env):
                         shaped_reward_p0 = hidden_reward[0]
                         shaped_reward_p1 = 0
                     
-                    utility_r_by_agent = [0,utility_reward[0]]
-                    hidden_r_by_agent = [0,hidden_reward[0]]
+                    utility_r_by_agent = [utility_reward[0],0]
+                    hidden_r_by_agent = [hidden_reward[0],0]
 
                 elif self.agent_idx == 1 and self.agent_utility[0]!=None:
                     
@@ -1170,8 +1170,8 @@ class Overcooked(gym.Env):
                         shaped_reward_p0 = 0
                         shaped_reward_p1 = hidden_reward[0]
 
-                    utility_r_by_agent = [utility_reward[0],0]
-                    hidden_r_by_agent = [hidden_reward[0],0]
+                    utility_r_by_agent = [0,utility_reward[0]]
+                    hidden_r_by_agent = [0,hidden_reward[0]]
                     
                 else:  # vs MEP agent
                     dense_reward = info["shaped_r_by_agent"]

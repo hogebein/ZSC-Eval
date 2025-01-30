@@ -1,14 +1,21 @@
+import copy
+import itertools
+import json
+import pprint
 import time
 from collections import defaultdict
+from os import path as osp
+from typing import Dict
 
 import numpy as np
 import torch
 import wandb
-from icecream import ic
 from loguru import logger
+from scipy.stats import rankdata
+from tqdm import tqdm
 
-from zsceval.runner.separated.base_runner import Runner
-from zsceval.utils.log_util import eta
+from zsceval.runner.shared.base_runner import Runner
+from zsceval.utils.log_util import eta, get_table_str
 
 
 def _t2n(x):
@@ -16,10 +23,20 @@ def _t2n(x):
 
 
 class OvercookedRunner(Runner):
+    """
+    A wrapper to start the RL agent training algorithm.
+    """
+
     def __init__(self, config):
         super(OvercookedRunner, self).__init__(config)
 
+        # for training br
+        self.br_best_sparse_r = 0
+        self.br_best_shaped_r = 0
+        self.br_eval_json = {}
+
     def run(self):
+        # train sp
         self.warmup()
 
         start = time.time()
@@ -27,10 +44,9 @@ class OvercookedRunner(Runner):
         total_num_steps = 0
 
         for episode in range(episodes):
-            time.time()
+            s_time = time.time()
             if self.use_linear_lr_decay:
-                for agent_id in range(self.num_agents):
-                    self.trainer[agent_id].policy.lr_decay(episode, episodes)
+                self.trainer.policy.lr_decay(episode, episodes)
 
             for step in range(self.episode_length):
                 # Sample actions
@@ -70,25 +86,26 @@ class OvercookedRunner(Runner):
 
                 # insert data into buffer
                 self.insert(data)
-            # e_time = time.time()
-            # logger.trace(f"Rollout time: {e_time - s_time:.3f}s")
+            
+            e_time = time.time()
+            logger.trace(f"Rollout time: {e_time - s_time:.3f}s")
 
             # compute return and update network
-            # s_time = time.time()
+            s_time = time.time()
             self.compute()
             train_infos = self.train(total_num_steps)
-            # e_time = time.time()
-            # logger.trace(f"Update models time: {e_time - s_time:.3f}s")
+            e_time = time.time()
+            logger.trace(f"Update models time: {e_time - s_time:.3f}s")
 
             # post process
-            # s_time = time.time()
+            s_time = time.time()
             total_num_steps = (episode + 1) * self.episode_length * self.n_rollout_threads
 
             # save model
             if episode < 50:
                 if episode % 2 == 0:
-                    self.save(total_num_steps)
                     # self.save(episode)
+                    self.save(total_num_steps)
             elif episode < 100:
                 if episode % 5 == 0:
                     self.save(total_num_steps)
@@ -102,6 +119,21 @@ class OvercookedRunner(Runner):
             if episode % self.log_interval == 0 or episode == episodes - 1:
                 end = time.time()
                 eta_t = eta(start, end, self.num_env_steps, total_num_steps)
+                log_data = list(
+                    {
+                        "Layout": self.all_args.layout_name,
+                        "Algorithm": self.algorithm_name,
+                        "Experiment": self.experiment_name,
+                        "Seed": self.all_args.seed,
+                        "Episodes": episode,
+                        "Total Episodes": episodes,
+                        "Timesteps": total_num_steps,
+                        "Total Timesteps": self.num_env_steps,
+                        "FPS": int(total_num_steps / (end - start)),
+                        "ETA": eta_t,
+                    }.items()
+                )
+                logger.info("training process:\n" + get_table_str(log_data))
                 logger.info(
                     "Layout {} Algo {} Exp {} Seed {} updates {}/{} episodes, total num timesteps {}/{}, FPS {}, ETA {}.".format(
                         self.all_args.layout_name,
@@ -116,16 +148,11 @@ class OvercookedRunner(Runner):
                         eta_t,
                     )
                 )
-
-                for a in range(self.num_agents):
-                    train_infos[a]["average_episode_rewards"] = np.mean(self.buffer[a].rewards) * self.episode_length
-                    logger.info(
-                        "agent {} average episode rewards is {}".format(a, train_infos[a]["average_episode_rewards"])
-                    )
+                # shaped reward
+                train_infos["average_episode_rewards"] = np.mean(self.buffer.rewards) * self.episode_length
+                logger.info("average episode rewards is {:.3f}".format(train_infos["average_episode_rewards"]))
 
                 env_infos = defaultdict(list)
-                if self.use_wandb:
-                    wandb.log({"train/ETA": eta_t}, step=total_num_steps)
                 if self.env_name == "Overcooked":
                     if self.all_args.overcooked_version == "old":
                         from zsceval.envs.overcooked.overcooked_ai_py.mdp.overcooked_mdp import (
@@ -139,7 +166,6 @@ class OvercookedRunner(Runner):
                         )
 
                         shaped_info_keys = SHAPED_INFOS
-
                     for info in infos:
                         for a in range(self.num_agents):
                             env_infos[f"ep_sparse_r_by_agent{a}"].append(info["episode"]["ep_sparse_r_by_agent"][a])
@@ -155,59 +181,53 @@ class OvercookedRunner(Runner):
 
                 self.log_train(train_infos, total_num_steps)
                 self.log_env(env_infos, total_num_steps)
-                logger.info(f'average sparse rewards is {np.mean(env_infos["ep_sparse_r"]):.3f}')
-
+                if self.use_wandb:
+                    wandb.log({"train/ETA": eta_t}, step=total_num_steps)
+                logger.info(f'average shaped rewards is {np.mean(env_infos["ep_shaped_r"]):.3f}')
             # eval
             if episode % self.eval_interval == 0 and self.use_eval or episode == episodes - 1:
                 self.eval(total_num_steps)
-            # e_time = time.time()
-            # logger.trace(f"Post update models time: {e_time - s_time:.3f}s")
+            e_time = time.time()
+            logger.trace(f"Post update models time: {e_time - s_time:.3f}s")
 
     def warmup(self):
         # reset env
         obs, share_obs, available_actions = self.envs.reset()
         obs = np.stack(obs)
 
-        if not self.use_centralized_V:
+        # replay buffer
+        if self.use_centralized_V:
+            share_obs = share_obs
+        else:
             share_obs = obs
 
-        for agent_id in range(self.num_agents):
-            self.buffer[agent_id].share_obs[0] = share_obs[:, agent_id].copy()
-            self.buffer[agent_id].obs[0] = obs[:, agent_id].copy()
-            self.buffer[agent_id].available_actions[0] = available_actions[:, agent_id].copy()
+        self.buffer.share_obs[0] = share_obs.copy()
+        self.buffer.obs[0] = obs.copy()
+        self.buffer.available_actions[0] = available_actions.copy()
 
     @torch.no_grad()
     def collect(self, step):
-        values = []
-        actions = []
-        action_log_probs = []
-        rnn_states = []
-        rnn_states_critic = []
-
-        for agent_id in range(self.num_agents):
-            self.trainer[agent_id].prep_rollout()
-            value, action, action_log_prob, rnn_state, rnn_state_critic = self.trainer[agent_id].policy.get_actions(
-                self.buffer[agent_id].share_obs[step],
-                self.buffer[agent_id].obs[step],
-                self.buffer[agent_id].rnn_states[step],
-                self.buffer[agent_id].rnn_states_critic[step],
-                self.buffer[agent_id].masks[step],
-                self.buffer[agent_id].available_actions[step],
-            )
-            # [agents, envs, dim]
-            values.append(_t2n(value))
-            action = _t2n(action)
-
-            actions.append(action)
-            action_log_probs.append(_t2n(action_log_prob))
-            rnn_states.append(_t2n(rnn_state))
-            rnn_states_critic.append(_t2n(rnn_state_critic))
-
-        values = np.array(values).transpose(1, 0, 2)
-        actions = np.array(actions).transpose(1, 0, 2)
-        action_log_probs = np.array(action_log_probs).transpose(1, 0, 2)
-        rnn_states = np.array(rnn_states).transpose(1, 0, 2, 3)
-        rnn_states_critic = np.array(rnn_states_critic).transpose(1, 0, 2, 3)
+        self.trainer.prep_rollout()
+        (
+            value,
+            action,
+            action_log_prob,
+            rnn_states,
+            rnn_states_critic,
+        ) = self.trainer.policy.get_actions(
+            np.concatenate(self.buffer.share_obs[step]),
+            np.concatenate(self.buffer.obs[step]),
+            np.concatenate(self.buffer.rnn_states[step]),
+            np.concatenate(self.buffer.rnn_states_critic[step]),
+            np.concatenate(self.buffer.masks[step]),
+            np.concatenate(self.buffer.available_actions[step]),
+        )
+        # [self.envs, agents, dim]
+        values = np.array(np.split(_t2n(value), self.n_rollout_threads))
+        actions = np.array(np.split(_t2n(action), self.n_rollout_threads))
+        action_log_probs = np.array(np.split(_t2n(action_log_prob), self.n_rollout_threads))
+        rnn_states = np.array(np.split(_t2n(rnn_states), self.n_rollout_threads))
+        rnn_states_critic = np.array(np.split(_t2n(rnn_states_critic), self.n_rollout_threads))
 
         return values, actions, action_log_probs, rnn_states, rnn_states_critic
 
@@ -231,31 +251,64 @@ class OvercookedRunner(Runner):
             dtype=np.float32,
         )
         rnn_states_critic[dones == True] = np.zeros(
-            ((dones == True).sum(), self.recurrent_N, self.hidden_size),
+            ((dones == True).sum(), *self.buffer.rnn_states_critic.shape[3:]),
             dtype=np.float32,
         )
         masks = np.ones((self.n_rollout_threads, self.num_agents, 1), dtype=np.float32)
         masks[dones == True] = np.zeros(((dones == True).sum(), 1), dtype=np.float32)
 
+        if self.use_centralized_V:
+            share_obs = share_obs
+        else:
+            share_obs = obs
+
         bad_masks = np.array([[[0.0] if info["bad_transition"] else [1.0]] * self.num_agents for info in infos])
 
-        for agent_id in range(self.num_agents):
-            if not self.use_centralized_V:
-                share_obs = obs
+        self.buffer.insert(
+            share_obs,
+            obs,
+            rnn_states,
+            rnn_states_critic,
+            actions,
+            action_log_probs,
+            values,
+            rewards,
+            masks,
+            bad_masks=bad_masks,
+            available_actions=available_actions,
+        )
 
-            self.buffer[agent_id].insert(
-                share_obs[:, agent_id],
-                obs[:, agent_id],
-                rnn_states[:, agent_id],
-                rnn_states_critic[:, agent_id],
-                actions[:, agent_id],
-                action_log_probs[:, agent_id],
-                values[:, agent_id],
-                rewards[:, agent_id],
-                masks[:, agent_id],
-                bad_masks=bad_masks[:, agent_id],
-                available_actions=available_actions[:, agent_id],
+    def restore(self):
+        if self.use_single_network:
+            policy_model_state_dict = torch.load(str(self.model_dir) + "/model.pt", map_location=self.device)
+            self.policy.model.load_state_dict(policy_model_state_dict)
+        else:
+            policy_actor_state_dict = torch.load(str(self.model_dir), map_location=self.device)
+            self.policy.actor.load_state_dict(policy_actor_state_dict)
+            if not (self.all_args.use_eval):
+                policy_critic_state_dict = torch.load(str(self.model_dir) + "/critic.pt", map_location=self.device)
+                self.policy.critic.load_state_dict(policy_critic_state_dict)
+
+    def save(self, step, save_critic: bool = False):
+        # logger.info(f"save sp periodic_{step}.pt")
+        if self.use_single_network:
+            policy_model = self.trainer.policy.model
+            torch.save(
+                policy_model.state_dict(),
+                str(self.save_dir) + "/model_periodic_{}.pt".format(step),
             )
+        else:
+            policy_actor = self.trainer.policy.actor
+            torch.save(
+                policy_actor.state_dict(),
+                str(self.save_dir) + "/actor_periodic_{}.pt".format(step),
+            )
+            if save_critic:
+                policy_critic = self.trainer.policy.critic
+                torch.save(
+                    policy_critic.state_dict(),
+                    str(self.save_dir) + "/critic_periodic_{}.pt".format(step),
+                )
 
     @torch.no_grad()
     def eval(self, total_num_steps):
@@ -273,39 +326,28 @@ class OvercookedRunner(Runner):
                 )
 
                 shaped_info_keys = SHAPED_INFOS
-        eval_episode_rewards = []
+        eval_average_episode_rewards = []
         eval_obs, _, eval_available_actions = self.eval_envs.reset()
         eval_obs = np.stack(eval_obs)
 
         eval_rnn_states = np.zeros(
-            (
-                self.n_eval_rollout_threads,
-                self.num_agents,
-                self.recurrent_N,
-                self.hidden_size,
-            ),
+            (self.n_eval_rollout_threads, *self.buffer.rnn_states.shape[2:]),
             dtype=np.float32,
         )
         eval_masks = np.ones((self.n_eval_rollout_threads, self.num_agents, 1), dtype=np.float32)
 
         for _ in range(self.episode_length):
-            eval_actions = []
-            for agent_id in range(self.num_agents):
-                self.trainer[agent_id].prep_rollout()
-                eval_action, eval_rnn_state = self.trainer[agent_id].policy.act(
-                    eval_obs[:, agent_id],
-                    eval_rnn_states[:, agent_id],
-                    eval_masks[:, agent_id],
-                    eval_available_actions[:, agent_id],
-                    deterministic=not self.all_args.eval_stochastic,
-                )
+            self.trainer.prep_rollout()
+            eval_action, eval_rnn_states = self.trainer.policy.act(
+                np.concatenate(eval_obs),
+                np.concatenate(eval_rnn_states),
+                np.concatenate(eval_masks),
+                np.concatenate(eval_available_actions),
+                deterministic=not self.all_args.eval_stochastic,
+            )
+            eval_actions = np.array(np.split(_t2n(eval_action), self.n_eval_rollout_threads))
+            eval_rnn_states = np.array(np.split(_t2n(eval_rnn_states), self.n_eval_rollout_threads))
 
-                eval_action = _t2n(eval_action)
-                eval_actions.append(eval_action)
-                eval_rnn_states[:, agent_id] = _t2n(eval_rnn_state)
-
-            eval_actions = np.stack(eval_actions).transpose(1, 0, 2)
-            # logger.debug(f"eval_actions {eval_actions.shape}")
             # Obser reward and next obs
             (
                 eval_obs,
@@ -316,7 +358,7 @@ class OvercookedRunner(Runner):
                 eval_available_actions,
             ) = self.eval_envs.step(eval_actions)
             eval_obs = np.stack(eval_obs)
-            eval_episode_rewards.append(eval_rewards)
+            eval_average_episode_rewards.append(eval_rewards)
 
             eval_rnn_states[eval_dones == True] = np.zeros(
                 ((eval_dones == True).sum(), self.recurrent_N, self.hidden_size),
@@ -325,7 +367,6 @@ class OvercookedRunner(Runner):
             eval_masks = np.ones((self.n_eval_rollout_threads, self.num_agents, 1), dtype=np.float32)
             eval_masks[eval_dones == True] = np.zeros(((eval_dones == True).sum(), 1), dtype=np.float32)
 
-        eval_episode_rewards = np.array(eval_episode_rewards)
         for eval_info in eval_infos:
             for a in range(self.num_agents):
                 eval_env_infos[f"eval_ep_sparse_r_by_agent{a}"].append(eval_info["episode"]["ep_sparse_r_by_agent"][a])
@@ -341,65 +382,41 @@ class OvercookedRunner(Runner):
             eval_env_infos["eval_ep_utility_r"].append(eval_info["episode"]["ep_utility_r"])
             eval_env_infos["eval_ep_hidden_r"].append(eval_info["episode"]["ep_hidden_r"])
 
-        eval_env_infos["eval_average_episode_rewards"] = np.sum(eval_episode_rewards, axis=0)
+        eval_env_infos["eval_average_episode_rewards"] = np.sum(eval_average_episode_rewards, axis=0)
         logger.success(
-            f'eval average sparse rewards {np.mean(eval_env_infos["eval_ep_sparse_r"]):.3f} {len(eval_env_infos["eval_ep_sparse_r"])} episodes, total num timesteps {total_num_steps}/{self.num_env_steps}'
+            f'eval average shaped rewards {np.mean(eval_env_infos["eval_ep_shaped_r"]):.3f} {len(eval_env_infos["eval_ep_shaped_r"])} episodes, total num timesteps {total_num_steps}/{self.num_env_steps}'
         )
-        logger.success(
-            f'eval average sparse rewards {np.mean(eval_env_infos["eval_ep_shaped_r"]):.3f} {len(eval_env_infos["eval_ep_shaped_r"])} episodes, total num timesteps {total_num_steps}/{self.num_env_steps}'
-        )
-
         self.log_env(eval_env_infos, total_num_steps)
 
     @torch.no_grad()
     def render(self):
         envs = self.envs
-        obs, share_obs, available_actions = envs.reset()
+        obs, _, available_actions = envs.reset()
         obs = np.stack(obs)
 
-        for episode in range(self.all_args.render_episodes):
-            episode_rewards = []
-
+        for episode in tqdm(range(self.all_args.render_episodes)):
             rnn_states = np.zeros(
-                (
-                    self.n_rollout_threads,
-                    self.num_agents,
-                    self.recurrent_N,
-                    self.hidden_size,
-                ),
+                (self.n_rollout_threads, *self.buffer.rnn_states.shape[2:]),
                 dtype=np.float32,
             )
             masks = np.ones((self.n_rollout_threads, self.num_agents, 1), dtype=np.float32)
 
+            episode_rewards = []
             for step in range(self.episode_length):
-                time.time()
-                actions = []
-                for agent_id in range(self.num_agents):
-                    if not self.use_centralized_V:
-                        share_obs = np.array(list(np.array(obs)[:, agent_id]))
-                    self.trainer[agent_id].prep_rollout()
-                    action, rnn_state = self.trainer[agent_id].policy.act(
-                        np.array(obs)[:, agent_id],
-                        rnn_states[:, agent_id],
-                        masks[:, agent_id],
-                        deterministic=True,
-                    )
-
-                    action = action.detach().cpu().numpy()
-                    actions.append(action[0])
-                    rnn_states[:, agent_id] = _t2n(rnn_state)
-
+                self.trainer.prep_rollout()
+                action, rnn_states = self.trainer.policy.act(
+                    np.concatenate(obs),
+                    np.concatenate(rnn_states),
+                    np.concatenate(masks),
+                    np.concatenate(available_actions),
+                    deterministic=True,
+                )
+                actions = np.array(np.split(_t2n(action), self.n_rollout_threads))
+                rnn_states = np.array(np.split(_t2n(rnn_states), self.n_rollout_threads))
                 # Obser reward and next obs
-                print("action:", actions)
-                (
-                    obs,
-                    share_obs,
-                    rewards,
-                    dones,
-                    infos,
-                    available_actions,
-                ) = self.envs.step([actions])
+                obs, _, rewards, dones, infos, available_actions = envs.step(actions)
                 obs = np.stack(obs)
+
                 episode_rewards.append(rewards)
 
                 rnn_states[dones == True] = np.zeros(
@@ -409,39 +426,678 @@ class OvercookedRunner(Runner):
                 masks = np.ones((self.n_rollout_threads, self.num_agents, 1), dtype=np.float32)
                 masks[dones == True] = np.zeros(((dones == True).sum(), 1), dtype=np.float32)
 
-            for info in infos:
-                for a in range(self.num_agents):
-                    ic(info["episode"]["ep_sparse_r_by_agent"][a])
-                    ic(info["episode"]["ep_shaped_r_by_agent"][a])
-                ic(info["episode"]["ep_sparse_r"])
-                ic(info["episode"]["ep_shaped_r"])
+            logger.info("average episode rewards is: " + str(np.mean(np.sum(np.array(episode_rewards), axis=0))))
 
-            print("average episode rewards is: " + str(np.mean(np.sum(np.array(episode_rewards), axis=0))))
-            # print("eval average episode rewards of agent%i: " % agent_id + str(average_episode_rewards))
+    def evaluate_one_episode_with_multi_policy(self, policy_pool: Dict, map_ea2p: Dict):
+        """Evaluate one episode with different policy for each agent.
+        Params:
+            policy_pool (Dict): a pool of policies. Each policy should support methods 'step' that returns actions given observation while maintaining hidden states on its own, and 'reset' that resets the hidden state.
+            map_ea2p (Dict): a mapping from (env_id, agent_id) to policy name
+        """
+        # warnings.warn("Evaluation with multi policy is not compatible with async done.")
+        [policy.reset(self.n_eval_rollout_threads, self.num_agents) for _, policy in policy_pool.items()]
+        if self.all_args.use_opponent_utility:
+            load_policy_cfg = np.full((self.n_eval_rollout_threads, self.num_agents), fill_value=None).tolist()
+        for e in range(self.n_eval_rollout_threads):
+            for agent_id in range(self.num_agents):
+                if not map_ea2p[(e, agent_id)].startswith("script:"):
+                    policy_pool[map_ea2p[(e, agent_id)]].register_control_agent(e, agent_id)
+                    if self.all_args.use_opponent_utility:
+                        load_policy_cfg[e][agent_id] = self.policy.policy_info[map_ea2p[(e,agent_id)]]
+        if self.all_args.use_opponent_utility:
+            self.eval_envs.load_policy(load_policy_cfg)
+            
+        if self.all_args.algorithm_name == "cole":
+            c_a_str = {
+                p_name: len(policy_pool[p_name].control_agents)
+                for p_name in self.generated_population_names + [self.trainer.agent_name]
+            }
+            logger.debug(f"control agents num:\n{c_a_str}")
 
-    def save(self, step, save_critic: bool = False):
-        # logger.info(f"save hsp periodic_{step}.pt")
-        for agent_id in range(self.num_agents):
-            if self.use_single_network:
-                policy_model = self.trainer[agent_id].policy.model
-                torch.save(
-                    policy_model.state_dict(),
-                    str(self.save_dir) + f"/model_agent{agent_id}_periodic_{step}.pt",
+        eval_env_infos = defaultdict(list)
+        eval_obs, _, eval_available_actions = self.eval_envs.reset()
+
+        extract_info_keys = []  # ['stuck', 'can_begin_cook']
+        infos = None
+        for _ in range(self.all_args.episode_length):
+            eval_actions = np.full((self.n_eval_rollout_threads, self.num_agents, 1), fill_value=0).tolist()
+            for _, policy in policy_pool.items():
+                if len(policy.control_agents) > 0:
+                    policy.prep_rollout()
+                    policy.to(self.device)
+                    obs_lst = [eval_obs[e][a] for (e, a) in policy.control_agents]
+                    avail_action_lst = [eval_available_actions[e][a] for (e, a) in policy.control_agents]
+                    info_lst = None
+                    if infos is not None:
+                        info_lst = {k: [infos[e][k][a] for e, a in policy.control_agents] for k in extract_info_keys}
+                    agents = policy.control_agents
+                    actions = policy.step(
+                        np.stack(obs_lst, axis=0),
+                        agents,
+                        info=info_lst,
+                        deterministic=not self.all_args.eval_stochastic,
+                        available_actions=np.stack(avail_action_lst),
+                    )
+                    for action, (e, a) in zip(actions, agents):
+                        eval_actions[e][a] = action
+            # Observe reward and next obs
+            eval_actions = np.array(eval_actions)
+            (
+                eval_obs,
+                _,
+                _,
+                _,
+                eval_infos,
+                eval_available_actions,
+            ) = self.eval_envs.step(eval_actions)
+
+            infos = eval_infos
+
+        if self.all_args.overcooked_version == "old":
+            from zsceval.envs.overcooked.overcooked_ai_py.mdp.overcooked_mdp import (
+                SHAPED_INFOS,
+            )
+
+            shaped_info_keys = SHAPED_INFOS
+        else:
+            from zsceval.envs.overcooked_new.src.overcooked_ai_py.mdp.overcooked_mdp import (
+                SHAPED_INFOS,
+            )
+
+            shaped_info_keys = SHAPED_INFOS
+
+        for eval_info in eval_infos:
+            for a in range(self.num_agents):
+                for i, k in enumerate(shaped_info_keys):
+                    eval_env_infos[f"eval_ep_{k}_by_agent{a}"].append(
+                        eval_info["episode"]["ep_category_r_by_agent"][a][i]
+                    )
+                eval_env_infos[f"eval_ep_sparse_r_by_agent{a}"].append(eval_info["episode"]["ep_sparse_r_by_agent"][a])
+                eval_env_infos[f"eval_ep_shaped_r_by_agent{a}"].append(eval_info["episode"]["ep_shaped_r_by_agent"][a])
+                eval_env_infos[f"eval_ep_utility_r_by_agent{a}"].append(eval_info["episode"]["ep_utility_r_by_agent"][a])
+                eval_env_infos[f"eval_ep_hidden_r_by_agent{a}"].append(eval_info["episode"]["ep_hidden_r_by_agent"][a])
+                # eval_env_infos[f"eval_ep_hidden_r_by_agent{a}"].append(eval_info["episode"]["ep_shaped_r_by_agent"][a])
+
+            eval_env_infos["eval_ep_sparse_r"].append(eval_info["episode"]["ep_sparse_r"])
+            eval_env_infos["eval_ep_shaped_r"].append(eval_info["episode"]["ep_shaped_r"])
+            eval_env_infos["eval_ep_utility_r"].append(eval_info["episode"]["ep_utility_r"])
+            eval_env_infos["eval_ep_hidden_r"].append(eval_info["episode"]["ep_hidden_r"])
+        return eval_env_infos
+
+    def evaluate_with_multi_policy(self, policy_pool=None, map_ea2p=None, num_eval_episodes=None):
+        """Evaluate with different policy for each agent."""
+        policy_pool = policy_pool or self.policy.policy_pool
+        map_ea2p = map_ea2p or self.policy.map_ea2p
+        num_eval_episodes = num_eval_episodes or self.all_args.eval_episodes
+        logger.debug(f"evaluate {self.population_size} policies with {num_eval_episodes} episodes")
+        eval_infos = defaultdict(list)
+        for _ in tqdm(
+            range(max(1, num_eval_episodes // self.n_eval_rollout_threads)),
+            desc="Evaluate with Population",
+        ):
+            eval_env_info = self.evaluate_one_episode_with_multi_policy(policy_pool, map_ea2p)
+            for k, v in eval_env_info.items():
+                for e in range(self.n_eval_rollout_threads):
+                    agent0, agent1 = map_ea2p[(e, 0)], map_ea2p[(e, 1)]
+                    for log_name in [
+                        f"{agent0}-{agent1}-{k}",
+                    ]:
+                        if k in ["eval_ep_sparse_r", "eval_ep_shaped_r", "eval_ep_utility_r", "eval_ep_hidden_r"]:
+                            eval_infos[log_name].append(v[e])
+                        elif (
+                            getattr(self.all_args, "stage", 1) == 1
+                            or not self.all_args.use_wandb
+                            or ("br" in self.trainer.agent_name)
+                        ):
+                            eval_infos[log_name].append(v[e])
+
+                    if k in ["eval_ep_sparse_r", "eval_ep_shaped_r", "eval_ep_utility_r", "eval_ep_hidden_r"]:
+                        for log_name in [
+                            f"either-{agent0}-{k}",
+                            f"either-{agent0}-{k}-as_agent_0",
+                            f"either-{agent1}-{k}",
+                            f"either-{agent1}-{k}-as_agent_1",
+                        ]:
+                            eval_infos[log_name].append(v[e])
+
+        logger.success(
+            "eval average shaped rewards:\n{}".format(
+                pprint.pformat(
+                    {
+                        k: f"{np.mean(v):.2f}"
+                        for k, v in eval_infos.items()
+                        if "ep_shaped_r" in k and "by_agent" not in k
+                    },
+                    compact=True,
+                    width=200,
                 )
+            )
+        )
+
+        eval_infos2dump = {k: np.mean(v) for k, v in eval_infos.items()}
+
+        if hasattr(self.trainer, "agent_name"):
+            br_shaped_r = f"either-{self.trainer.agent_name}-eval_ep_shaped_r"
+            br_shaped_r = np.mean(eval_infos[br_shaped_r])
+
+            if br_shaped_r >= self.br_best_shaped_r:
+                self.br_best_shaped_r = br_shaped_r
+                logger.success(
+                    f"best eval br shaped reward {self.br_best_shaped_r:.2f} at {self.total_num_steps} steps"
+                )
+                self.br_eval_json = copy.deepcopy(eval_infos2dump)
+
+                if getattr(self.all_args, "eval_result_path", None):
+                    logger.debug("dump eval_infos to {}".format(self.all_args.eval_result_path))
+                    with open(self.all_args.eval_result_path, "w", encoding="utf-8") as f:
+                        json.dump(self.br_eval_json, f)
+
+            br_sparse_r = f"either-{self.trainer.agent_name}-eval_ep_sparse_r"
+            br_sparse_r = np.mean(eval_infos[br_sparse_r])
+
+            if br_sparse_r >= self.br_best_sparse_r:
+                self.br_best_sparse_r = br_sparse_r
+                logger.success(
+                    f"best eval br shaped reward {self.br_best_sparse_r:.2f} at {self.total_num_steps} steps"
+                )
+                self.br_eval_json = copy.deepcopy(eval_infos2dump)
+
+                if getattr(self.all_args, "eval_result_path", None):
+                    logger.debug("dump eval_infos to {}".format(self.all_args.eval_result_path))
+                    with open(self.all_args.eval_result_path, "w", encoding="utf-8") as f:
+                        json.dump(self.br_eval_json, f)
+            
+        elif getattr(self.all_args, "eval_result_path", None):
+            logger.debug("dump eval_infos to {}".format(self.all_args.eval_result_path))
+            with open(self.all_args.eval_result_path, "w", encoding="utf-8") as f:
+                json.dump(eval_infos2dump, f)
+
+        return eval_infos
+
+
+    def evaluate_opp_utility_one_episode_with_multi_policy(self, policy_pool: Dict, policy_utility: Dict, map_ea2p: Dict):
+
+        """Evaluate one episode with different policy for each agent.
+        Params:
+            policy_pool (Dict): a pool of policies. Each policy should support methods 'step' that returns actions given observation while maintaining hidden states on its own, and 'reset' that resets the hidden state.
+            map_ea2p (Dict): a mapping from (env_id, agent_id) to policy name
+        """
+        # warnings.warn("Evaluation with multi policy is not compatible with async done.")
+
+        ep_reaction_counter = []
+        for e in range(self.n_eval_rollout_threads):
+            ep_reaction_counter.append([0, 0])
+
+        [policy.reset(self.n_eval_rollout_threads, self.num_agents) for _, policy in policy_pool.items()]
+        if self.all_args.use_opponent_utility:
+            load_policy_cfg = np.full((self.n_eval_rollout_threads, self.num_agents), fill_value=None).tolist()
+        for e in range(self.n_eval_rollout_threads):
+            for agent_id in range(self.num_agents):
+                if not map_ea2p[(e, agent_id)].startswith("script:"):
+                    policy_pool[map_ea2p[(e, agent_id)]].register_control_agent(e, agent_id)
+                    if self.all_args.use_opponent_utility:
+                        load_policy_cfg[e][agent_id] = self.policy.policy_info[map_ea2p[(e,agent_id)]]
+        if self.all_args.use_opponent_utility:
+            self.eval_envs.load_policy(load_policy_cfg)
+        
+        if self.all_args.algorithm_name == "cole":
+            c_a_str = {
+                p_name: len(policy_pool[p_name].control_agents)
+                for p_name in self.generated_population_names + [self.trainer.agent_name]
+            }
+            logger.debug(f"control agents num:\n{c_a_str}")
+
+        eval_env_infos = defaultdict(list)
+        eval_obs, _, eval_available_actions = self.eval_envs.reset()
+
+        extract_info_keys = []  # ['stuck', 'can_begin_cook']
+        infos = None
+        infos_previous = None
+        infos_buffer = []
+        for _ in range(self.all_args.episode_length):
+            eval_actions = np.full((self.n_eval_rollout_threads, self.num_agents, 1), fill_value=0).tolist()
+            for policy_name, policy in policy_pool.items():
+                if len(policy.control_agents) > 0:
+                    policy.prep_rollout()
+                    policy.to(self.device)
+                    obs_lst = [eval_obs[e][a] for (e, a) in policy.control_agents]
+                    avail_action_lst = [eval_available_actions[e][a] for (e, a) in policy.control_agents]
+                    info_lst = None
+                    if infos is not None:
+                        info_lst = {k: [infos[e][k][a] for e, a in policy.control_agents] for k in extract_info_keys}
+                    
+                    agents = policy.control_agents
+                    
+                    
+                    actions = policy.step(
+                        np.stack(obs_lst, axis=0),
+                        agents,
+                        info=info_lst,
+                        deterministic=not self.all_args.eval_stochastic,
+                        available_actions=np.stack(avail_action_lst),
+                    )
+                                        
+                    for action, (e, a) in zip(actions, agents):
+                        #logger.debug(action)
+                        eval_actions[e][a] = action
+            
+            # Observe reward and next obs
+            eval_actions = np.array(eval_actions)
+            (
+                eval_obs,
+                _,
+                _,
+                _,
+                eval_infos,
+                eval_available_actions,
+            ) = self.eval_envs.step(eval_actions)
+            
+            for e in range(self.n_eval_rollout_threads):
+                ep_reaction_counter[e] = [x + y for (x, y) in zip(ep_reaction_counter[e], eval_infos[e]["reaction_counter"])]
+
+        if self.all_args.overcooked_version == "old":
+            from zsceval.envs.overcooked.overcooked_ai_py.mdp.overcooked_mdp import (
+                SHAPED_INFOS,
+            )
+
+            shaped_info_keys = SHAPED_INFOS
+        else:
+            from zsceval.envs.overcooked_new.src.overcooked_ai_py.mdp.overcooked_mdp import (
+                SHAPED_INFOS,
+            )
+
+            shaped_info_keys = SHAPED_INFOS
+
+        for e, eval_info in enumerate(eval_infos):
+            for a in range(self.num_agents):
+                for i, k in enumerate(shaped_info_keys):
+                    eval_env_infos[f"eval_ep_{k}_by_agent{a}"].append(
+                        eval_info["episode"]["ep_category_r_by_agent"][a][i]
+                    )
+                eval_env_infos[f"eval_ep_reaction_by_agent{a}"].append(
+                    ep_reaction_counter[e][a]
+                )
+                eval_env_infos[f"eval_ep_sparse_r_by_agent{a}"].append(eval_info["episode"]["ep_sparse_r_by_agent"][a])
+                eval_env_infos[f"eval_ep_shaped_r_by_agent{a}"].append(eval_info["episode"]["ep_shaped_r_by_agent"][a])
+                eval_env_infos[f"eval_ep_utility_r_by_agent{a}"].append(eval_info["episode"]["ep_utility_r_by_agent"][a])
+                eval_env_infos[f"eval_ep_hidden_r_by_agent{a}"].append(eval_info["episode"]["ep_hidden_r_by_agent"][a])
+                # eval_env_infos[f"eval_ep_hidden_r_by_agent{a}"].append(eval_info["episode"]["ep_shaped_r_by_agent"][a])
+
+            eval_env_infos["eval_ep_sparse_r"].append(eval_info["episode"]["ep_sparse_r"])
+            eval_env_infos["eval_ep_shaped_r"].append(eval_info["episode"]["ep_shaped_r"])
+            eval_env_infos["eval_ep_utility_r"].append(eval_info["episode"]["ep_utility_r"])
+            eval_env_infos["eval_ep_hidden_r"].append(eval_info["episode"]["ep_hidden_r"])
+        
+        return eval_env_infos
+
+
+    def evaluate_opp_utility_policy_with_multi_policy(self, policy_pool=None, map_ea2p=None, num_eval_episodes=None):
+        """Evaluate with different policy for each agent."""
+
+        policy_pool = policy_pool or self.policy.policy_pool
+        policy_utility = self.policy.policy_utility
+        map_ea2p = map_ea2p or self.policy.map_ea2p
+        num_eval_episodes = num_eval_episodes or self.all_args.eval_episodes
+        logger.debug(f"evaluate {self.population_size} policies with {num_eval_episodes} episodes")
+        eval_infos = defaultdict(list)
+
+        for _ in tqdm(
+            range(max(1, num_eval_episodes // self.n_eval_rollout_threads)),
+            desc="Evaluate with Population",
+        ):
+            eval_env_info = self.evaluate_opp_utility_one_episode_with_multi_policy(policy_pool, policy_utility, map_ea2p)
+            for k, v in eval_env_info.items():
+                for e in range(self.n_eval_rollout_threads):
+                    agent0, agent1 = map_ea2p[(e, 0)], map_ea2p[(e, 1)]
+                    for log_name in [
+                        f"{agent0}-{agent1}-{k}",
+                    ]:
+                        if k in ["eval_ep_sparse_r", "eval_ep_shaped_r", "eval_ep_utility_r", "eval_ep_hidden_r"]:
+                            eval_infos[log_name].append(v[e])
+                        elif (
+                            getattr(self.all_args, "stage", 1) == 1
+                            or not self.all_args.use_wandb
+                            or ("br" in self.trainer.agent_name)
+                        ):
+                            eval_infos[log_name].append(v[e])
+
+                    if k in ["eval_ep_sparse_r", "eval_ep_shaped_r", "eval_ep_utility_r", "eval_ep_hidden_r"]:
+                        for log_name in [
+                            f"either-{agent0}-{k}",
+                            f"either-{agent0}-{k}-as_agent_0",
+                            f"either-{agent1}-{k}",
+                            f"either-{agent1}-{k}-as_agent_1",
+                        ]:
+                            eval_infos[log_name].append(v[e])
+
+        logger.success(
+            "eval average shaped rewards:\n{}".format(
+                pprint.pformat(
+                    {
+                        k: f"{np.mean(v):.2f}"
+                        for k, v in eval_infos.items()
+                        if "ep_shaped_r" in k and "by_agent" not in k
+                    },
+                    compact=True,
+                    width=200,
+                )
+            )
+        )
+
+        eval_infos2dump = {k: np.mean(v) for k, v in eval_infos.items()}
+
+        if hasattr(self.trainer, "agent_name"):
+            br_shaped_r = f"either-{self.trainer.agent_name}-eval_ep_shaped_r"
+            br_shaped_r = np.mean(eval_infos[br_shaped_r])
+
+            if br_shaped_r >= self.br_best_shaped_r:
+                self.br_best_shaped_r = br_shaped_r
+                logger.success(
+                    f"best eval br shaped reward {self.br_best_shaped_r:.2f} at {self.total_num_steps} steps"
+                )
+                self.br_eval_json = copy.deepcopy(eval_infos2dump)
+
+                if getattr(self.all_args, "eval_result_path", None):
+                    logger.debug("dump eval_infos to {}".format(self.all_args.eval_result_path))
+                    with open(self.all_args.eval_result_path, "w", encoding="utf-8") as f:
+                        json.dump(self.br_eval_json, f)
+
+            br_sparse_r = f"either-{self.trainer.agent_name}-eval_ep_sparse_r"
+            br_sparse_r = np.mean(eval_infos[br_sparse_r])
+
+            if br_sparse_r >= self.br_best_sparse_r:
+                self.br_best_sparse_r = br_sparse_r
+                logger.success(
+                    f"best eval br shaped reward {self.br_best_sparse_r:.2f} at {self.total_num_steps} steps"
+                )
+                self.br_eval_json = copy.deepcopy(eval_infos2dump)
+
+                if getattr(self.all_args, "eval_result_path", None):
+                    logger.debug("dump eval_infos to {}".format(self.all_args.eval_result_path))
+                    with open(self.all_args.eval_result_path, "w", encoding="utf-8") as f:
+                        json.dump(self.br_eval_json, f)
+
+        elif getattr(self.all_args, "eval_result_path", None):
+            logger.debug("dump eval_infos to {}".format(self.all_args.eval_result_path))
+            with open(self.all_args.eval_result_path, "w", encoding="utf-8") as f:
+                json.dump(eval_infos2dump, f)
+
+        return eval_infos
+
+    def naive_train_with_multi_policy(self, reset_map_ea2t_fn=None, reset_map_ea2p_fn=None):
+        """This is a naive training loop using TrainerPool and PolicyPool.
+
+        To use PolicyPool and TrainerPool, you should first initialize population in policy_pool, with either:
+        >>> self.policy.load_population(population_yaml_path)
+        >>> self.trainer.init_population()
+        or:
+        >>> # mannually register policies
+        >>> self.policy.register_policy(policy_name="ppo1", policy=rMAPPOpolicy(args, obs_space, share_obs_space, act_space), policy_config=(args, obs_space, share_obs_space, act_space), policy_train=True)
+        >>> self.policy.register_policy(policy_name="ppo2", policy=rMAPPOpolicy(args, obs_space, share_obs_space, act_space), policy_config=(args, obs_space, share_obs_space, act_space), policy_train=True)
+        >>> self.trainer.init_population()
+
+        To bind (env_id, agent_id) to different trainers and policies:
+        >>> map_ea2t = {(e, a): "ppo1" if a == 0 else "ppo2" for e in range(self.n_rollout_threads) for a in range(self.num_agents)}
+        # Qs: 2p? n_eval_rollout_threads?
+        >>> map_ea2p = {(e, a): "ppo1" if a == 0 else "ppo2" for e in range(self.n_eval_rollout_threads) for a in range(self.num_agents)}
+        >>> self.trainer.set_map_ea2t(map_ea2t)
+        >>> self.policy.set_map_ea2p(map_ea2p)
+
+        # MARK
+        Note that map_ea2t is for training while map_ea2p is for policy evaluations
+
+        WARNING: Currently do not support changing map_ea2t and map_ea2p when training. To implement this, we should take the first obs of next episode in the previous buffers and feed into the next buffers.
+        """
+
+        start = time.time()
+        episodes = int(self.num_env_steps) // self.episode_length // self.n_rollout_threads
+        total_num_steps = 0
+        env_infos = defaultdict(list)
+        self.eval_info = dict()
+        self.env_info = dict()
+
+        for episode in range(0, episodes):
+            self.total_num_steps = total_num_steps
+            if self.use_linear_lr_decay:
+                self.trainer.lr_decay(episode, episodes)
+
+            # reset env agents
+            if reset_map_ea2t_fn is not None:
+                map_ea2t = reset_map_ea2t_fn(episode)
+                self.trainer.reset(
+                    map_ea2t,
+                    self.n_rollout_threads,
+                    self.num_agents,
+                    load_unused_to_cpu=True,
+                )
+                if self.all_args.use_policy_in_env:
+                    load_policy_cfg = np.full((self.n_rollout_threads, self.num_agents), fill_value=None).tolist()
+                    for e in range(self.n_rollout_threads):
+                        for a in range(self.num_agents):
+                            trainer_name = map_ea2t[(e, a)]
+                            # logger.debug(trainer_name)
+                            if trainer_name not in self.trainer.on_training:
+                                load_policy_cfg[e][a] = self.trainer.policy_pool.policy_info[trainer_name]
+                    # logger.debug(load_policy_cfg)
+                    self.envs.load_policy(load_policy_cfg)
+
+        
+            # init env
+            obs, share_obs, available_actions = self.envs.reset()
+
+            # replay buffer
+            if self.use_centralized_V:
+                share_obs = share_obs
             else:
-                policy_actor = self.trainer[agent_id].policy.actor
-                torch.save(
-                    policy_actor.state_dict(),
-                    str(self.save_dir) + f"/actor_agent{agent_id}_periodic_{step}.pt",
+                share_obs = obs
+
+            s_time = time.time()
+            self.trainer.init_first_step(share_obs, obs, available_actions)
+
+            ep_reaction_counter = []
+            for e in range(self.n_rollout_threads):
+                ep_reaction_counter.append([0, 0])
+
+            for step in range(self.episode_length):
+                # Sample actions
+                actions = self.trainer.step(step)
+                # Observe reward and next obs
+                (
+                    obs,
+                    share_obs,
+                    rewards,
+                    dones,
+                    infos,
+                    available_actions,
+                ) = self.envs.step(actions)
+                total_num_steps += self.n_rollout_threads
+                self.envs.anneal_reward_shaping_factor(self.trainer.reward_shaping_steps())
+
+                bad_masks = np.array([[[0.0] if info["bad_transition"] else [1.0]] * self.num_agents for info in infos])
+
+                self.trainer.insert_data(
+                    share_obs,
+                    obs,
+                    rewards,
+                    dones,
+                    bad_masks=bad_masks,
+                    infos=infos,
+                    available_actions=available_actions,
                 )
-                if save_critic:
-                    policy_critic = self.trainer[agent_id].policy.critic
-                    torch.save(
-                        policy_critic.state_dict(),
-                        str(self.save_dir) + f"/critic_agent{agent_id}_periodic_{step}.pt",
+                
+                for e in range(self.n_rollout_threads):
+                    ep_reaction_counter[e] = [x + y for (x, y) in zip(ep_reaction_counter[e], infos[e]["reaction_counter"])]
+
+            # update env infos
+            episode_env_infos = defaultdict(list)
+            ep_returns_per_trainer = defaultdict(lambda: [[] for _ in range(self.num_agents)])
+            e2ta = dict()
+            if self.env_name == "Overcooked":
+                if self.all_args.overcooked_version == "old":
+                    from zsceval.envs.overcooked.overcooked_ai_py.mdp.overcooked_mdp import (
+                        SHAPED_INFOS,
                     )
 
-<<<<<<< HEAD
+                    shaped_info_keys = SHAPED_INFOS
+                else:
+                    from zsceval.envs.overcooked_new.src.overcooked_ai_py.mdp.overcooked_mdp import (
+                        SHAPED_INFOS,
+                    )
+
+                    shaped_info_keys = SHAPED_INFOS
+                for e, info in enumerate(infos):
+                    agent0_trainer = self.trainer.map_ea2t[(e, 0)]
+                    agent1_trainer = self.trainer.map_ea2t[(e, 1)]
+                    for log_name in [
+                        f"{agent0_trainer}-{agent1_trainer}",
+                    ]:
+
+                        episode_env_infos[f"{log_name}-ep_sparse_r"].append(info["episode"]["ep_sparse_r"])
+                        episode_env_infos[f"{log_name}-ep_shaped_r"].append(info["episode"]["ep_shaped_r"])
+                        episode_env_infos[f"{log_name}-ep_utility_r"].append(info["episode"]["ep_utility_r"])
+                        episode_env_infos[f"{log_name}-ep_hidden_r"].append(info["episode"]["ep_hidden_r"])
+                        for a in range(self.num_agents):
+                            # if getattr(self.all_args, "stage", 1) == 1 or not self.all_args.use_wandb:
+                            for i, k in enumerate(shaped_info_keys):
+                                episode_env_infos[f"{log_name}-ep_{k}_by_agent{a}"].append(
+                                    info["episode"]["ep_category_r_by_agent"][a][i]
+                                )
+                            episode_env_infos[f"{log_name}-ep_reaction_by_agent{a}"].append(
+                                ep_reaction_counter[e][a]
+                            )
+                            episode_env_infos[f"{log_name}-ep_sparse_r_by_agent{a}"].append(
+                                info["episode"]["ep_sparse_r_by_agent"][a]
+                            )
+                            episode_env_infos[f"{log_name}-ep_shaped_r_by_agent{a}"].append(
+                                info["episode"]["ep_shaped_r_by_agent"][a]
+                            )
+                            episode_env_infos[f"{log_name}-ep_utility_r_by_agent{a}"].append(
+                                info["episode"]["ep_utility_r_by_agent"][a]
+                            )
+                            episode_env_infos[f"{log_name}-ep_hidden_r_by_agent{a}"].append(
+                                info["episode"]["ep_hidden_r_by_agent"][a]
+                            )
+                            
+
+                    for k in ["ep_sparse_r", "ep_shaped_r", "ep_utility_r", "ep_hidden_r"]:
+                        for log_name in [
+                            f"either-{agent0_trainer}-{k}",
+                            f"either-{agent0_trainer}-{k}-as_agent_0",
+                            f"either-{agent1_trainer}-{k}",
+                            f"either-{agent1_trainer}-{k}-as_agent_1",
+                        ]:
+                            episode_env_infos[log_name].append(info["episode"][k])
+                    if agent0_trainer != self.trainer.agent_name:
+                        # suitable for both stage 1 and stage 2
+                        ep_returns_per_trainer[agent1_trainer][1].append(info["episode"]["ep_shaped_r"])
+                        e2ta[e] = (agent1_trainer, 1)
+                    elif agent1_trainer != self.trainer.agent_name:
+                        ep_returns_per_trainer[agent0_trainer][0].append(info["episode"]["ep_shaped_r"])
+                        e2ta[e] = (agent0_trainer, 0)
+                env_infos.update(episode_env_infos)
+            max_ep_shaped_r_dict = defaultdict(lambda: [0, 0])
+
+            self.env_info.update(env_infos)
+            e_time = time.time()
+            logger.trace(f"Rollout time: {e_time - s_time:.3f}s")
+
+            # compute return and update network
+            s_time = time.time()
+            if self.all_args.stage == 1:
+                self.trainer.adapt_entropy_coef(total_num_steps // self.population_size)
+            else:
+                self.trainer.adapt_entropy_coef(total_num_steps)
+
+            train_infos = self.trainer.train(sp_size=getattr(self, "n_repeats", 0) * self.num_agents)
+            e_time = time.time()
+            logger.trace(f"Update models time: {e_time - s_time:.3f}s")
+
+            s_time = time.time()
+            if self.all_args.stage == 2:
+                # update advantage moving average, used in stage2
+                if self.all_args.use_advantage_prioritized_sampling:  # Default:False
+                    if not hasattr(self, "avg_adv"):
+                        self.avg_adv = defaultdict(float)
+                    adv = self.trainer.compute_advantages()
+                    for (agent0, agent1, a), vs in adv.items():
+                        agent_pair = (agent0, agent1)
+                        for v in vs:
+                            if agent_pair not in self.avg_adv.keys():
+                                self.avg_adv[agent_pair] = v
+                            else:
+                                self.avg_adv[agent_pair] = self.avg_adv[agent_pair] * 0.99 + v * 0.01
+
+            # post process
+            total_num_steps = (episode + 1) * self.episode_length * self.n_rollout_threads
+
+            # save model
+            if episode < 50:
+                if episode % 2 == 0:
+                    self.trainer.save(total_num_steps, save_dir=self.save_dir)
+                    # self.trainer.save(episode, save_dir=self.save_dir)
+            elif episode < 100:
+                if episode % 5 == 0:
+                    self.trainer.save(total_num_steps, save_dir=self.save_dir)
+                    # self.trainer.save(episode, save_dir=self.save_dir)
+            else:
+                if episode % self.save_interval == 0 or episode == episodes - 1:
+                    self.trainer.save(total_num_steps, save_dir=self.save_dir)
+                    # self.trainer.save(episode, save_dir=self.save_dir)
+
+            if self.all_args.use_primitive_hsp:
+                self.trainer.update_best_r(
+                    {
+                        trainer_name: np.mean(self.env_info.get(f"either-{trainer_name}-ep_sparse_r", -1e9))
+                        for trainer_name in self.trainer.active_trainers
+                    },
+                    save_dir=self.save_dir,
+                )
+            else:
+                self.trainer.update_best_r(
+                    {
+                        trainer_name: np.mean(self.env_info.get(f"either-{trainer_name}-ep_shaped_r", -1e9))
+                        for trainer_name in self.trainer.active_trainers
+                    },
+                    save_dir=self.save_dir,
+                )
+            
+            # log information
+            if episode % self.log_interval == 0 or episode == episodes - 1:
+                end = time.time()
+                eta_t = eta(start, end, self.num_env_steps, total_num_steps)
+                logger.info(
+                    "Layout {} Algo {} Exp {} Seed {} updates {}/{} episodes, total num timesteps {}/{}, FPS {}, ETA {}.".format(
+                        self.all_args.layout_name,
+                        self.algorithm_name,
+                        self.experiment_name,
+                        self.all_args.seed,
+                        episode,
+                        episodes,
+                        total_num_steps,
+                        self.num_env_steps,
+                        int(total_num_steps / (end - start)),
+                        eta_t,
+                    )
+                )
+                average_ep_rew_dict = {
+                    k[: k.rfind("-")]: f"{np.mean(train_infos[k]):.3f}"
+                    for k in train_infos.keys()
+                    if "average_episode_rewards" in k and "either" not in k
+                }
+                logger.info(f"average episode rewards is\n{pprint.pformat(average_ep_rew_dict, width=600)}")
+                average_ep_shaped_rew_dict = {
+                    k[: k.rfind("-")]: f"{np.mean(env_infos[k]):.3f}"
+                    for k in env_infos.keys()
+                    if k.endswith("ep_shaped_r") and "either" not in k
+                }
+                logger.info(
+                    f"average shaped episode rewards is\n{pprint.pformat(average_ep_shaped_rew_dict, width=600, compact=True)}"
+                )
+                if self.all_args.algorithm_name == "traj":
+                    if self.all_args.stage == 1:
+                        logger.debug(f'jsd is {train_infos["average_jsd"]}')
+                        logger.debug(f'jsd loss is {train_infos["average_jsd_loss"]}')
+
                 self.log_train(train_infos, total_num_steps)
                 self.log_env(env_infos, total_num_steps)
                 if self.use_wandb:

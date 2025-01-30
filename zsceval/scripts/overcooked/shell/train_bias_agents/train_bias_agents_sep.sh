@@ -166,10 +166,10 @@ do
         --use_proper_time_limits \
         --save_interval 25 --log_interval 10 --use_eval --eval_interval 20 --n_eval_rollout_threads 20 \
         --wandb_name "hogebein" \
-        --cuda_id 1 \
+        --cuda_id 0 \
         --use_base_shaping_r \
-        --share_policy \
-        --use_wandb
+        --share_policy 
+    
     
     else
 
@@ -182,9 +182,8 @@ do
         --use_proper_time_limits \
         --save_interval 25 --log_interval 10 --use_eval --eval_interval 20 --n_eval_rollout_threads 20 \
         --wandb_name "hogebein" \
-        --cuda_id 1 \
-        --share_policy \
-        --use_wandb
+        --cuda_id 0 \
+        --share_policy
     fi
 
     

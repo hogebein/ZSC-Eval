@@ -289,6 +289,7 @@ class Runner(object):
                         policy_critic.state_dict(),
                         str(self.save_dir) + "/critic_agent" + str(agent_id) + postfix,
                     )
+        logger.info(f"model at {steps} saved")
 
     def restore(self):
         for agent_id in range(self.num_agents):

@@ -216,6 +216,7 @@ class Runner(object):
             if save_critic:
                 policy_critic = self.trainer.policy.critic
                 torch.save(policy_critic.state_dict(), str(self.save_dir) + "/critic.pt")
+        logger.info(f"model at {steps} saved")
 
     def restore(self):
         if self.use_single_network:

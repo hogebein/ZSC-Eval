@@ -35,8 +35,8 @@ if [[ ${population_size} == 5 ]]; then
         use_base_shaping_r=true
     else
         pop="hsp_plate_placement_shared"
-        reward_shaping_horizon="5e7"
-        num_env_steps="5e7"
+        reward_shaping_horizon="3e7"
+        num_env_steps="3e7"
         use_base_shaping_r=true
     fi
     mep_exp="no_mep"

@@ -82,6 +82,7 @@ version="new"
 
 use_base_shaping_r=true
 use_placement_shaping_r=false
+lr=5e-4
 
 if [[ "${weight_pattern}" == "all" ]]; then
     w0="0,0,[-5:0:5],0,0,0,0,0,[-5:0:5],0,0,3,5,3,0,0,0,0,[-0.2:0],[-20:0],0,0,[-5:0:20],[-15:0:10],0,[-0.1:0:0.1],0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
@@ -118,6 +119,7 @@ elif [[ "${weight_pattern}" == "onion_lover" ]]; then
    seed_begin=1
    seed_max=5
    exp="hsp_onion_tomato_shared-${stage}"
+   lr=5e-4
 elif [[ "${weight_pattern}" == "tomato_lover" ]]; then
    #w0="0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
    w0="0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
@@ -130,7 +132,8 @@ elif [[ "${weight_pattern}" == "tomato_lover" ]]; then
       seed_max=10
       exp="hsp_onion_tomato_shared-${stage}"
    fi
-   
+   lr=5e-4
+
 elif [[ "${weight_pattern}" == "score" ]]; then
     w0="0,0,0,0,0,0,0,0,0,3,0,0,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
     seed_begin=1
@@ -155,6 +158,7 @@ rollout_threads=80
 
 cuda=1
 
+
 echo "seed_max is ${seed_max}:"
 for seed in $(seq ${seed_begin} ${seed_max});
 do
@@ -172,7 +176,11 @@ do
         --save_interval 25 --log_interval 10 --use_eval --eval_interval 20 --n_eval_rollout_threads 20 \
         --wandb_name "hogebein" \
         --cuda_id ${cuda} \
-        --use_base_shaping_r
+        --use_base_shaping_r \
+        --lr ${lr} \
+        --critic_lr ${lr} \
+        --tau 0.995
+
     
     elif "${use_placement_shaping_r}"; then
 
@@ -186,7 +194,10 @@ do
         --save_interval 25 --log_interval 10 --use_eval --eval_interval 20 --n_eval_rollout_threads 20 \
         --wandb_name "hogebein" \
         --cuda_id ${cuda} \
-        --use_placement_shaping_r
+        --use_placement_shaping_r \
+        --lr ${lr} \
+        --critic_lr ${lr} \
+        --tau 0.995
 
     else
 
@@ -199,7 +210,10 @@ do
         --use_proper_time_limits \
         --save_interval 25 --log_interval 10 --use_eval --eval_interval 20 --n_eval_rollout_threads 20 \
         --wandb_name "hogebein" \
-        --cuda_id ${cuda}
+        --cuda_id ${cuda} \
+        --lr ${lr} \
+        --critic_lr ${lr} \
+        --tau 0.995
 
     fi
     

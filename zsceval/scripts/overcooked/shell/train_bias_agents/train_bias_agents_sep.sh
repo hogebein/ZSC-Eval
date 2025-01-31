@@ -82,6 +82,7 @@ version="new"
 
 use_base_shaping_r=true
 use_placement_shaping_r=false
+lr=5e-4
 
 if [[ "${weight_pattern}" == "all" ]]; then
     w0="0,0,[-5:0:5],0,0,0,0,0,[-5:0:5],0,0,3,5,3,0,0,0,0,[-0.2:0],[-20:0],0,0,[-5:0:20],[-15:0:10],0,[-0.1:0:0.1],0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
@@ -94,7 +95,6 @@ elif [[ "${weight_pattern}" == "plate_placed" ]]; then
     exp="hsp_plate_placement-${stage}"
     use_base_shaping_r=false
     use_placement_shaping_r=true
-
 elif [[ "${weight_pattern}" == "plate_place" ]]; then
     w0="0,0,0,0,0,0,0,0,-1000,0,0,0,0,0,0,0,0,0,0,0,1,1000,0,0,0,0,0,0,0,0,0,1000,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0"
     seed_begin=6
@@ -110,6 +110,7 @@ elif [[ "${weight_pattern}" == "tomato_self" ]]; then
    seed_begin=6
    seed_max=10
    exp="hsp_tomato_delivery-${stage}"
+
 elif [[ "${weight_pattern}" == "onion_lover" ]]; then
    #w0="0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
    w0="0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
@@ -119,6 +120,13 @@ elif [[ "${weight_pattern}" == "onion_lover" ]]; then
    seed_begin=1
    seed_max=5
    exp="hsp_onion_tomato-${stage}"
+   lr=1e-4
+    
+   entropy_coefs="0.2 0.05 0.001"
+    entropy_coef_horizons="0 3e7 5e7"
+    reward_shaping_horizon="5e7"
+    num_env_steps="5e7"
+
 elif [[ "${weight_pattern}" == "tomato_lover" ]]; then
    #w0="0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
    w0="0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
@@ -129,8 +137,14 @@ elif [[ "${weight_pattern}" == "tomato_lover" ]]; then
       seed_begin=6
       seed_max=10
    fi
-   
    exp="hsp_onion_tomato-${stage}"
+   lr=1e-4
+    
+   entropy_coefs="0.2 0.05 0.001"
+    entropy_coef_horizons="0 3e7 5e7"
+    reward_shaping_horizon="5e7"
+    num_env_steps="5e7"
+
 elif [[ "${weight_pattern}" == "score" ]]; then
     w0="0,0,0,0,0,0,0,0,0,3,0,0,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
     seed_begin=1
@@ -173,7 +187,10 @@ do
         --wandb_name "hogebein" \
         --cuda_id ${cuda} \
         --use_base_shaping_r \
-        --share_policy
+        --share_policy \
+        --lr ${lr} \
+        --critic_lr ${lr} \
+        --tau 0.995
     
     elif "${use_placement_shaping_r}"; then
 
@@ -188,7 +205,10 @@ do
         --wandb_name "hogebein" \
         --cuda_id ${cuda} \
         --use_placement_shaping_r \
-        --share_policy
+        --share_policy \
+        --lr ${lr} \
+        --critic_lr ${lr} \
+        --tau 0.995
     else
 
         python train/train_bias_agent.py --env_name ${env} --algorithm_name ${algo} --experiment_name "${exp}" --layout_name ${layout} --num_agents ${num_agents} \
@@ -201,7 +221,10 @@ do
         --save_interval 25 --log_interval 10 --use_eval --eval_interval 20 --n_eval_rollout_threads 20 \
         --wandb_name "hogebein" \
         --cuda_id ${cuda} \
-        --share_policy
+        --share_policy \
+        --lr ${lr} \
+        --critic_lr ${lr} \
+        --tau 0.995
         
     fi
 

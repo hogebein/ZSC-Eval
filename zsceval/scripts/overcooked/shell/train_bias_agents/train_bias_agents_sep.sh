@@ -117,12 +117,13 @@ elif [[ "${weight_pattern}" == "onion_lover" ]]; then
    seed_begin=1
    seed_max=5
    exp="hsp_onion_tomato-${stage}"
-   lr=1e-4
-    
-   entropy_coefs="0.2 0.05 0.001"
-    entropy_coef_horizons="0 3e7 5e7"
-    reward_shaping_horizon="5e7"
-    num_env_steps="5e7"
+   if [[ "${layout}" == "random9" ]]; then
+      lr=1e-4 
+      entropy_coefs="0.2 0.05 0.001"
+      entropy_coef_horizons="0 3e7 5e7"
+      reward_shaping_horizon="5e7"
+      num_env_steps="5e7"
+   fi
 
 elif [[ "${weight_pattern}" == "tomato_lover" ]]; then
    #w0="0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
@@ -130,12 +131,15 @@ elif [[ "${weight_pattern}" == "tomato_lover" ]]; then
    seed_begin=6
    seed_max=10
    exp="hsp_onion_tomato-${stage}"
-   lr=1e-4
-    
-   entropy_coefs="0.2 0.05 0.001"
-   entropy_coef_horizons="0 3e7 5e7"
-   reward_shaping_horizon="5e7"
-   num_env_steps="5e7"
+
+   if [[ "${layout}" == "random9" ]]; then
+      lr=1e-4 
+      entropy_coefs="0.2 0.05 0.001"
+      entropy_coef_horizons="0 3e7 5e7"
+      reward_shaping_horizon="5e7"
+      num_env_steps="5e7"
+   fi
+   
 
 elif [[ "${weight_pattern}" == "score" ]]; then
     w0="0,0,0,0,0,0,0,0,0,3,0,0,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"

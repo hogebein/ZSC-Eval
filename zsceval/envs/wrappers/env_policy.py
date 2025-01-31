@@ -197,7 +197,7 @@ class PartialPolicyEnv:
         def reaction_planner():
             r = self.all_args.reaction_type
             # STAY
-            if r == 1:
+            if r == 0:
                 return [4]
             # MOVE IN RANDOM DIRECTION
             else:

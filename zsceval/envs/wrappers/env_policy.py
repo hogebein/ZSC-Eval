@@ -202,10 +202,10 @@ class PartialPolicyEnv:
             # MOVE IN RANDOM DIRECTION
             else:
                 if self.FLAG:
-                    action = 2
+                    action = 0
                     self.FLAG = True
                 else:
-                    action = 3
+                    action = 1
                     self.FLAG = False
                 return [action]
 

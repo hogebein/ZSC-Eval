@@ -116,14 +116,14 @@ elif [[ "${weight_pattern}" == "onion_lover" ]]; then
    seed_begin=1
    seed_max=5
    exp="hsp_onion_tomato_shared-${stage}"
-   lr=5e-4
+   lr=1e-4
 elif [[ "${weight_pattern}" == "tomato_lover" ]]; then
    #w0="0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
    w0="0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0,0,0,0,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
    seed_begin=6
    seed_max=10
    exp="hsp_onion_tomato_shared-${stage}"
-   lr=5e-4
+   lr=1e-4
 elif [[ "${weight_pattern}" == "score" ]]; then
     w0="0,0,0,0,0,0,0,0,0,3,0,0,5,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
     seed_begin=1

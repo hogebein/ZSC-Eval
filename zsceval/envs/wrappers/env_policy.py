@@ -197,7 +197,7 @@ class PartialPolicyEnv:
         def reaction_planner():
             r = self.all_args.reaction_type
             # STAY
-            if r == 0:
+            if r == 1:
                 return [4]
             # MOVE IN RANDOM DIRECTION
             else:
@@ -213,7 +213,7 @@ class PartialPolicyEnv:
             for a, agent_infos in enumerate(infos["shaped_info_by_agent"]):
                 #logger.debug(agent_infos)
                 #logger.debug(self.infos_previous[a])
-                if len(self.infos_buffer[a]) == 20:
+                if len(self.infos_buffer[a]) == 10:
                     #logger.debug(type(self.infos_buffer[a]))
                     self.infos_buffer[a].pop(0)
 

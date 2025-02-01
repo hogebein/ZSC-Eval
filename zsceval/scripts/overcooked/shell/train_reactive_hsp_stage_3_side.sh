@@ -54,15 +54,15 @@ elif [[ ${population_size} == 10 ]]; then
         filter_type=2
     elif [[ ${pop_version} == "onion_tomato" ]]; then
         pop="hsp_onion_tomato_shared"
-        reward_shaping_horizon="10e7"
-        num_env_steps="10e7"
+        reward_shaping_horizon="5e7"
+        num_env_steps="5e7"
         use_base_shaping_r=true
 
         filter_type=1
     else
         pop="hsp_plate_placement_shared"
-        reward_shaping_horizon="10e7"
-        num_env_steps="10e7"
+        reward_shaping_horizon="6e7"
+        num_env_steps="6e7"
         use_base_shaping_r=true
         
         filter_type=0

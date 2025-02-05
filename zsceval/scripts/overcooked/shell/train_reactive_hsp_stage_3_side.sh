@@ -69,17 +69,24 @@ elif [[ ${population_size} == 10 ]]; then
     fi
     mep_exp="no_mep"
     
-elif [[ ${population_size} == 24 ]]; then
-    entropy_coefs="0.2 0.05 0.01"
-    entropy_coef_horizons="0 4e7 8e7"
-    if [[ "${layout}" == "small_corridor" ]]; then
-        entropy_coefs="0.2 0.05 0.01"
-        entropy_coef_horizons="0 6.4e7 8e7"
+elif [[ ${population_size} == 20 ]]; then
+    if [[ ${pop_version} == "onion_tomato" ]]; then
+        pop="hsp_onion_tomato_shared"
+        reward_shaping_horizon="10e7"
+        num_env_steps="10e7"
+        use_base_shaping_r=true
+
+        filter_type=1
+    else
+        pop="hsp_plate_placement_shared"
+        reward_shaping_horizon="10e7"
+        num_env_steps="10e7"
+        use_base_shaping_r=true
+        
+        filter_type=0
     fi
-    reward_shaping_horizon="8e7"
-    num_env_steps="8e7"
-    pop="hsp"
-    mep_exp="mep-S1-s10"
+    mep_exp="no_mep"
+    
 elif [[ ${population_size} == 36 ]]; then
     entropy_coefs="0.2 0.05 0.01"
     entropy_coef_horizons="0 5e7 1e8"

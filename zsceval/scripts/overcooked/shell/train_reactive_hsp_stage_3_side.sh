@@ -70,6 +70,9 @@ elif [[ ${population_size} == 10 ]]; then
     mep_exp="no_mep"
     
 elif [[ ${population_size} == 20 ]]; then
+    entropy_coefs="0.2 0.05 0.01"
+    entropy_coef_horizons="0 4e7 8e7"
+
     if [[ ${pop_version} == "onion_tomato" ]]; then
         pop="hsp_onion_tomato_shared"
         reward_shaping_horizon="10e7"
@@ -86,7 +89,7 @@ elif [[ ${population_size} == 20 ]]; then
         filter_type=0
     fi
     mep_exp="no_mep"
-    
+
 elif [[ ${population_size} == 36 ]]; then
     entropy_coefs="0.2 0.05 0.01"
     entropy_coef_horizons="0 5e7 1e8"

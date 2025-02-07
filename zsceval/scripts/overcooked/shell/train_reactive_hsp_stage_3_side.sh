@@ -61,8 +61,8 @@ elif [[ ${population_size} == 10 ]]; then
         filter_type=1
     else
         pop="hsp_plate_placement_shared"
-        reward_shaping_horizon="6e7"
-        num_env_steps="6e7"
+        reward_shaping_horizon="10e7"
+        num_env_steps="10e7"
         use_base_shaping_r=true
         
         filter_type=0
@@ -129,7 +129,7 @@ n_training_threads=200
 
 ulimit -n 65536
 
-reaction_type=1
+reaction_type=0
 
 echo "env is ${env}, layout is ${layout}, algo is ${algo}, pop is ${pop}, exp is ${exp}, seed from ${seed_begin} to ${seed_max}, stage is ${stage}"
 for seed in $(seq ${seed_begin} ${seed_max});

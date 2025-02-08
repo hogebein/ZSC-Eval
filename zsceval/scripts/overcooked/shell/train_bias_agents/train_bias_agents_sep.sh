@@ -6,17 +6,12 @@ weight_pattern=$2
 
 entropy_coefs="0.2 0.05 0.001"
 entropy_coef_horizons="0 6e6 1e7"
-reward_shaping_horizon="1e7"
+reward_shaping_horizon="0.5e7"
 num_env_steps="1e7"
 
 if [[ "${layout}" == "small_corridor" ]]; then
     entropy_coefs="0.2 0.05 0.001"
     entropy_coef_horizons="0 8e6 1e7"
-fi
-
-if [[ "${layout}" == "random9" || "${layout}" == "random9_d" || "${layout}" == "random9_p" ]]; then
-    reward_shaping_horizon="1e7"
-    num_env_steps="1e7"
 fi
 
 num_agents=2
@@ -145,7 +140,7 @@ fi
 
 w1="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
 
-rollout_threads=80
+rollout_threads=1
 
 cuda=1
 

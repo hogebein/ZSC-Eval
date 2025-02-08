@@ -42,6 +42,9 @@ class OvercookedRunner(Runner):
                     rnn_states_critic,
                 ) = self.collect(step)
 
+                if self.all_args.random_index == False and self.all_args.fixed_index==1:
+                    actions[0], actions[1] = actions[1], actions[0]
+
                 # Obser reward and next obs
                 (
                     obs,
@@ -243,19 +246,34 @@ class OvercookedRunner(Runner):
             if not self.use_centralized_V:
                 share_obs = obs
 
-            self.buffer[agent_id].insert(
-                share_obs[:, agent_id],
-                obs[:, agent_id],
-                rnn_states[:, agent_id],
-                rnn_states_critic[:, agent_id],
-                actions[:, agent_id],
-                action_log_probs[:, agent_id],
-                values[:, agent_id],
-                rewards[:, agent_id],
-                masks[:, agent_id],
-                bad_masks=bad_masks[:, agent_id],
-                available_actions=available_actions[:, agent_id],
-            )
+            if self.all_args.random_index == False and self.all_args.fixed_index==1:
+                self.buffer[agent_id].insert(
+                    share_obs[:, agent_id^1],
+                    obs[:, agent_id^1],
+                    rnn_states[:, agent_id],
+                    rnn_states_critic[:, agent_id],
+                    actions[:, agent_id],
+                    action_log_probs[:, agent_id],
+                    values[:, agent_id],
+                    rewards[:, agent_id^1],
+                    masks[:, agent_id],
+                    bad_masks=bad_masks[:, agent_id],
+                    available_actions=available_actions[:, agent_id^1],
+                )
+            else:
+                self.buffer[agent_id].insert(
+                    share_obs[:, agent_id],
+                    obs[:, agent_id],
+                    rnn_states[:, agent_id],
+                    rnn_states_critic[:, agent_id],
+                    actions[:, agent_id],
+                    action_log_probs[:, agent_id],
+                    values[:, agent_id],
+                    rewards[:, agent_id],
+                    masks[:, agent_id],
+                    bad_masks=bad_masks[:, agent_id],
+                    available_actions=available_actions[:, agent_id],
+                )
 
     @torch.no_grad()
     def eval(self, total_num_steps):

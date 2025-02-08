@@ -122,7 +122,7 @@ elif [[ "${weight_pattern}" == "tomato_lover" ]]; then
    #w0="0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1"
    w0="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,30,0,0,0,0,1"
    seed_begin=6
-   seed_max=10
+   seed_max=6
    exp="hsp_onion_tomato-${stage}"
 
 elif [[ "${weight_pattern}" == "score" ]]; then
@@ -160,7 +160,7 @@ do
         --seed ${seed} --n_training_threads 2 --n_rollout_threads ${rollout_threads} --dummy_batch_size 2 --num_mini_batch 1 --episode_length 400 --num_env_steps ${num_env_steps} --reward_shaping_horizon ${reward_shaping_horizon} \
         --overcooked_version ${version} \
         --ppo_epoch 15 --entropy_coefs ${entropy_coefs} --entropy_coef_horizons ${entropy_coef_horizons} \
-        --use_hsp --w0 ${w0} --w1 ${w1} --random_index \
+        --use_hsp --w0 ${w0} --w1 ${w1} \
         --cnn_layers_params "32,3,1,1 64,3,1,1 32,3,1,1" --use_recurrent_policy \
         --use_proper_time_limits \
         --save_interval 25 --log_interval 10 --use_eval --eval_interval 20 --n_eval_rollout_threads 20 \
@@ -178,7 +178,7 @@ do
         --seed ${seed} --n_training_threads 2 --n_rollout_threads ${rollout_threads} --dummy_batch_size 2 --num_mini_batch 1 --episode_length 400 --num_env_steps ${num_env_steps} --reward_shaping_horizon ${reward_shaping_horizon} \
         --overcooked_version ${version} \
         --ppo_epoch 15 --entropy_coefs ${entropy_coefs} --entropy_coef_horizons ${entropy_coef_horizons} \
-        --use_hsp --w0 ${w0} --w1 ${w1} --random_index \
+        --use_hsp --w0 ${w0} --w1 ${w1} \
         --cnn_layers_params "32,3,1,1 64,3,1,1 32,3,1,1" --use_recurrent_policy \
         --use_proper_time_limits \
         --save_interval 25 --log_interval 10 --use_eval --eval_interval 20 --n_eval_rollout_threads 20 \
@@ -195,7 +195,7 @@ do
         --seed ${seed} --n_training_threads 2 --n_rollout_threads ${rollout_threads} --dummy_batch_size 2 --num_mini_batch 1 --episode_length 400 --num_env_steps ${num_env_steps} --reward_shaping_horizon ${reward_shaping_horizon} \
         --overcooked_version ${version} \
         --ppo_epoch 15 --entropy_coefs ${entropy_coefs} --entropy_coef_horizons ${entropy_coef_horizons} \
-        --use_hsp --w0 ${w0} --w1 ${w1} --random_index \
+        --use_hsp --w0 ${w0} --w1 ${w1} \
         --cnn_layers_params "32,3,1,1 64,3,1,1 32,3,1,1" --use_recurrent_policy \
         --use_proper_time_limits \
         --save_interval 25 --log_interval 10 --use_eval --eval_interval 20 --n_eval_rollout_threads 20 \

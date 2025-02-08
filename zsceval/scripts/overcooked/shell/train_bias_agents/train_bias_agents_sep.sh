@@ -147,7 +147,7 @@ w1="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 
 rollout_threads=80
 
-cuda=0
+cuda=1
 
 echo "seed_max is ${seed_max}:"
 for seed in $(seq ${seed_begin} ${seed_max});

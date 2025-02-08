@@ -158,7 +158,7 @@ w1=${w0}
 
 rollout_threads=80
 
-cuda=0
+cuda=1
 
 
 echo "seed_max is ${seed_max}:"

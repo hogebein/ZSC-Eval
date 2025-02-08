@@ -170,7 +170,8 @@ do
         --share_policy \
         --lr ${lr} \
         --critic_lr ${lr} \
-        --tau 0.995
+        --tau 0.995 \
+        --fixed_index 0
     
     elif "${use_placement_shaping_r}"; then
 
@@ -188,7 +189,8 @@ do
         --share_policy \
         --lr ${lr} \
         --critic_lr ${lr} \
-        --tau 0.995
+        --tau 0.995 \
+        --fixed_index 0
     else
 
         python train/train_bias_agent.py --env_name ${env} --algorithm_name ${algo} --experiment_name "${exp}" --layout_name ${layout} --num_agents ${num_agents} \
@@ -204,7 +206,8 @@ do
         --share_policy \
         --lr ${lr} \
         --critic_lr ${lr} \
-        --tau 0.995
+        --tau 0.995 \
+        --fixed_index 0
         
     fi
 

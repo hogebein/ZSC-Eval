@@ -719,7 +719,7 @@ class Overcooked(gym.Env):
         if all_args.use_base_shaping_r:
             rew_shaping_params = {
                 "PLACEMENT_IN_POT_REW": 3,
-                "DISH_PICKUP_REWARD": 3,
+                "DISH_PICKUP_REWARD": 0,
                 "SOUP_PICKUP_REWARD": 5,
                 "DISH_DISP_DISTANCE_REW": 0,
                 "POT_DISTANCE_REW": 0,
@@ -1046,7 +1046,7 @@ class Overcooked(gym.Env):
             shaped_reward_p1 = sparse_reward + self.reward_shaping_factor * dense_reward[1]
         else:
             
-            logger.debug(joint_action)
+            #logger.debug(joint_action)
             next_state, sparse_reward, done, info = self.base_env.step(joint_action, display_phi=False)
             
             if self.use_hsp:
@@ -1103,7 +1103,6 @@ class Overcooked(gym.Env):
                     assert len(self.w0) == len(self.w1) == len(SHAPED_INFOS) + 1, f"{len(self.w0)}, {len(self.w1)}, {len(SHAPED_INFOS) + 1}"
                     dense_reward = info["shaped_r_by_agent"]
                     if self.agent_idx == 0:
-                        logger.debug(self.agent_idx)
                         utility_reward = (
                             np.dot(self.w0[:-1], vec_shaped_info[0]),
                             np.dot(self.w1[:-1], vec_shaped_info[1])
@@ -1117,7 +1116,7 @@ class Overcooked(gym.Env):
                         utility_r_by_agent = [utility_reward[0], utility_reward[1]]
                         hidden_r_by_agent = [hidden_reward[0], hidden_reward[1]]
                     else:
-                        logger.debug(self.agent_idx)
+                        
                         utility_reward = (
                             np.dot(self.w1[:-1], vec_shaped_info[0]),
                             np.dot(self.w0[:-1], vec_shaped_info[1])

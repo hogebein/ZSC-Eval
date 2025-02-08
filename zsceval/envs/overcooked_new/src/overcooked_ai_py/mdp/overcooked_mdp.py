@@ -1439,12 +1439,14 @@ class OvercookedGridworld(object):
             elif terrain_type == "O" and player.held_object is None:
                 self.log_object_pickup(events_infos, new_state, "onion", pot_states, player_idx)
                 shaped_info[player_idx][f"pickup_onion_from_O"] += 1
+                shaped_reward[player_idx] += self.reward_shaping_params["INGREDIENT_PICKUP_REW"]
                 # Onion pickup from dispenser
                 obj = ObjectState("onion", pos)
                 player.set_object(obj)
 
             elif terrain_type == "T" and player.held_object is None:
                 shaped_info[player_idx][f"pickup_tomato_from_T"] += 1
+                shaped_reward[player_idx] += self.reward_shaping_params["INGREDIENT_PICKUP_REW"]
                 # Tomato pickup from dispenser
                 player.set_object(ObjectState("tomato", pos))
             elif terrain_type == "D" and player.held_object is None:

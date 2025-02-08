@@ -42,7 +42,7 @@ class OvercookedRunner(Runner):
                     rnn_states_critic,
                 ) = self.collect(step)
 
-                logger.debug(actions)
+                #logger.debug(actions)
 
                 if self.all_args.random_index == False and self.all_args.fixed_index==1:
                     actions[0][0], actions[0][1] = actions[0][1], actions[0][0]

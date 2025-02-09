@@ -118,7 +118,10 @@ class PartialPolicyEnv:
 
                     if self.all_args.use_reactive and "reactive" in policy_info:     
                         self.policy_reactive[a] = policy_info["reactive"]
-                    
+                
+        logger.debug(self.policy_name)
+        logger.debug(self.policy_utility)
+
     def step(self, actions):
 
         def reaction_filter(_utility, agent_id):
@@ -130,8 +133,8 @@ class PartialPolicyEnv:
             if _utility == None:
                 return False
 
-            if self.all_args.filter_type == 0:
 
+            if self.all_args.filter_type == 0:
                 # CASE_PLATE_PLACEMENT
                 # P : Agent that likes to place plates by itsself 
                 if _utility[31] > 0:
@@ -147,7 +150,7 @@ class PartialPolicyEnv:
                     # Complain when the opponent has taken a plate
                     dishes_recieved_log = [i["SOUP_PICKUP"] for i in self.infos_buffer[agent_id^1]]
                     if sum(dishes_recieved_log) >= 1:
-                        #logger.debug(dishes_recieved_log)
+                        logger.debug(dishes_recieved_log)
                         return True
                     else:
                         return False
@@ -201,6 +204,7 @@ class PartialPolicyEnv:
                 return [4]
             # MOVE IN RANDOM DIRECTION
             else:
+                #logger.debug("move")
                 if self.FLAG:
                     action = 0
                     self.FLAG = True
@@ -252,6 +256,7 @@ class PartialPolicyEnv:
                 if self.all_args.use_reactive and self.policy_reactive[a]:
                     filter_result = reaction_filter(self.policy_utility[a], a)
                     if filter_result:
+                        #logger.debug("reaction")
                         reaction[a] = 1
                         actions[a] = reaction_planner()
                     else:

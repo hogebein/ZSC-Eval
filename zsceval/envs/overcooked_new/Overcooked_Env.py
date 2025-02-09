@@ -1379,7 +1379,7 @@ class Overcooked(gym.Env):
             imageio.mimsave(
                 save_path,
                 imgs,
-                duration=0.05,
+                duration=1,
             )
             print(f"save gifs in {save_path}")
             imgs_dir = os.listdir(save_dir)

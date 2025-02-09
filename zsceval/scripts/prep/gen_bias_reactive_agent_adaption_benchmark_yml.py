@@ -45,12 +45,11 @@ if __name__ == "__main__":
             for i, exp_i in enumerate(s_exps):
 
                 if args.stage == 1:
-                    model_name = f"hsp{exp_i+1}_final_actor"
+                    model_name = f"hsp{exp_i+1}_final_w0_actor"
                 else:
                     model_name = f"{exp_i+1}"
 
-                if i > 4:
-                    continue
+
 
 #                f.write(
 #                    f"""\
@@ -67,7 +66,6 @@ bias{i+1}_final:
     policy_config_path: {l}/policy_config/mlp_policy_config.pkl
     featurize_type: ppo
     train: False
-    reactive: True
     model_path:
         actor: {l}/{args.algo}/s{args.stage}/{policy_version}/{model_name}.pt
     utility: @@{i+1}\n"""

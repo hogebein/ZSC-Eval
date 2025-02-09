@@ -216,12 +216,13 @@ if __name__ == "__main__":
         "hsp": [
             #"hsp-S2-s12",
             #"hsp-S2-s24",
+
+            #"primitive_hsp_plate_placement-S2-s5",
+            #"hsp_plate_placement_shared-S2-s5",
+            
             "hsp_plate_placement_shared-S2-s10",
-            "reactive_hsp_plate_placement_shared-S3-s10",
-            "reactive2_hsp_plate_placement_shared-S3-s10",
-            "hsp_tomato_delivery_shared-S2-s10",
-            "reactive_hsp_tomato_delivery_shared-S3-s10",
-            "reactive2_hsp_plate_placement_shared-S3-s10",
+            #"reactive_hsp_plate_placement_shared-S3-s10",
+            #"reactive2_hsp_plate_placement_shared-S3-s10",
         ],
         "traj": [
             "traj-S2-s24",

@@ -150,7 +150,7 @@ class PartialPolicyEnv:
                     # Complain when the opponent has taken a plate
                     dishes_recieved_log = [i["MOVEMENT"] for i in self.infos_buffer[agent_id^1]]
                     if sum(dishes_recieved_log) >= 1:
-                        logger.debug(dishes_recieved_log)
+                        #logger.debug(dishes_recieved_log)
                         return True
                     else:
                         return False

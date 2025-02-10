@@ -139,7 +139,7 @@ class PartialPolicyEnv:
                 # P : Agent that likes to place plates by itsself 
                 if _utility[31] > 0:
                     # Complain when the opponent places a plate
-                    dishes_placed_log = [i["MOVEMENT"] for i in self.infos_buffer[agent_id^1]]
+                    dishes_placed_log = [i["put_dish_on_X"] for i in self.infos_buffer[agent_id^1]]
                     if sum(dishes_placed_log) >= 1:
                         #logger.debug(dishes_placed_log)
                         return True
@@ -148,9 +148,9 @@ class PartialPolicyEnv:
                 # F : Agent that likes plates placed on the counter
                 elif _utility[51] > 0:
                     # Complain when the opponent has taken a plate
-                    dishes_recieved_log = [i["MOVEMENT"] for i in self.infos_buffer[agent_id^1]]
+                    dishes_recieved_log = [i["SOUP_PICKUP"] for i in self.infos_buffer[agent_id^1]]
                     if sum(dishes_recieved_log) >= 1:
-                        #logger.debug(dishes_recieved_log)
+                        logger.debug(dishes_recieved_log)
                         return True
                     else:
                         return False
@@ -257,7 +257,6 @@ class PartialPolicyEnv:
                         #logger.debug("reaction")
                         reaction[a] = 1
                         actions[a] = reaction_planner()
-                        logger.debug(actions[a])
                     else:
                         actions[a] = action_cand
                 else:

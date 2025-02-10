@@ -207,10 +207,10 @@ class PartialPolicyEnv:
                 #logger.debug("move")
                 if self.FLAG:
                     action = 0
-                    self.FLAG = True
+                    self.FLAG = False
                 else:
                     action = 1
-                    self.FLAG = False
+                    self.FLAG = True
                 return [action]
 
         def update_infos_buffer(infos):

@@ -206,10 +206,10 @@ class PartialPolicyEnv:
             else:
                 #logger.debug("move")
                 if self.FLAG:
-                    action = 0
+                    action = 2
                     self.FLAG = False
                 else:
-                    action = 1
+                    action = 3
                     self.FLAG = True
                 return [action]
 

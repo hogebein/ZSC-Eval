@@ -205,8 +205,7 @@ class PartialPolicyEnv:
             # MOVE SOUTH
             elif r == 1:
                 #logger.debug("move")
-                if self.FLAG:
-                    return [1]
+                return [1]
             
             #MOVE EAST・WEST ALTERNATELY
             else:

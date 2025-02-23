@@ -202,7 +202,13 @@ class PartialPolicyEnv:
             # STAY
             if r == 0:
                 return [4]
-            # MOVE IN RANDOM DIRECTION
+            # MOVE SOUTH
+            elif r == 1:
+                #logger.debug("move")
+                if self.FLAG:
+                    return [1]
+            
+            #MOVE EAST・WEST ALTERNATELY
             else:
                 #logger.debug("move")
                 if self.FLAG:

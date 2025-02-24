@@ -82,8 +82,8 @@ elif [[ ${population_size} == 20 ]]; then
         filter_type=1
     else
         pop="hsp_plate_placement_shared"
-        reward_shaping_horizon="10e7"
-        num_env_steps="10e7"
+        reward_shaping_horizon="12e7"
+        num_env_steps="12e7"
         use_base_shaping_r=true
         
         filter_type=0
@@ -119,17 +119,18 @@ num_agents=2
 algo="adaptive"
 exp="reactive_${pop}-S3-s${population_size}"
 stage="S2"
-seed_begin=3
+seed_begin=1
 seed_max=3
 path=../../policy_pool
 
 export POLICY_POOL=${path}
 
-n_training_threads=80
+n_training_threads=200
 
 ulimit -n 65536
 
 reaction_type=1
+cuda=0
 
 echo "env is ${env}, layout is ${layout}, algo is ${algo}, pop is ${pop}, exp is ${exp}, seed from ${seed_begin} to ${seed_max}, stage is ${stage}"
 for seed in $(seq ${seed_begin} ${seed_max});
@@ -152,7 +153,7 @@ do
     	--use_opponent_utility \
     	--use_base_shaping_r \
         --fixed_index ${index} \
-        --cuda_id 0 \
+        --cuda_id ${cuda} \
         --reaction_type ${reaction_type} \
         --filter_type ${filter_type}
 	    
@@ -172,7 +173,7 @@ do
     	--use_reactive \
         --use_opponent_utility \
         --fixed_index ${index} \
-	    --cuda_id 0 \
+	    --cuda_id ${cuda} \
         --reaction_type ${reaction_type} \
         --filter_type ${filter_type}
 

@@ -222,12 +222,22 @@ def main(args):
     # assert all_args.n_eval_rollout_threads % (num_population_agents * 2) == 0, num_population_agents
     assert all_args.eval_episodes % all_args.n_eval_rollout_threads == 0
     map_ea2p = dict()
-    for e in range(all_args.n_eval_rollout_threads):
-        map_ea2p[(e, 0)] = all_args.agent_name
-        map_ea2p[(e, 1)] = population_agents[e % num_population_agents]
-    #for e in range(all_args.n_eval_rollout_threads // 2, all_args.n_eval_rollout_threads):
-    #    map_ea2p[(e, 0)] = population_agents[e % num_population_agents]
-    #    map_ea2p[(e, 1)] = all_args.agent_name
+    if all_args.fixed_index == 0:
+        for e in range(all_args.n_eval_rollout_threads):
+            map_ea2p[(e, 0)] = all_args.agent_name
+            map_ea2p[(e, 1)] = population_agents[e % num_population_agents]
+    elif all_args.fixed_index == 1:
+        for e in range(all_args.n_eval_rollout_threads):
+            map_ea2p[(e, 0)] = population_agents[e % num_population_agents]
+            map_ea2p[(e, 1)] = all_args.agent_name
+    else:
+        for e in range(all_args.n_eval_rollout_threads // 2):
+            map_ea2p[(e, 0)] = all_args.agent_name
+            map_ea2p[(e, 1)] = population_agents[e % num_population_agents]
+        for e in range(all_args.n_eval_rollout_threads // 2, all_args.n_eval_rollout_threads):
+            map_ea2p[(e, 0)] = population_agents[e % num_population_agents]
+            map_ea2p[(e, 1)] = all_args.agent_name
+
     runner.policy.set_map_ea2p(map_ea2p)
     runner.population_size = all_args.population_size
     # logger.info(f"map_ea2p:\n{pformat(map_ea2p)}")

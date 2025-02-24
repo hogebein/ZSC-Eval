@@ -49,7 +49,8 @@ if __name__ == "__main__":
                 else:
                     model_name = f"{exp_i+1}"
 
-
+                if i < 5:
+                    continue
 
 #                f.write(
 #                    f"""\

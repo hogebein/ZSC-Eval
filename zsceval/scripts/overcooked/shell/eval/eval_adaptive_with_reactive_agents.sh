@@ -36,7 +36,10 @@ elif [[ $2 == "hsp" ]];
 then
     algorithm="hsp"
     # exps=("hsp-S2-s24" "hsp-S2-s36")
-    exps=("hsp-S2-s12" "hsp-S2-s24" "hsp-S2-s36")
+    #exps=("hsp-S2-s12" "hsp-S2-s24" "hsp-S2-s36")
+
+    exps=("hsp_onion_tomato_shared-S2-s10")
+    pop_agent_version="hsp_onion_tomato_shared"
 elif [[ $2 == "cole" ]];
 then
     algorithm="cole"
@@ -52,9 +55,9 @@ then
 elif [[ $2 == "hsp_react" ]];
 then
     algorithm="hsp"
-    exps=("hsp_plate_placement_shared-S2-s10")
+    #exps=("hsp_plate_placement_shared-S2-s10")
     #exps=("reactive_hsp_plate_placement_shared-S3-s10")
-    pop_agent_version="hsp_plate_placement_shared"
+    #pop_agent_version="hsp_plate_placement_shared"
     #exps=("hsp_plate_placement_shared-S2-s5")
     #pop_agent_version="hsp_plate_placement_shared"
 
@@ -83,7 +86,7 @@ path=../../policy_pool
 export POLICY_POOL=${path}
 
 #K=$((LAYOUTS_KS[${layout}]))
-K=5
+K=10
 bias_yml="${path}/${layout}/${pop_agent_algo}/s1/${pop_agent_version}/benchmarks-s${K}.yml"
 yml_dir=eval/eval_policy_pool/${layout}/results
 mkdir -p ${yml_dir}
@@ -98,6 +101,7 @@ eval_exp_v=$3
 
 n_seed=1
 rollout_threads=1
+fixed_index=1
 
 options=()
 
@@ -129,7 +133,7 @@ for (( i=0; i<$len; i++ )); do
             sed -e "s/agent_name/${agent_name}/g" -e "s/algorithm/${algorithm}/g" -e "s/population/${exp_name}/g" -e "s/seed/${seed}/g" "${options[@]}" "${bias_yml}" > "${yml}"
 
             python eval/eval_with_population.py --env_name ${env} --algorithm_name ${algo} --experiment_name "${eval_exp}" --layout_name "${layout}" \
-            --num_agents ${num_agents} --seed 1 --episode_length 400 --n_eval_rollout_threads "${rollout_threads}" --eval_episodes 1 --eval_stochastic --dummy_batch_size 1 \
+            --num_agents ${num_agents} --seed 1 --episode_length 400 --n_eval_rollout_threads "${rollout_threads}" --eval_episodes 20 --eval_stochastic --dummy_batch_size 1 \
             --use_proper_time_limits \
             --use_wandb \
             --store_traj \
@@ -142,7 +146,7 @@ for (( i=0; i<$len; i++ )); do
             --use_render \
             --reaction_type 1 \
             --filter_type 0 \
-            --fixed_index 0
+            --fixed_index ${fixed_index}
         else
 
             eval_exp="eval_cp-${agent_name}"
@@ -151,7 +155,7 @@ for (( i=0; i<$len; i++ )); do
             sed -e "s/agent_name/${agent_name}/g" -e "s/algorithm/${algorithm}/g" -e "s/population/${exp_name}/g" -e "s/seed/${seed}/g" "${options[@]}" "${bias_yml}" > "${yml}"
 
             python eval/eval_with_population.py --env_name ${env} --algorithm_name ${algo} --experiment_name "${eval_exp}" --layout_name "${layout}" \
-            --num_agents ${num_agents} --seed 1 --episode_length 400 --n_eval_rollout_threads "${rollout_threads}" --eval_episodes 1 --eval_stochastic --dummy_batch_size 1 \
+            --num_agents ${num_agents} --seed 1 --episode_length 400 --n_eval_rollout_threads "${rollout_threads}" --eval_episodes 20 --eval_stochastic --dummy_batch_size 1 \
             --use_proper_time_limits \
             --use_wandb \
             --store_traj \
@@ -160,7 +164,8 @@ for (( i=0; i<$len; i++ )); do
             --agent_name "${agent_name}" \
             --use_agent_policy_id \
             --use_opponent_utility \
-            --use_render
+            --use_render \
+            --fixed_index ${fixed_index}
 
         fi
 

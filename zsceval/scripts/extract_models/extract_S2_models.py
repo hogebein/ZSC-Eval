@@ -220,7 +220,10 @@ if __name__ == "__main__":
             #"primitive_hsp_plate_placement-S2-s5",
             #"hsp_plate_placement_shared-S2-s5",
             
-            "hsp_plate_placement_shared-S2-s10",
+            "primitive_hsp_onion_tomato-S2-s10",
+            "hsp_onion_tomato_shared-S2-s10"
+
+            #"hsp_plate_placement_shared-S2-s10",
             #"reactive_hsp_plate_placement_shared-S3-s10",
             #"reactive2_hsp_plate_placement_shared-S3-s10",
         ],

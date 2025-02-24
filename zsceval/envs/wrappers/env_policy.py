@@ -202,15 +202,20 @@ class PartialPolicyEnv:
             # STAY
             if r == 0:
                 return [4]
-            # MOVE IN RANDOM DIRECTION
+            # MOVE SOUTH
+            elif r == 1:
+                #logger.debug("move")
+                return [1]
+            
+            #MOVE EAST・WEST ALTERNATELY
             else:
                 #logger.debug("move")
                 if self.FLAG:
-                    action = 0
-                    self.FLAG = True
-                else:
-                    action = 1
+                    action = 2
                     self.FLAG = False
+                else:
+                    action = 3
+                    self.FLAG = True
                 return [action]
 
         def update_infos_buffer(infos):
@@ -232,8 +237,6 @@ class PartialPolicyEnv:
                         agent_diffs[key] = agent_infos[key] - self.infos_previous[a][key]
                     self.infos_buffer[a].append(agent_diffs)
                     self.infos_previous[a] = agent_infos.copy()
-
-
 
 
         reaction = [0 for _ in range(self.num_agents)]

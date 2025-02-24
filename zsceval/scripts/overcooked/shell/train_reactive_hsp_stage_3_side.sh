@@ -129,7 +129,7 @@ n_training_threads=80
 
 ulimit -n 65536
 
-reaction_type=0
+reaction_type=1
 
 echo "env is ${env}, layout is ${layout}, algo is ${algo}, pop is ${pop}, exp is ${exp}, seed from ${seed_begin} to ${seed_max}, stage is ${stage}"
 for seed in $(seq ${seed_begin} ${seed_max});

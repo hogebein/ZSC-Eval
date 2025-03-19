@@ -1,5 +1,6 @@
 import os
 import pickle
+import json
 import pprint
 import time
 import json
@@ -681,6 +682,10 @@ class Overcooked(gym.Env):
         self.reward_shaping_horizon = all_args.reward_shaping_horizon
         self.use_phi = all_args.use_phi
         self.use_hsp = all_args.use_hsp
+        self.use_expectation = all_args.use_expectation
+        self.use_reactive = all_args.use_reactive
+        self.use_opponent_utility = all_args.use_opponent_utility
+        self.use_primitive_hsp = all_args.use_primitive_hsp
         self.store_traj = getattr(all_args, "store_traj", False)
         self.rank = rank
         self.random_index = all_args.random_index
@@ -688,7 +693,13 @@ class Overcooked(gym.Env):
             self.w0 = self.string2array(all_args.w0)
             self.w1 = self.string2array(all_args.w1)
             w_dict = {"w0": f"{self.w0}", "w1": f"{self.w1}"}
+            if self.use_expectation:
+                self.we0 = self.string2array(all_args.we0)
+                self.we1 = self.string2array(all_args.we1)
+                w_dict["we0"] = f"{self.we0}"
+                w_dict["we1"] = f"{self.we1}"
             logger.debug("hsp weights:\n" + pprint.pformat(w_dict, compact=True, width=120))
+        
         self.use_available_actions = getattr(all_args, "use_available_actions", True)
         self.use_render = all_args.use_render
         self.num_agents = all_args.num_agents
@@ -705,14 +716,37 @@ class Overcooked(gym.Env):
         else:
             self.old_dynamics = old_dynamics
         mdp_params = {"layout_name": all_args.layout_name, "start_order_list": None}
-        rew_shaping_params = {
-            "PLACEMENT_IN_POT_REW": 3,
-            "DISH_PICKUP_REWARD": 3,
-            "SOUP_PICKUP_REWARD": 5,
-            "DISH_DISP_DISTANCE_REW": 0,
-            "POT_DISTANCE_REW": 0,
-            "SOUP_DISTANCE_REW": 0,
-        }
+
+        if all_args.use_base_shaping_r:
+            rew_shaping_params = {
+                "PLACEMENT_IN_POT_REW": 3,
+                "DISH_PICKUP_REWARD": 3,
+                "SOUP_PICKUP_REWARD": 5,
+                "DISH_DISP_DISTANCE_REW": 0,
+                "POT_DISTANCE_REW": 0,
+                "SOUP_DISTANCE_REW": 0,
+                "RECIEVE_DISH_REW": 0
+            }
+        elif all_args.use_placement_shaping_r:
+            rew_shaping_params = {
+                "PLACEMENT_IN_POT_REW": 0,
+                "DISH_PICKUP_REWARD": 0,
+                "SOUP_PICKUP_REWARD": 0,
+                "DISH_DISP_DISTANCE_REW": 0,
+                "POT_DISTANCE_REW": 0,
+                "SOUP_DISTANCE_REW": 0,
+                "RECIEVE_DISH_REW": 3
+            }
+        else:
+            rew_shaping_params = {
+                "PLACEMENT_IN_POT_REW": 0,
+                "DISH_PICKUP_REWARD": 0,
+                "SOUP_PICKUP_REWARD": 0,
+                "DISH_DISP_DISTANCE_REW": 0,
+                "POT_DISTANCE_REW": 0,
+                "SOUP_DISTANCE_REW": 0,
+                "RECIEVE_DISH_REW": 0
+            }
         # MARK: use reward shaping
         mdp_params.update(
             {
@@ -779,6 +813,7 @@ class Overcooked(gym.Env):
             "use_agent_policy_id", False
         )  # Add policy id for loaded policy
         self.agent_policy_id = [-1.0 for _ in range(self.num_agents)]
+        self.agent_utility = [[] for _ in range(self.num_agents)]
         self.featurize_fn_ppo = lambda state: self.base_env.lossless_state_encoding_mdp(
             state, old_dynamics=self.old_dynamics
         )  # Encoding obs for PPO
@@ -885,6 +920,13 @@ class Overcooked(gym.Env):
 
     def _set_agent_policy_id(self, agent_policy_id):
         self.agent_policy_id = agent_policy_id
+
+    def _set_agent_utility(self, utility):
+        if self.agent_idx == 0:
+            self.agent_utility = utility
+        else:
+            self.agent_utility[0] = utility[1]
+            self.agent_utility[1] = utility[0]
 
     def _gen_share_observation(self, state):
         share_obs = list(self.featurize_fn_ppo(state))
@@ -994,7 +1036,7 @@ class Overcooked(gym.Env):
 
         if self.store_traj:
             #self.traj_to_store.append(info["shaped_info_by_agent"])
-            self.traj_to_store.append(joint_action)
+            self.traj_to_store["ep_action"].append(joint_action)
 
         if self.use_phi:
             raise NotImplementedError
@@ -1004,51 +1046,177 @@ class Overcooked(gym.Env):
             shaped_reward_p0 = sparse_reward + self.reward_shaping_factor * dense_reward[0]
             shaped_reward_p1 = sparse_reward + self.reward_shaping_factor * dense_reward[1]
         else:
+            
             next_state, sparse_reward, done, info = self.base_env.step(joint_action, display_phi=False)
+            
             if self.use_hsp:
+                if self.use_expectation:
+                    shaped_info = info["shaped_info_by_agent"]
+                    vec_shaped_info = np.array(
+                        [[agent_info[k] for k in SHAPED_INFOS] for agent_info in shaped_info]
+                    ).astype(np.float32)
+                    assert len(self.w0) == len(self.w1) == len(SHAPED_INFOS) + 1
+                    dense_reward = info["shaped_r_by_agent"]
+
+                    if self.agent_idx == 0:
+                        utility_reward = (
+                            np.dot(self.w0[:-1], vec_shaped_info[0]),
+                            np.dot(self.w1[:-1], vec_shaped_info[1]),
+                            np.dot(self.we0[:-1], vec_shaped_info[1]),
+                            np.dot(self.we1[:-1], vec_shaped_info[0])
+                        )
+                        hidden_reward = (
+                            utility_reward[0] + sparse_reward * self.w0[-1],
+                            utility_reward[1] + sparse_reward * self.w1[-1],
+                            utility_reward[2] + sparse_reward * self.we0[-1],
+                            utility_reward[3] + sparse_reward * self.we1[-1],
+                        )
+                        shaped_reward_p0 = hidden_reward[0] + hidden_reward[2]
+                        shaped_reward_p1 = hidden_reward[1] + hidden_reward[3] + self.reward_shaping_factor * dense_reward[1]
+                        utility_r_by_agent = [utility_reward[0] + utility_reward[2], 0]
+                        hidden_r_by_agent = [hidden_reward[0] + hidden_reward[2], 0]
+                    else:
+                        utility_reward = (
+                            np.dot(self.w0[:-1], vec_shaped_info[0]),
+                            np.dot(self.w1[:-1], vec_shaped_info[1]),
+                            np.dot(self.we0[:-1], vec_shaped_info[1]),
+                            np.dot(self.we1[:-1], vec_shaped_info[0])
+                        )
+                        hidden_reward = (
+                            utility_reward[0] + sparse_reward * self.w1[-1],
+                            utility_reward[1] + sparse_reward * self.w0[-1],
+                            utility_reward[2] + sparse_reward * self.we1[-1],
+                            utility_reward[3] + sparse_reward * self.we0[-1],
+                        )
+                        shaped_reward_p0 = hidden_reward[0] + hidden_reward[2] + self.reward_shaping_factor * dense_reward[0]
+                        shaped_reward_p1 = hidden_reward[1] + hidden_reward[3]
+                        utility_r_by_agent = [0, utility_reward[1] + utility_reward[3]]
+                        hidden_r_by_agent = [0, hidden_reward[1] + hidden_reward[3]]
+                else:
+                    
+                    shaped_info = info["shaped_info_by_agent"]
+                    vec_shaped_info = np.array(
+                        [[agent_info[k] for k in SHAPED_INFOS] for agent_info in shaped_info]
+                    ).astype(np.float32)
+                    assert len(self.w0) == len(self.w1) == len(SHAPED_INFOS) + 1, f"{len(self.w0)}, {len(self.w1)}, {len(SHAPED_INFOS) + 1}"
+                    dense_reward = info["shaped_r_by_agent"]
+                    if self.agent_idx == 0:
+                        utility_reward = (
+                            np.dot(self.w0[:-1], vec_shaped_info[0]),
+                            np.dot(self.w1[:-1], vec_shaped_info[1])
+                        )
+                        hidden_reward = (
+                            utility_reward[0] + sparse_reward * self.w0[-1],
+                            utility_reward[1] + sparse_reward * self.w1[-1],
+                        )
+                        shaped_reward_p0 = hidden_reward[0]
+                        shaped_reward_p1 = hidden_reward[1] + self.reward_shaping_factor * dense_reward[1]
+                        utility_r_by_agent = [utility_reward[0], utility_reward[1]]
+                        hidden_r_by_agent = [hidden_reward[0], hidden_reward[1]]
+                    else:
+                        utility_reward = (
+                            np.dot(self.w1[:-1], vec_shaped_info[0]),
+                            np.dot(self.w0[:-1], vec_shaped_info[1])
+                        )
+                        hidden_reward = (
+                            utility_reward[0] + sparse_reward * self.w1[-1],
+                            utility_reward[1] + sparse_reward * self.w0[-1],
+                        )
+                        shaped_reward_p0 = hidden_reward[0] + self.reward_shaping_factor * dense_reward[0]
+                        shaped_reward_p1 = hidden_reward[1]
+                        utility_r_by_agent = [utility_reward[0], utility_reward[1]]
+                        hidden_r_by_agent = [hidden_reward[0], hidden_reward[1]]
+
+            elif self.use_opponent_utility:
+
+                assert self.agent_utility[0]!=None or self.agent_utility[1]!=None 
+
                 shaped_info = info["shaped_info_by_agent"]
                 vec_shaped_info = np.array(
                     [[agent_info[k] for k in SHAPED_INFOS] for agent_info in shaped_info]
                 ).astype(np.float32)
-                assert len(self.w0) == len(self.w1) == len(SHAPED_INFOS) + 1
+                # assert len(self.agent_utility) == len(self.w1) == len(SHAPED_INFOS) + 1
                 dense_reward = info["shaped_r_by_agent"]
+
+                #logger.debug(self.agent_idx)
+                #logger.debug(self.agent_utility)
+
+
+                utility_r_by_agent = [0, 0]
+                hidden_r_by_agent = [0, 0]
+                shaped_r_by_agent = [0, 0]
+
+                # logger.debug(self.agent_utility)
                 if self.agent_idx == 0:
-                    hidden_reward = (
-                        np.dot(self.w0[:-1], vec_shaped_info[0]) + sparse_reward * self.w0[-1],
-                        np.dot(self.w1[:-1], vec_shaped_info[1]) + sparse_reward * self.w1[-1],
-                    )
-                    shaped_reward_p0 = hidden_reward[0]
-                    shaped_reward_p1 = hidden_reward[1] + self.reward_shaping_factor * dense_reward[1]
-                else:
-                    hidden_reward = (
-                        np.dot(self.w1[:-1], vec_shaped_info[0]) + sparse_reward * self.w1[-1],
-                        np.dot(self.w0[:-1], vec_shaped_info[1]) + sparse_reward * self.w0[-1],
-                    )
-                    shaped_reward_p0 = hidden_reward[0] + self.reward_shaping_factor * dense_reward[0]
-                    shaped_reward_p1 = hidden_reward[1]
+
+                    for a, utility in enumerate(self.agent_utility):
+                        
+                        if utility != None:
+
+                            utility_r_by_agent[a] =  np.dot(self.agent_utility[a][:-1], vec_shaped_info[a])
+                            hidden_r_by_agent[a] = utility_r_by_agent[a] + sparse_reward * self.agent_utility[a][-1]
+
+                            if self.use_primitive_hsp:
+                                shaped_r_by_agent[a^1] = sparse_reward + self.reward_shaping_factor * dense_reward[a]
+                            else:
+                                shaped_r_by_agent[a^1] = hidden_r_by_agent[a] + self.reward_shaping_factor * dense_reward[a]
+                    
+
+                elif self.agent_idx == 1:
+                    
+                    for a, utility in enumerate(self.agent_utility):
+                        
+                        if utility != None:
+
+                            utility_r_by_agent[a] =  np.dot(self.agent_utility[a][:-1], vec_shaped_info[a^1])
+                            hidden_r_by_agent[a] = utility_r_by_agent[a] + sparse_reward * self.agent_utility[a][-1]
+
+                            if self.use_primitive_hsp:
+                                shaped_r_by_agent[a^1] = sparse_reward + self.reward_shaping_factor * dense_reward[a^1]
+                            else:
+                                shaped_r_by_agent[a^1] = hidden_r_by_agent[a] + self.reward_shaping_factor * dense_reward[a^1]
+                    
+                else:  
+
+                    raise NotImplementedError
+
+                shaped_reward_p0 = shaped_r_by_agent[0]
+                shaped_reward_p1 = shaped_r_by_agent[1]
+
             else:
+
                 dense_reward = info["shaped_r_by_agent"]
                 shaped_reward_p0 = sparse_reward + self.reward_shaping_factor * dense_reward[0]
                 shaped_reward_p1 = sparse_reward + self.reward_shaping_factor * dense_reward[1]
-
-        for i in range(2):
-            shaped_info = info["shaped_info_by_agent"]
-            for k, v in shaped_info[i].items():
-                self.cumulative_shaped_info[i][k] += v
-        info["shaped_info_by_agent"] = self.cumulative_shaped_info
-
-        if self.store_traj:
-            #self.traj_to_store.append(info["shaped_info_by_agent"])
-            self.traj_to_store.append(self.base_env.state.to_dict())
+                utility_r_by_agent = [0, 0]
+                hidden_r_by_agent = [0,0]
+        
 
         reward = [[shaped_reward_p0], [shaped_reward_p1]]
 
         if self.agent_idx == 1:
             reward = [[shaped_reward_p1], [shaped_reward_p0]]
 
+
         self.history_sa = self.history_sa[1:] + [
             [next_state, None],
         ]
+
+        for i in range(2):
+            shaped_info = info["shaped_info_by_agent"]
+            for k, v in shaped_info[i].items():
+                self.cumulative_shaped_info[i][k] += v
+            self.cumulative_utility_r[i] += utility_r_by_agent[i]
+            self.cumulative_hidden_r[i] += hidden_r_by_agent[i]
+            self.cumulative_shaped_r[i] +=  reward[i][0]
+        
+        info["shaped_info_by_agent"] = self.cumulative_shaped_info
+        info["total_utility_reward_by_agent"] = self.cumulative_utility_r
+        info["total_hidden_reward_by_agent"] = self.cumulative_hidden_r
+
+        if self.store_traj:
+            #self.traj_to_store.append(info["shaped_info_by_agent"])
+            self.traj_to_store["ep_state"].append(self.base_env.state.to_dict())
 
         # stuck
         stuck_info = []
@@ -1074,14 +1242,25 @@ class Overcooked(gym.Env):
                 self.traj["ep_returns"].append(info["episode"]["ep_sparse_r"])
                 self.traj["mdp_params"].append(self.base_mdp.mdp_params)
                 self.traj["env_params"].append(self.base_env.env_params)
-                if self.rank is not None and self.rank <= 1:
+                if self.rank is None or self.rank <= 1:
                     self.render()
         if done:
             if self.store_traj:
                 self._store_trajectory()
-            if self.use_hsp:
-                info["episode"]["ep_hidden_r_by_agent"] = self.cumulative_hidden_reward
+
+            info["episode"]["ep_hidden_r_by_agent"] = self.cumulative_hidden_r
+            info["episode"]["ep_utility_r_by_agent"] = self.cumulative_utility_r
+            info["episode"]["ep_shaped_r_by_agent"] = self.cumulative_shaped_r
+
+            info["episode"]["ep_shaped_r"] = sum(self.cumulative_shaped_r)
+            info["episode"]["ep_utility_r"] = sum(self.cumulative_utility_r)
+            info["episode"]["ep_hidden_r"] = sum(self.cumulative_hidden_r)
             info["bad_transition"] = True
+
+            #logger.debug(self.cumulative_hidden_r)
+            #logger.debug(self.cumulative_utility_r)
+            #logger.debug(self.cumulative_shaped_r)
+
         else:
             info["bad_transition"] = False
 
@@ -1125,9 +1304,18 @@ class Overcooked(gym.Env):
             self.step_count = 0
             self.base_env.reset()
             self.cumulative_shaped_info = [defaultdict(int), defaultdict(int)]
+            self.cumulative_shaped_r = np.zeros(2)
+            self.cumulative_utility_r = np.zeros(2)
+            self.cumulative_hidden_r = np.zeros(2)
 
         if self.random_index:
+            old_idx = self.agent_idx
             self.agent_idx = np.random.choice([0, 1])
+            if old_idx != self.agent_idx:
+                temp = self.agent_utility[self.agent_idx]
+                old_utility = self.agent_utility[old_idx]
+                self.agent_utility[self.agent_idx] = old_utility
+                self.agent_utility[old_idx] = temp
 
         for a in range(self.num_agents):
             if self.script_agent[a] is not None:
@@ -1146,11 +1334,10 @@ class Overcooked(gym.Env):
             self.init_traj()
 
         if self.store_traj:
-            self.traj_to_store = []
-            self.traj_to_store.append(self.base_env.state.to_dict())
-
-        if self.use_hsp:
-            self.cumulative_hidden_reward = np.zeros(2)
+            self.traj_to_store = {}
+            self.traj_to_store["ep_state"] = []
+            self.traj_to_store["ep_action"] = []
+            self.traj_to_store["ep_state"].append(self.base_env.state.to_dict())
 
         share_obs = self._gen_share_observation(self.base_env.state)
         available_actions = self._get_available_actions()
@@ -1193,7 +1380,7 @@ class Overcooked(gym.Env):
             imageio.mimsave(
                 save_path,
                 imgs,
-                duration=0.05,
+                duration=1,
             )
             print(f"save gifs in {save_path}")
             imgs_dir = os.listdir(save_dir)
@@ -1208,11 +1395,7 @@ class Overcooked(gym.Env):
         if not os.path.exists(f"{self.run_dir}/trajs_store/{self.layout_name}/"):
             os.makedirs(f"{self.run_dir}/trajs_store/{self.layout_name}/", exist_ok=True)
         save_dir = f"{self.run_dir}/trajs_store/{self.layout_name}/traj_{self.rank}_{self.traj_num}.json"
-        # save_dir = f"{self.run_dir}/trajs_store/{self.layout_name}/traj_{self.rank}_{self.traj_num}.pkl"
-        with open(save_dir, "w") as f:
-            json.dump(self.traj_to_store, f)           
-        # pickle.dump(self.traj_to_store, open(save_dir, "wb"))
-        
+        json.dump(self.traj_to_store, open(save_dir, "w"))
         
         #if not os.path.exists(f"{self.run_dir}/trajs/{self.layout_name}/"):
         #    os.makedirs(f"{self.run_dir}/trajs/{self.layout_name}/", exist_ok=True)

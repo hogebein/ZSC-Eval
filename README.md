@@ -241,6 +241,8 @@ python extract_models/extract_S2_models.py {layout} overcooked
 1. generate S2 ymls
 ```shell
 python prep/gen_hsp_S2_ymls.py -l ${layout} -k {num_bias_agents} -s {mep_stage_1_population_size} -S {population_size}
+
+ex. python prep/gen_hsp_S2_ymls.py -l random3_m -k 72 -s 10 -S 24 --bias_agent_version hsp_plate
 ```
 2. train S2
 ```shell

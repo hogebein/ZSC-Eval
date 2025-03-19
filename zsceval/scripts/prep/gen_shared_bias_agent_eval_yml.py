@@ -1,11 +1,13 @@
 import os
 import sys
+import re
 
 from loguru import logger
 
 if __name__ == "__main__":
     layout = sys.argv[1]
     exp = sys.argv[2]
+
     if layout == "all":
         layouts = [
             "random0",
@@ -35,6 +37,7 @@ if __name__ == "__main__":
             "w",
             encoding="utf-8",
         )
+        
         for a_i in range(num_agents):
             yml.write(
                 f"""
@@ -43,7 +46,7 @@ agent{a_i}:
     featurize_type: ppo
     train: False
     model_path:
-        actor: {layout}/hsp/s1/{exp}/agent{a_i}_actor.pt
+        actor: {layout}/hsp/s1/{exp}/xxx.pt
     """
             )
         yml.close()

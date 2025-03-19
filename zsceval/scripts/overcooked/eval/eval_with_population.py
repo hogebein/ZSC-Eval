@@ -15,6 +15,7 @@ from zsceval.envs.overcooked.Overcooked_Env import Overcooked
 from zsceval.envs.overcooked_new.Overcooked_Env import Overcooked as Overcooked_new
 from zsceval.overcooked_config import get_overcooked_args
 from zsceval.utils.train_util import setup_seed
+from zsceval.envs.wrappers.env_policy import PartialPolicyEnv
 
 
 def make_eval_env(all_args, run_dir):
@@ -25,6 +26,7 @@ def make_eval_env(all_args, run_dir):
                     env = Overcooked(all_args, run_dir, rank=rank, evaluation=True)
                 else:
                     env = Overcooked_new(all_args, run_dir, rank=rank)
+                env = PartialPolicyEnv(all_args, env)
             else:
                 print("Can not support the " + all_args.env_name + "environment.")
                 raise NotImplementedError
@@ -73,6 +75,14 @@ def parse_args(args, parser):
         type=str,
         help="eval/results/{layout}/{exp}",
         required=True,
+    )
+
+    # fixed policy actions inside env threads
+    parser.add_argument(
+        "--use_policy_in_env",
+        default=True,
+        action="store_false",
+        help="Use loaded policy to move in env threads.",
     )
 
     # all_args = parser.parse_known_args(args)[0]
@@ -197,22 +207,37 @@ def main(args):
 
     # load population
     logger.info(f"population_yaml_path: {all_args.population_yaml_path}")
-    featurize_type = runner.policy.load_population(all_args.population_yaml_path, evaluation=True)
+
+    if all_args.use_opponent_utility:
+        featurize_type = runner.policy.load_population(all_args.population_yaml_path, evaluation=True, utility=True)
+
+    else:
+        featurize_type = runner.policy.load_population(all_args.population_yaml_path, evaluation=True)
 
     # configure mapping from (env_id, agent_id) to policy_name
     num_population_agents = all_args.population_size - 1
     population_agents = [name for name, _, _, _ in runner.policy.all_policies() if all_args.agent_name not in name]
     # logger.info(population_agents)
     # logger.info(len(population_agents))
-    assert all_args.n_eval_rollout_threads % (num_population_agents * 2) == 0, num_population_agents
+    # assert all_args.n_eval_rollout_threads % (num_population_agents * 2) == 0, num_population_agents
     assert all_args.eval_episodes % all_args.n_eval_rollout_threads == 0
     map_ea2p = dict()
-    for e in range(all_args.n_eval_rollout_threads // 2):
-        map_ea2p[(e, 0)] = all_args.agent_name
-        map_ea2p[(e, 1)] = population_agents[e % num_population_agents]
-    for e in range(all_args.n_eval_rollout_threads // 2, all_args.n_eval_rollout_threads):
-        map_ea2p[(e, 0)] = population_agents[e % num_population_agents]
-        map_ea2p[(e, 1)] = all_args.agent_name
+    if all_args.fixed_index == 0:
+        for e in range(all_args.n_eval_rollout_threads):
+            map_ea2p[(e, 0)] = all_args.agent_name
+            map_ea2p[(e, 1)] = population_agents[e % num_population_agents]
+    elif all_args.fixed_index == 1:
+        for e in range(all_args.n_eval_rollout_threads):
+            map_ea2p[(e, 0)] = population_agents[e % num_population_agents]
+            map_ea2p[(e, 1)] = all_args.agent_name
+    else:
+        for e in range(all_args.n_eval_rollout_threads // 2):
+            map_ea2p[(e, 0)] = all_args.agent_name
+            map_ea2p[(e, 1)] = population_agents[e % num_population_agents]
+        for e in range(all_args.n_eval_rollout_threads // 2, all_args.n_eval_rollout_threads):
+            map_ea2p[(e, 0)] = population_agents[e % num_population_agents]
+            map_ea2p[(e, 1)] = all_args.agent_name
+
     runner.policy.set_map_ea2p(map_ea2p)
     runner.population_size = all_args.population_size
     # logger.info(f"map_ea2p:\n{pformat(map_ea2p)}")
@@ -234,9 +259,9 @@ def main(args):
 
     if all_args.use_wandb:
         run.finish()
-    else:
-        runner.writter.export_scalars_to_json(str(runner.log_dir + "/summary.json"))
-        runner.writter.close()
+    # else:
+        # runner.writter.export_scalars_to_json(str(runner.log_dir + "/summary.json"))
+        # runner.writter.close()
 
 
 if __name__ == "__main__":

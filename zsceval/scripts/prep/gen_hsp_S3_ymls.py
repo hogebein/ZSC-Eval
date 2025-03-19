@@ -2,6 +2,7 @@ import argparse
 import glob
 import json
 import os
+import re
 import random
 from collections import defaultdict
 from itertools import permutations
@@ -70,12 +71,13 @@ def parse_args():
     parser.add_argument("-e", "--env", type=str, default="Overcooked")
     parser.add_argument("--num_agents", type=int, default=2)
     parser.add_argument("-l", "--layout", type=str, required=True, help="layout name")
-    parser.add_argument("-k", type=int, default=6, help="number of selected policies")
-    parser.add_argument("-s", type=int, default=5, help="population size of S1")
+    parser.add_argument("-k", type=int, default=6, help="number of selected bias policies")
+    parser.add_argument("-s", type=int, default=5, help="population size of MEP S1")
     parser.add_argument("-S", type=int, default=12, help="population size of training")
     parser.add_argument("--eval_result_dir", type=str, default="eval/results")
     parser.add_argument("--policy_pool_path", type=str, default="../policy_pool")
-    parser.add_argument("--bias_agent_version", type=str, default="hsp")
+    parser.add_argument("-V", "--bias_agent_version", type=str, default="hsp")
+    parser.add_argument("--policy_pool_version", type=str, default=None)
 
     args = parser.parse_args()
     return args
@@ -128,7 +130,7 @@ if __name__ == "__main__":
         ]
 
     events = dict()
-    eval_result_dir = os.path.join(args.env.lower(), args.eval_result_dir, layout, "bias")
+    eval_result_dir = os.path.join(args.env.lower(), args.eval_result_dir, layout, "bias_cp")
     logger.info(f"eval result dir {eval_result_dir}")
     logfiles = glob.glob(f"{eval_result_dir}/eval*{policy_version}*.json")
     logfiles = [l_f for l_f in logfiles if "mid" not in l_f]
@@ -147,22 +149,26 @@ if __name__ == "__main__":
                 continue
         with open(logfile, "r", encoding="utf-8") as f:
             eval_result = json.load(f)
-            hsp_exp_name = os.path.basename(logfile).split("eval-")[1].split(".")[0]
+            #hsp_exp_name = os.path.basename(logfile).split("eval-")[1].split(".")[0]
+            hsp_exp_name = re.findall(r"(.+\d+)_final_.+_final_", next(iter(eval_result)))[0]
             agents = []
             for a_i in range(args.num_agents):
                 # example: hsp36_final_w0-hsp36_final_w1-hsp36_final_w2
                 agents.append(f"{hsp_exp_name}_final_w{a_i}")
             exp_name = f"{hsp_exp_name}"
             full_exp_name = "-".join(agents)
-            if eval_result[f"{full_exp_name}-eval_ep_sparse_r"] <= 0.1:
-                logger.warning(f"exp {exp_name} has 0 sparse reward")
-                exclude.add(hsp_exp_name)
-                continue
+            
+            #if eval_result[f"{full_exp_name}-eval_ep_sparse_r"] <= 0.1:
+            #    logger.warning(f"exp {exp_name} has 0 sparse reward")
+            #    exclude.add(hsp_exp_name)
+            #    continue
             event_dict = defaultdict(list)
             for k in event_types:
+                
                 # only the events of the biased agent are recorded
                 agent_names = [f"{hsp_exp_name}_final_w{a_i}" for a_i in range(args.num_agents)]
                 pairs = permutations(agent_names)
+                
                 for pair in pairs:
                     pair_name = "-".join(pair)
                     w0_i = -1
@@ -190,14 +196,16 @@ if __name__ == "__main__":
 
     exps, metric_np, df = compute_metric(events, event_types, args.num_agents)
     df.to_excel(f"{eval_result_dir}/event_count_{policy_version}.xlsx", sheet_name="Events")
-
+    
     runs = select_policies(exps, metric_np, K)
     logger.success(f"selected runs: {runs}")
 
     # generate HSP training config
     os.makedirs(f"{args.policy_pool_path}/{layout}/hsp/s2", exist_ok=True)
     mep_exp = MEP_EXPS[args.s]
+    policy_pool_version = args.policy_pool_version if args.policy_pool_version != None else policy_version
     for seed in range(1, 6):
+        logger.info(f"Writing {args.policy_pool_path}/{layout}/hsp/s2/train-s{args.S}-{args.bias_agent_version}_{mep_exp}-{seed}.yml")
         with open(
             f"{args.policy_pool_path}/{layout}/hsp/s2/train-s{args.S}-{args.bias_agent_version}_{mep_exp}-{seed}.yml",
             "w",
@@ -245,5 +253,5 @@ hsp{i+1}_final:
     featurize_type: ppo
     train: False
     model_path:
-        actor: {layout}/hsp/s1/{policy_version}/hsp{run_i}_final_w0_actor.pt\n"""
+        actor: {layout}/hsp/s1/{policy_pool_version}/hsp{run_i}_final_actor.pt\n"""
                 )

@@ -3,23 +3,25 @@ import os
 import pprint
 import socket
 import sys
+from argparse import Namespace
+from pprint import pformat, pprint
 from itertools import product
 from pathlib import Path
 
 import numpy as np
 import setproctitle
 import torch
+import yaml
 import wandb
 from loguru import logger
 
 from zsceval.config import get_config
-from zsceval.envs.env_wrappers import ShareDummyVecEnv, ShareSubprocDummyBatchVecEnv
+from zsceval.envs.env_wrappers import ChooseSubprocVecEnv,ShareDummyVecEnv, ShareSubprocDummyBatchVecEnv
 from zsceval.envs.overcooked.Overcooked_Env import Overcooked
 from zsceval.envs.overcooked_new.Overcooked_Env import Overcooked as Overcooked_new
 from zsceval.overcooked_config import get_overcooked_args
 from zsceval.utils.train_util import get_base_run_dir, setup_seed
-
-from zsceval.envs.overcooked_new.src.overcooked_ai_py.mdp.overcooked_mdp import SHAPED_INFOS
+from zsceval.envs.wrappers.env_policy import PartialPolicyEnv
 
 
 def make_train_env(all_args, run_dir):
@@ -140,79 +142,81 @@ def main(args):
             w0.append(s)
             if len(s) > 1:
                 bias_index.append(s_i)
-        if len(bias_index) > 0:
-            bias_index = np.array(bias_index)
-            logger.info(f"bias index {bias_index}")
-            w0_candidates = list(map(list, product(*w0)))
-            w0_candidates = [cand for cand in w0_candidates if sum(np.array(cand)[bias_index] != 0) <= 3]
-            logger.info(f"num w0_candidates {len(w0_candidates)}")
-            candidates_str = ""
-            for c_i in range(len(w0_candidates)):
-                candidates_str += f"{c_i+1}: {w0_candidates[c_i]}\n"
-            # logger.info(
-            #     f"w0_candidates:\n {pprint.pformat(w0_candidates, width=150, compact=True)}"
-            # )
-            logger.info(f"w0_candidates:\n{candidates_str}")
-            w0 = w0_candidates[(all_args.seed + all_args.w0_offset) % len(w0_candidates)]
-        else:
-            w0_candidates = list(map(list, product(*w0)))
-            logger.debug(f"w1_candidates:\n {pprint.pformat(w0_candidates, compact=True, width=200)}")
-            w0 = w0_candidates[(all_args.seed) % len(w0_candidates)]
-
+        bias_index = np.array(bias_index)
+        w0_candidates = list(map(list, product(*w0)))
+        w0_candidates = [cand for cand in w0_candidates if sum(np.array(cand)[bias_index] != 0) <= 3]
+        logger.info(f"bias index {bias_index}")
+        logger.info(f"num w0_candidates {len(w0_candidates)}")
+        candidates_str = ""
+        for c_i in range(len(w0_candidates)):
+            candidates_str += f"{c_i+1}: {w0_candidates[c_i]}\n"
+        # logger.info(
+        #     f"w0_candidates:\n {pprint.pformat(w0_candidates, width=150, compact=True)}"
+        # )
+        # logger.info(f"w0_candidates:\n{candidates_str}")
+        w0 = w0_candidates[(all_args.seed + all_args.w0_offset) % len(w0_candidates)]
         all_args.w0 = ""
-        w0_label = []
-        for i, s in enumerate(w0):
+        for s in w0:
             all_args.w0 += str(s) + ","
-            if int(s) != 0 and i != len(SHAPED_INFOS):
-                w0_label.append(SHAPED_INFOS[i])
-            elif i == len(SHAPED_INFOS):
-                w0_label.append("SCORE")
-
         all_args.w0 = all_args.w0[:-1]
+        logger.debug(f"w0:\n {pprint.pformat(all_args.w0, compact=True, width=200)}")
 
         w1 = []
-        bias_index = []
-        for s_i, s in enumerate(all_args.w1.split(",")):
-            s = parse_value(s)
-            w1.append(s)
-            if len(s) > 1:
-                bias_index.append(s_i)
-        if len(bias_index) > 0:
-            bias_index = np.array(bias_index)
-            logger.info(f"bias index {bias_index}")
-            w1_candidates = list(map(list, product(*w1)))
-            w1_candidates = [cand for cand in w1_candidates if sum(np.array(cand)[bias_index] != 0) <= 3]
-            logger.info(f"num w1_candidates {len(w1_candidates)}")
-            candidates_str = ""
-            for c_i in range(len(w1_candidates)):
-                candidates_str += f"{c_i+1}: {w1_candidates[c_i]}\n"
-            # logger.info(
-            #     f"w1_candidates:\n {pprint.pformat(w1_candidates, width=150, compact=True)}"
-            # )
-            logger.info(f"w1_candidates:\n{candidates_str}")
-            w1 = w1_candidates[(all_args.seed + all_args.w1_offset) % len(w1_candidates)]
-        else:
-            w1_candidates = list(map(list, product(*w1)))
-            logger.debug(f"w1_candidates:\n {pprint.pformat(w1_candidates, compact=True, width=200)}")
-            w1 = w1_candidates[(all_args.seed) % len(w1_candidates)]
-    
+        for s in all_args.w1.split(","):
+            w1.append(parse_value(s))
+        w1_candidates = list(map(list, product(*w1)))
+        # logger.debug(f"w1_candidates:\n {pprint.pformat(w1_candidates, compact=True, width=200)}")
+        w1 = w1_candidates[(all_args.seed) % len(w1_candidates)]
         all_args.w1 = ""
-        w1_label = []
-        for i, s in enumerate(w1):
+        for s in w1:
             all_args.w1 += str(s) + ","
-            if int(s) != 0 and i != len(SHAPED_INFOS):
-                w1_label.append(SHAPED_INFOS[i])
-            elif i == len(SHAPED_INFOS):
-                w1_label.append("SCORE")
         all_args.w1 = all_args.w1[:-1]
+        logger.debug(f"w1:\n {pprint.pformat(all_args.w1, compact=True, width=200)}")
 
-        logger.info(f"Non 0 events in w0 : {w0_label}")
-        logger.info(f"Non 0 events in w1 : {w1_label}")
+
+        if all_args.use_expectation:
+            we0 = []
+            bias_index = []
+            for s_i, s in enumerate(all_args.we0.split(",")):
+                s = parse_value(s)
+                we0.append(s)
+                if len(s) > 1:
+                    bias_index.append(s_i)
+            bias_index = np.array(bias_index)
+            we0_candidates = list(map(list, product(*we0)))
+            we0_candidates = [cand for cand in we0_candidates if sum(np.array(cand)[bias_index] != 0) <= 3]
+            logger.info(f"bias index {bias_index}")
+            logger.info(f"num we0_candidates {len(we0_candidates)}")
+            candidates_str = ""
+            for c_i in range(len(we0_candidates)):
+                candidates_str += f"{c_i+1}: {we0_candidates[c_i]}\n"
+            # logger.info(
+            #     f"we0_candidates:\n {pprint.pformat(we0_candidates, width=150, compact=True)}"
+            # )
+            # logger.info(f"we0_candidates:\n{candidates_str}")
+            we0 = we0_candidates[(all_args.seed + all_args.we0_offset) % len(we0_candidates)]
+            all_args.we0 = ""
+            for s in we0:
+                all_args.we0 += str(s) + ","
+            all_args.we0 = all_args.we0[:-1]
+            logger.debug(f"we0:\n {pprint.pformat(all_args.we0, compact=True, width=200)}")
+
+            we1 = []
+            for s in all_args.we1.split(","):
+                we1.append(parse_value(s))
+            we1_candidates = list(map(list, product(*we1)))
+            # logger.debug(f"we1_candidates:\n {pprint.pformat(we1_candidates, compact=True, width=200)}")
+            we1 = we1_candidates[(all_args.seed) % len(we1_candidates)]
+            all_args.we1 = ""
+            for s in we1:
+                all_args.we1 += str(s) + ","
+            all_args.we1 = all_args.we1[:-1]
+            logger.debug(f"we1:\n {pprint.pformat(all_args.we1, compact=True, width=200)}")
 
     # cuda
     if all_args.cuda and torch.cuda.is_available():
         print("choose to use gpu...")
-        device = torch.device(f"cuda:{all_args.cuda_id}")
+        device = torch.device("cuda:0")
         torch.set_num_threads(all_args.n_training_threads)
         if all_args.cuda_deterministic:
             torch.backends.cudnn.benchmark = False
@@ -278,6 +282,8 @@ def main(args):
         + str(all_args.user_name)
     )
 
+    
+
     # seed
     # torch.manual_seed(all_args.seed)
     # torch.cuda.manual_seed_all(all_args.seed)
@@ -327,3 +333,35 @@ if __name__ == "__main__":
     logger.add(sys.stdout, level="DEBUG")
     # logger.add(sys.stdout, level="INFO")
     main(sys.argv[1:])
+
+
+# Add initial bias agent to pool
+    policy_config_path = os.path.join(
+        os.environ["POLICY_POOL"],
+        f"{all_args.layout_name}/policy_config/mlp_policy_config.pkl"
+    )
+    policy_config = list(
+        pickle.load(open(policy_config_path, "rb"))
+    )
+    share_observation_space = (
+        config["envs"].share_observation_space[0] if config["all_args"].use_centralized_V else config["envs"].observation_space[0]
+    )
+    print(f"1st {share_observation_space.shape}")
+    model_config = {
+        "policy_config_path" : policy_config_path,
+        "featurize_type" : "ppo",
+        "train" : True,
+    }
+    runner.policy.register_policy(
+        policy_name="hsp_cp",
+        policy=R_MAPPOPolicy(
+            config["all_args"],
+            config["envs"].observation_space[0],
+            share_observation_space,
+            config["envs"].action_space[0],
+            config["device"],
+        ), 
+        policy_config=policy_config,
+        policy_train=True,
+        policy_info=["hsp_cp", model_config]
+    )

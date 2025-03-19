@@ -47,6 +47,7 @@ class TrainerPool:
             policy_train,
         ) in self.policy_pool.all_policies():
             # use the same name for trainer and policy
+
             trainer_name = policy_name
             trainer_cls, _ = make_trainer_policy_cls(
                 policy_config[0].algorithm_name,  # mappo or rmappo
@@ -134,6 +135,7 @@ class TrainerPool:
         obs: np.ndarray,
         available_actions: np.ndarray = None,
     ):
+
         assert self.__initialized
         for trainer_name in self.active_trainers:
             # extract corresponding (e, a) and add num_agent=1 dimension
@@ -167,6 +169,7 @@ class TrainerPool:
         assert self.__initialized
         actions = np.full((self.n_rollout_threads, self.num_agents), fill_value=None).tolist()
         self.step_data = dict()
+        agent_trainers = {}
         for trainer_name in self.active_trainers:
             self.trainer_total_num_steps[trainer_name] += self.control_agent_count[trainer_name]
             self.train_infos[f"{trainer_name}-total_num_steps"] = self.trainer_total_num_steps[trainer_name]
@@ -210,6 +213,8 @@ class TrainerPool:
 
             for i, (e, a) in enumerate(self.control_agents[trainer_name]):
                 actions[e][a] = action[i][0]
+
+
         return actions
 
     def insert_data(

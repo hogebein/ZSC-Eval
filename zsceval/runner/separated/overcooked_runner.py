@@ -144,12 +144,14 @@ class OvercookedRunner(Runner):
                         for a in range(self.num_agents):
                             env_infos[f"ep_sparse_r_by_agent{a}"].append(info["episode"]["ep_sparse_r_by_agent"][a])
                             env_infos[f"ep_shaped_r_by_agent{a}"].append(info["episode"]["ep_shaped_r_by_agent"][a])
-                            if "ep_hidden_r_by_agent" in info["episode"]:
-                                env_infos[f"ep_hidden_r_by_agent{a}"].append(info["episode"]["ep_hidden_r_by_agent"][a])
+                            env_infos[f"ep_utility_r_by_agent{a}"].append(info["episode"]["ep_utility_r_by_agent"][a])
+                            env_infos[f"ep_hidden_r_by_agent{a}"].append(info["episode"]["ep_hidden_r_by_agent"][a])
                             for i, k in enumerate(shaped_info_keys):
                                 env_infos[f"ep_{k}_by_agent{a}"].append(info["episode"]["ep_category_r_by_agent"][a][i])
                         env_infos["ep_sparse_r"].append(info["episode"]["ep_sparse_r"])
                         env_infos["ep_shaped_r"].append(info["episode"]["ep_shaped_r"])
+                        env_infos["ep_utility_r"].append(info["episode"]["ep_utility_r"])
+                        env_infos["ep_hidden_r"].append(info["episode"]["ep_hidden_r"])
 
                 self.log_train(train_infos, total_num_steps)
                 self.log_env(env_infos, total_num_steps)
@@ -328,16 +330,23 @@ class OvercookedRunner(Runner):
             for a in range(self.num_agents):
                 eval_env_infos[f"eval_ep_sparse_r_by_agent{a}"].append(eval_info["episode"]["ep_sparse_r_by_agent"][a])
                 eval_env_infos[f"eval_ep_shaped_r_by_agent{a}"].append(eval_info["episode"]["ep_shaped_r_by_agent"][a])
+                eval_env_infos[f"eval_ep_utility_r_by_agent{a}"].append(eval_info["episode"]["ep_utility_r_by_agent"][a])
+                eval_env_infos[f"eval_ep_hidden_r_by_agent{a}"].append(eval_info["episode"]["ep_hidden_r_by_agent"][a])
                 for i, k in enumerate(shaped_info_keys):
                     eval_env_infos[f"eval_ep_{k}_by_agent{a}"].append(
                         eval_info["episode"]["ep_category_r_by_agent"][a][i]
                     )
             eval_env_infos["eval_ep_sparse_r"].append(eval_info["episode"]["ep_sparse_r"])
             eval_env_infos["eval_ep_shaped_r"].append(eval_info["episode"]["ep_shaped_r"])
+            eval_env_infos["eval_ep_utility_r"].append(eval_info["episode"]["ep_utility_r"])
+            eval_env_infos["eval_ep_hidden_r"].append(eval_info["episode"]["ep_hidden_r"])
 
         eval_env_infos["eval_average_episode_rewards"] = np.sum(eval_episode_rewards, axis=0)
         logger.success(
             f'eval average sparse rewards {np.mean(eval_env_infos["eval_ep_sparse_r"]):.3f} {len(eval_env_infos["eval_ep_sparse_r"])} episodes, total num timesteps {total_num_steps}/{self.num_env_steps}'
+        )
+        logger.success(
+            f'eval average sparse rewards {np.mean(eval_env_infos["eval_ep_shaped_r"]):.3f} {len(eval_env_infos["eval_ep_shaped_r"])} episodes, total num timesteps {total_num_steps}/{self.num_env_steps}'
         )
 
         self.log_env(eval_env_infos, total_num_steps)

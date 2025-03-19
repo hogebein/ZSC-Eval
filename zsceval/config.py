@@ -28,6 +28,8 @@ def get_config() -> argparse.ArgumentParser:
             "adaptive",
             "cole",
             "e3t",
+            "mappo_cp",
+            "rmappo_cp",
         ],
     )
 
@@ -43,6 +45,11 @@ def get_config() -> argparse.ArgumentParser:
         action="store_false",
         default=True,
         help="by default True, will use GPU to train; or else will use CPU;",
+    )
+    parser.add_argument("--cuda_id",
+        type=int,
+        default=0,
+        help="which gpu_id you are using",
     )
     parser.add_argument(
         "--cuda_deterministic",

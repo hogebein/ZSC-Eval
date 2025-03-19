@@ -67,7 +67,17 @@ def get_overcooked_args(parser: argparse.ArgumentParser) -> argparse.ArgumentPar
     parser.add_argument("--overcooked_version", default="old", type=str, choices=["new", "old"])
     parser.add_argument("--random_index", default=False, action="store_true")
     parser.add_argument("--use_hsp", default=False, action="store_true")
+    parser.add_argument("--use_base_shaping_r", default=False, action="store_true")
+    parser.add_argument("--use_placement_shaping_r", default=False, action="store_true")
+    parser.add_argument("--use_opponent_utility", default=False, action="store_true")
+    parser.add_argument("--use_expectation", default=False, action="store_true")
+    parser.add_argument("--use_reactive", default=False, action="store_true")
+    parser.add_argument("--filter_type", default=0, type=int)
+    parser.add_argument("--reaction_type", default=0, type=int)
+    parser.add_argument("--use_primitive_hsp", default=False, action="store_true")
+    parser.add_argument("--cross-play", default=False, action="store_true")
     parser.add_argument("--w0_offset", default=0, type=int)
+    parser.add_argument("--we0_offset", default=0, type=int)
     parser.add_argument(
         "--w0",
         type=str,
@@ -80,6 +90,21 @@ def get_overcooked_args(parser: argparse.ArgumentParser) -> argparse.ArgumentPar
         default="1,1,1,1",
         help="Weight vector of dense reward 1 in overcooked env.",
     )
+    parser.add_argument(
+        "--we0",
+        type=str,
+        default="1,1,1,1",
+        help="Weight vector of dense reward 0 in overcooked env.",
+    )
+    parser.add_argument(
+        "--we1",
+        type=str,
+        default="1,1,1,1",
+        help="Weight vector of dense reward 1 in overcooked env.",
+    )
+
+    parser.add_argument("--fixed_index", default=None, type=int)
+    
 
     parser.add_argument("--num_initial_state", type=int, default=5)
     parser.add_argument("--replay_return_threshold", type=float, default=0.75)

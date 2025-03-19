@@ -86,7 +86,7 @@ def extract_S2_models(layout, algorithm, exp, env, population: str):
     #    exp_name += "-S2"
     #    exp_name = exp + "-pop_" + exp_name.split(exp + "-", 1)[1]
 
-def extract_pop_S2_models(layout, algo, exp, env, percentile=0.8):
+def extract_pop_S2_models(layout, algo, exp, env, percentile=0.8, final=False):
     logger.info(f"exp {exp}")
     api = wandb.Api(timeout=60)
     if "overcooked" in env.lower():
@@ -120,19 +120,31 @@ def extract_pop_S2_models(layout, algo, exp, env, percentile=0.8):
             files = run.files()
             policy_name = f"{algo}_adaptive"
             history = run.history()
-            history = history[["_step", f"either-{algo}_adaptive-ep_sparse_r"]]
+            history = history[["_step", f"either-{algo}_adaptive-ep_shaped_r"]]
             steps = history["_step"].to_numpy().astype(int)
-            ep_sparse_r = history[f"either-{algo}_adaptive-ep_sparse_r"].to_numpy()
-            i_max_ep_sparse_r, max_ep_sparse_r = find_target_index(ep_sparse_r, percentile)
-            max_ep_sparse_r_step = steps[i_max_ep_sparse_r]
+            ep_shaped_r = history[f"either-{algo}_adaptive-ep_shaped_r"].to_numpy()
+            
             files = run.files()
             actor_pts = [f for f in files if f.name.startswith(f"{policy_name}/actor_periodic")]
             actor_versions = [int(f.name.split("_")[-1].split(".pt")[0]) for f in actor_pts]
             actor_versions.sort()
-            version = find_nearest(actor_versions, max_ep_sparse_r_step)
-            logger.info(
-                f"actor version {version} / {actor_versions[-1]}, sparse_r {max_ep_sparse_r:.3f}/{np.nanmax(ep_sparse_r):.3f}"
-            )
+
+            i_max_ep_shaped_r, max_ep_shaped_r = find_target_index(ep_shaped_r, percentile)
+            max_ep_shaped_r_step = steps[i_max_ep_shaped_r]
+
+            if final:
+                version = find_nearest(actor_versions, actor_versions[-1] * percentile)
+                logger.info(
+                    f"final_version"
+                )
+                logger.info(
+                    f"actor version {version} / {actor_versions[-1]}, shaped_r {max_ep_shaped_r:.3f}/{np.nanmax(ep_shaped_r):.3f}"
+                )
+            else:
+                version = find_nearest(actor_versions, max_ep_shaped_r_step)
+                logger.info(
+                    f"actor version {version} / {actor_versions[-1]}, shaped_r {max_ep_shaped_r:.3f}/{np.nanmax(ep_shaped_r):.3f}"
+                )
             ckpt = run.file(f"{policy_name}/actor_periodic_{version}.pt")
             tmp_dir = f"tmp/{layout}/{exp}"
             logger.info(f"Fetch {tmp_dir}/{policy_name}/actor_periodic_{version}.pt")
@@ -145,31 +157,33 @@ def extract_pop_S2_models(layout, algo, exp, env, percentile=0.8):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Extract S2 models")
-    parser.add_argument("--layout", type=str, help="layout name")
-    parser.add_argument("--env", type=str, help="env name")
+    parser.add_argument("-l", "--layout", type=str, help="layout name")
+    parser.add_argument("-e", "--env", type=str, help="env name")
     parser.add_argument("-a", "--algo", "--algorithm", type=str, action="append", required=True)
     parser.add_argument("-p", type=float, help="percentile", default=0.8)
+    parser.add_argument("-f", "--final",  action="store_true", help="select final checkpoint", default=False)
 
     args = parser.parse_args()
     layout = args.layout
-    assert layout in [
-        "random0",
-        "academy_3_vs_1_with_keeper",
-        "random0_medium",
-        "random1",
-        "random3",
-        "small_corridor",
-        "unident_s",
-        "random0_m",
-        "random1_m",
-        "random3_m",
-        "academy_3_vs_1_with_keeper",
-        "inverse_marshmallow_experiment",
-        "subobjective",
-"random3_l_m",
-        "forced_coordination_tomato",
-        "all",
-    ]
+    #assert layout in [
+    #    "random0",
+    #    "academy_3_vs_1_with_keeper",
+    #    "random0_medium",
+    #    "random1",
+    #    "random3",
+    #    "small_corridor",
+    #    "unident_s",
+    #    "random0_m",
+    #    "random1_m",
+    #    "random3_m",
+    #    "academy_3_vs_1_with_keeper",
+    #    "inverse_marshmallow_experiment",
+    #    "subobjective",
+    #    "random3_l_m",
+    #    "forced_coordination_tomato",
+    #    "placement_coordination",
+    #    "all",
+    #]
     if layout == "all":
         layout = [
             "random0",
@@ -195,16 +209,24 @@ if __name__ == "__main__":
             "fcp-S2-s36",
         ],
         "mep": [
-            "mep-S2-s12",
+            "mep-S2-s10",
             "mep-S2-s24",
             "mep-S2-s36",
         ],
         "hsp": [
-            "hsp-S2-s12",
-            "hsp-S2-s24",
-            "hsp-S2-s36",
-            "hsp-S2-s75",
-            "hsp_plate-S2-s24",
+
+            #"hsp-S2-s12",
+            #"hsp-S2-s24",
+
+            #"primitive_hsp_plate_placement-S2-s5",
+            #"hsp_plate_placement_shared-S2-s5",
+            
+            "primitive_hsp_onion_tomato-S2-s10",
+            "hsp_onion_tomato_shared-S2-s10"
+
+            #"hsp_plate_placement_shared-S2-s10",
+            #"reactive_hsp_plate_placement_shared-S3-s10",
+            #"reactive2_hsp_plate_placement_shared-S3-s10",
         ],
         "traj": [
             "traj-S2-s24",
@@ -225,7 +247,7 @@ if __name__ == "__main__":
             while i < len(ALG_EXPS[algo]):
                 exp = ALG_EXPS[algo][i]
                 try:
-                    extract_pop_S2_models(l, algo, exp, args.env, percentile)
+                    extract_pop_S2_models(l, algo, exp, args.env, percentile, args.final)
                 except Exception as e:
                     logger.error(e)
                 else:

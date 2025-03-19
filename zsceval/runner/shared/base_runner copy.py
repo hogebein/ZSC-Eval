@@ -23,37 +23,41 @@ def make_trainer_policy_cls(algorithm_name, use_single_network=False):
         "rmappo": (
             "zsceval.algorithms.r_mappo.r_mappo.R_MAPPO",
             "zsceval.algorithms.r_mappo.algorithm.rMAPPOPolicy.R_MAPPOPolicy",
+            ""
         ),
         "mappo": (
             "zsceval.algorithms.r_mappo.r_mappo.R_MAPPO",
             "zsceval.algorithms.r_mappo.algorithm.rMAPPOPolicy.R_MAPPOPolicy",
+            "",
         ),
         "population": (
             "zsceval.algorithms.population.trainer_pool.TrainerPool",
+            "",
             "zsceval.algorithms.population.policy_pool.PolicyPool",
         ),
         "mep": (
             "zsceval.algorithms.population.mep.MEP_Trainer",
+            "",
             "zsceval.algorithms.population.policy_pool.PolicyPool",
         ),
         "adaptive": (
             "zsceval.algorithms.population.mep.MEP_Trainer",
+            "",
             "zsceval.algorithms.population.policy_pool.PolicyPool",
         ),
         "cole": (
             "zsceval.algorithms.population.cole.COLE_Trainer",
+            "",
             "zsceval.algorithms.population.policy_pool.PolicyPool",
         ),
         "traj": (
             "zsceval.algorithms.population.traj.Traj_Trainer",
-            "zsceval.algorithms.population.policy_pool.PolicyPool",
-        ),
-        "mappo_cp": (
-            "zsceval.algorithms.population.r_mappo_cp.R_MAPPO_Trainer",
+            "",
             "zsceval.algorithms.population.policy_pool.PolicyPool",
         ),
         "rmappo_cp": (
-            "zsceval.algorithms.population.r_mappo_cp.R_MAPPO_Trainer",
+            "zsceval.algorithms.r_mappo.r_mappo.R_MAPPO",
+            "zsceval.algorithms.r_mappo.algorithm.rMAPPOPolicy.R_MAPPOPolicy",
             "zsceval.algorithms.population.policy_pool.PolicyPool",
         ),
     }
@@ -62,13 +66,26 @@ def make_trainer_policy_cls(algorithm_name, use_single_network=False):
         raise NotImplementedError
 
     train_algo_module, train_algo_class = algorithm_dict[algorithm_name][0].rsplit(".", 1)
-    policy_module, policy_class = algorithm_dict[algorithm_name][1].rsplit(".", 1)
-
+    if(algorithm_dict[algorithm_name][1]!=""):
+        policy_module, policy_class = algorithm_dict[algorithm_name][1].rsplit(".", 1)
+    else:
+        policy_module, policy_class = None, None
+    if(algorithm_dict[algorithm_name][2]!=""):
+        policy_pool_module, policy_pool_class = algorithm_dict[algorithm_name][2].rsplit(".", 1)
+    else:
+        policy_pool_module, policy_pool_class = None, None
+    
     TrainAlgo = getattr(importlib.import_module(train_algo_module), train_algo_class)
-    Policy = getattr(importlib.import_module(policy_module), policy_class)
+    if(policy_module!=None):
+        Policy = getattr(importlib.import_module(policy_module), policy_class)
+    else:
+        Policy = None
+    if(policy_pool_module!=None):
+        PolicyPool = getattr(importlib.import_module(policy_pool_module), policy_pool_class)
+    else:
+        PolicyPool = None
 
-    return TrainAlgo, Policy
-
+    return TrainAlgo, Policy, PolicyPool
 
 class Runner(object):
     def __init__(self, config):
@@ -84,7 +101,6 @@ class Runner(object):
         self.env_name = self.all_args.env_name
         self.algorithm_name = self.all_args.algorithm_name
         self.experiment_name = self.all_args.experiment_name
-
         self.use_centralized_V = self.all_args.use_centralized_V
         self.use_obs_instead_of_state = self.all_args.use_obs_instead_of_state
         self.num_env_steps = self.all_args.num_env_steps
@@ -108,42 +124,53 @@ class Runner(object):
         # dir
         self.model_dir = self.all_args.model_dir
 
-        if self.use_wandb:
-            self.save_dir = str(wandb.run.dir)
-            self.run_dir = str(wandb.run.dir)
-        else:
-            self.run_dir = config["run_dir"]
-            self.log_dir = str(self.run_dir / "logs")
-            if not os.path.exists(self.log_dir):
-                os.makedirs(self.log_dir)
-            self.writter = SummaryWriter(self.log_dir)
-            self.save_dir = str(self.run_dir / "models")
-            if not os.path.exists(self.save_dir):
-                os.makedirs(self.save_dir)
-
         if self.use_render:
+            self.run_dir = config["run_dir"]
             self.gif_dir = str(self.run_dir / "gifs")
             if not os.path.exists(self.gif_dir):
                 os.makedirs(self.gif_dir)
+        else:
+            if self.use_wandb:
+                self.save_dir = str(wandb.run.dir)
+                self.run_dir = str(wandb.run.dir)
+            else:
+                self.run_dir = config["run_dir"]
+                self.log_dir = str(self.run_dir / "logs")
+                if not os.path.exists(self.log_dir):
+                    os.makedirs(self.log_dir)
+                self.writter = SummaryWriter(self.log_dir)
+                self.save_dir = str(self.run_dir / "models")
+                if not os.path.exists(self.save_dir):
+                    os.makedirs(self.save_dir)
 
-        TrainAlgo, Policy = make_trainer_policy_cls(self.algorithm_name, use_single_network=self.use_single_network)
+        TrainAlgo, Policy, PolicyPool = make_trainer_policy_cls(self.algorithm_name, use_single_network=self.use_single_network)
 
         share_observation_space = (
             self.envs.share_observation_space[0] if self.use_centralized_V else self.envs.observation_space[0]
         )
 
-        # policy network
-        self.policy = Policy(
-            self.all_args,
-            self.envs.observation_space[0],
-            share_observation_space,
-            self.envs.action_space[0],
-            device=self.device,
-        )
-
         logger.info(
             f"Action space {self.envs.action_space[0]}, Obs space {self.envs.observation_space[0].shape}, Share obs space {share_observation_space.shape}"
         )
+
+        # policy network
+        if(Policy!=None):
+            self.policy = Policy(
+                self.all_args,
+                self.envs.observation_space[0],
+                share_observation_space,
+                self.envs.action_space[0],
+                device=self.device,
+            )
+        
+        if(PolicyPool!=None):
+            self.policy_pool = PolicyPool(
+                self.all_args,
+                self.envs.observation_space[0],
+                share_observation_space,
+                self.envs.action_space[0],
+                device=self.device,
+            )
 
         # dump policy config to allow loading population in yaml form
         self.policy_config = (
@@ -152,6 +179,7 @@ class Runner(object):
             share_observation_space,
             self.envs.action_space[0],
         )
+
         policy_config_path = os.path.join(self.run_dir, "policy_config.pkl")
         pickle.dump(self.policy_config, open(policy_config_path, "wb"))
         print(f"Pickle dump policy config at {policy_config_path}")
@@ -160,12 +188,12 @@ class Runner(object):
 
         if self.model_dir is not None:
             self.restore()
-        
+
         # algorithm
         self.trainer = TrainAlgo(self.all_args, self.policy, device=self.device)
 
         # buffer
-        if self.algorithm_name != "population":
+        if self.algorithm_name != "population" or self.algorithm_name != "rmappo_cp":
             # population-based trainer creates buffer inside trainer
             self.buffer = SharedReplayBuffer(
                 self.all_args,
@@ -216,7 +244,6 @@ class Runner(object):
             if save_critic:
                 policy_critic = self.trainer.policy.critic
                 torch.save(policy_critic.state_dict(), str(self.save_dir) + "/critic.pt")
-        logger.info(f"model at {steps} saved")
 
     def restore(self):
         if self.use_single_network:

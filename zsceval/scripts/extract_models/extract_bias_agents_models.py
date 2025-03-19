@@ -1,10 +1,12 @@
 import os
 import socket
 import sys
+import json
 
 import numpy as np
 import wandb
 from loguru import logger
+
 
 wandb_name = "hogebein"
 POLICY_POOL_PATH = "../policy_pool"
@@ -12,7 +14,8 @@ POLICY_POOL_PATH = "../policy_pool"
 
 def extract_sp_S1_models(layout, exp, env="Overcooked"):
     api = wandb.Api()
-    if "overcooked" in env.lower():
+    #if "overcooked" in env.lower():
+    if True:
         layout_config = "config.layout_name"
     else:
         layout_config = "config.scenario_name"
@@ -33,6 +36,11 @@ def extract_sp_S1_models(layout, exp, env="Overcooked"):
     logger.info(f"num of runs: {len(runs)}")
     seeds = set()
     num_agents = None
+    utility_weights = dict()
+
+    hsp_s1_dir = f"{POLICY_POOL_PATH}/{layout}/hsp/s1/{exp.replace('-S1', '')}"
+    os.makedirs(hsp_s1_dir, exist_ok=True)
+
     for r_i, run_id in enumerate(run_ids):
         run = runs[r_i]
         if run.state == "finished":
@@ -42,11 +50,11 @@ def extract_sp_S1_models(layout, exp, env="Overcooked"):
                 continue
             i = run.config["seed"]
             history = run.history()
-            history = history[["_step", "ep_sparse_r"]]
+            history = history[["_step", "ep_shaped_r"]]
             steps = history["_step"].to_numpy().astype(int)
-            ep_sparse_r = history["ep_sparse_r"].to_numpy()
-            final_ep_sparse_r = np.mean(ep_sparse_r[-5:])
-            logger.info(f"hsp{i} Run: {run_id} Seed: {run.config['seed']} Return {final_ep_sparse_r}")
+            ep_shaped_r = history["ep_shaped_r"].to_numpy()
+            final_ep_shaped_r = np.mean(ep_shaped_r[-5:])
+            logger.info(f"hsp{i} Run: {run_id} Seed: {run.config['seed']} Return {final_ep_shaped_r}")
             seeds.add(run.config["seed"])
             files = run.files()
             actor_pts = [f for f in files if f.name.startswith("actor")]
@@ -57,69 +65,86 @@ def extract_sp_S1_models(layout, exp, env="Overcooked"):
             max_steps = max(steps)
 
             new_steps = [steps[0]]
-            new_ep_sparse_r = [ep_sparse_r[0]]
-            for s, er in zip(steps[1:], ep_sparse_r[1:]):
+            new_ep_shaped_r = [ep_shaped_r[0]]
+            for s, er in zip(steps[1:], ep_shaped_r[1:]):
                 l_s = new_steps[-1]
-                l_er = new_ep_sparse_r[-1]
+                l_er = new_ep_shaped_r[-1]
                 for w in range(l_s + 1, s, 100):
                     new_steps.append(w)
-                    new_ep_sparse_r.append(l_er + (er - l_er) * (w - l_s) / (s - l_s))
+                    new_ep_shaped_r.append(l_er + (er - l_er) * (w - l_s) / (s - l_s))
             steps = new_steps
-            ep_sparse_r = new_ep_sparse_r
+            ep_shaped_r = new_ep_shaped_r
 
             # select checkpoints
             selected_pts = dict(mid=-1, final=max_steps)
-            mid_ep_sparse_r = final_ep_sparse_r / 2
+            mid_ep_shaped_r = final_ep_shaped_r / 2
             min_delta = 1e9
-            for s, score in zip(steps, ep_sparse_r):
-                if min_delta > abs(mid_ep_sparse_r - score):
-                    min_delta = abs(mid_ep_sparse_r - score)
+            for s, score in zip(steps, ep_shaped_r):
+                if min_delta > abs(mid_ep_shaped_r - score):
+                    min_delta = abs(mid_ep_shaped_r - score)
                     selected_pts["mid"] = s
 
             selected_pts = {k: int(v / max_steps * max_actor_versions) for k, v in selected_pts.items()}
-            sparse_r_dict = dict(init=0, mid=mid_ep_sparse_r, final=final_ep_sparse_r)
+            shaped_r_dict = dict(init=0, mid=mid_ep_shaped_r, final=final_ep_shaped_r)
             for tag, exp_version in selected_pts.items():
                 version = actor_versions[0]
                 for actor_version in actor_versions:
                     if abs(exp_version - version) > abs(exp_version - actor_version):
                         version = actor_version
-                logger.info(f"hsp{i}: {tag} Expected: {exp_version} {sparse_r_dict[tag]} Found: {version}")
+                logger.info(f"hsp{i}: {tag} Expected: {exp_version} {shaped_r_dict[tag]} Found: {version}")
+
                 actor_pts = []
-                for a_i in range(run.config["num_agents"]):
-                    actor_pts.append(run.file(f"actor_agent{a_i}_periodic_{version}.pt"))
+                if(run.config["share_policy"]):
+                    actor_pts.append(run.file(f"actor_periodic_{version}.pt"))
+                else:
+                    for a_i in range(run.config["num_agents"]):
+                        actor_pts.append(run.file(f"actor_agent{a_i}_periodic_{version}.pt"))
+
+                w0 = run.config["w0"]
 
                 tmp_dir = f"tmp/{layout}/{exp}"
                 for pt in actor_pts:
                     pt.download(tmp_dir, replace=True)
 
-                hsp_s1_dir = f"{POLICY_POOL_PATH}/{layout}/hsp/s1/{exp.replace('-S1', '')}"
-                os.makedirs(hsp_s1_dir, exist_ok=True)
-                for a_i in range(run.config["num_agents"]):
-                    pt_path = f"{hsp_s1_dir}/hsp{i}_{tag}_w{a_i}_actor.pt"
-                    logger.info(f"pt {a_i} store in {pt_path}")
-                    os.system(f"mv {tmp_dir}/actor_agent{a_i}_periodic_{version}.pt {pt_path}")
+                if(run.config["share_policy"]):
+                    
+                    pt_path = f"{hsp_s1_dir}/hsp{i}_{tag}_actor.pt"
+                    logger.info(f"pt store in {pt_path}")
+                    os.system(f"mv {tmp_dir}/actor_periodic_{version}.pt {pt_path}")
+                    utility_weights[f"hsp{i}_{tag}_actor"] = w0
+                else:
+                    for a_i in range(run.config["num_agents"]):
+                        pt_path = f"{hsp_s1_dir}/hsp{i}_{tag}_w{a_i}_actor.pt"
+                        logger.info(f"pt {a_i} store in {pt_path}")
+                        os.system(f"mv {tmp_dir}/actor_agent{a_i}_periodic_{version}.pt {pt_path}")
+                        utility_weights[f"hsp{i}_{tag}_w{a_i}_actor"] = w0
 
+    with open(f"{hsp_s1_dir}/w0.json", mode="wt", encoding="utf-8") as f:
+        json.dump(utility_weights, f, ensure_ascii=False, indent=2)
+                
     logger.success(f"Extracted {len(seeds)} models for {layout}")
 
 
 if __name__ == "__main__":
     layout = sys.argv[1]
-    env = sys.argv[2]
-    assert layout in [
-        "random0",
-        "random0_medium",
-        "random1",
-        "random3",
-        "small_corridor",
-        "unident_s",
-        "random0_m",
-        "random1_m",
-        "random3_m",
-        "inverse_marshmallow_experiment",
-        "subobjective",
-        "academy_3_vs_1_with_keeper",
-        "all",
-    ], layout
+    exp = sys.argv[2]
+    env = sys.argv[3]
+    #assert layout in [
+    #    "random0",
+    #    "random0_medium",
+    #    "random1",
+    #    "random3",
+    #    "small_corridor",
+    #    "unident_s",
+    #    "random0_m",
+    #    "random1_m",
+    #    "random3_m",
+    #    "inverse_marshmallow_experiment",
+    #    "subobjective",
+    #    "placement_coordination",
+    #    "academy_3_vs_1_with_keeper",
+    #    "all",
+    #], layout
     if layout == "all":
         layout = [
             "random0",
@@ -138,19 +163,25 @@ if __name__ == "__main__":
 
     hostname = socket.gethostname()
     exp_names = {
-        "random3_m": "hsp_plate-S1",
-        "small_corridor": "hsp-S1",
+
+        "small_corridor" : "hsp-S1",
+        "all" : "hsp_all_shared-S1",
         "random0" : "hsp-S1",
+
+        "plate_placement" : "hsp_plate_placement-S1",
+        "tomato_delivery" : "hsp_tomato_delivery-S1",
+        "score" : "hsp_score-S1",
+        "onion_tomato" : "hsp_onion_tomato-S1",
+
+        "plate_placement_s" : "hsp_plate_placement_shared-S1",
+        "tomato_delivery_s" : "hsp_tomato_delivery_shared-S1",
+        "score_s" : "hsp_score_shared-S1",
+        "onion_tomato_s" : "hsp_onion_tomato_shared-S1",
     }
 
     # logger.add(f"./extract_log/extract_{layout}_hsp_S1_models.log")
     # logger.info(f"hostname: {hostname}")
     for l in layout:
-        #exp = exp_names[l]
-        exp = "hsp-S1"
-        logger.info(f"Extracting {exp} for {l}")
-        extract_sp_S1_models(l, exp, env)
-
-def read_layout_dict():
-    
-    return load_dict_from_file(os.path.join(LAYOUTS_DIR, layout_name + ".layout"))
+        exp_trans = exp_names[exp]
+        logger.info(f"Extracting {exp_trans} for {l}")
+        extract_sp_S1_models(l, exp_trans, env)

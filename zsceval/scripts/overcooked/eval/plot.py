@@ -356,7 +356,6 @@ def load_human_ai():
     df = pd.DataFrame(data=shaped_dict, index=index)
     #df = df.rename(index=index)
     
-    return df
     
 def load_trajectory(layout_name, alg, exps, ranks, run, traj_num, use_new):
     
@@ -386,7 +385,7 @@ def plot_pca(df_all, exps, layout, plot_label, save_root):
     score = pd.DataFrame(pca.transform(df_std))
 
     #logger.debug(score)
-    
+
     num = len(score)  # 可視化するデータ数を指定
     
     cmap = plt.get_cmap("tab20")
@@ -464,6 +463,7 @@ def plot_radar(df, exps, seed_max, subscript, save_root):
     index_list = df_no_zero.index
     
     scaler = MinMaxScaler()
+
     #logger.debug(scaler.fit_transform(df_no_zero))
     df_scaler = pd.DataFrame(scaler.fit_transform(df_no_zero), columns=label_list)
     
@@ -486,7 +486,7 @@ def plot_radar(df, exps, seed_max, subscript, save_root):
         ax.plot(angle_list, value_list, linewidth=1, linestyle='solid')
         ax.fill(angle_list, value_list, 'blue', alpha=0.1)
         ax.set_ylim(ymin=0, ymax=1.0)
-        
+
         logger.debug(index_list[i])
 
         rows = i
@@ -707,8 +707,6 @@ def get_atr_params(key, value, filter):
     
 
 
-
-
 def plot_histgrams(df, layout, exps, exp_match_ups, save_root, use_new=True):
     
     df_agent0 = df.filter(like="agent0", axis=1)
@@ -922,10 +920,12 @@ if __name__ == "__main__":
     #        "mep-S2-s36-adp_cp-s5", "adaptive_mep-S2-s36-adp_cp-s5"]
     #algs = ["bias"]
     #exps = ["hsp"]
+
     seed_max = [1, 1, 5, 5]
     # seed_max = [72, 72, 72]
     #seed_max = [20, 10, 10]
     #seed_max = [1, 1, 1]
+
     #exps = [e for e in range(1,4)]
     #ranks = [r for r in range(1)]
     #run = 1
@@ -992,7 +992,7 @@ if __name__ == "__main__":
         dfs.append(df)
         
         index += 1
-    
+
     df_all = pd.concat(dfs, axis=0)
     df_all.to_csv(f"{save_root}/preprocess.csv")
     

@@ -166,6 +166,7 @@ if __name__ == "__main__":
         "academy_3_vs_1_with_keeper",
         "inverse_marshmallow_experiment",
         "subobjective",
+"random3_l_m",
         "forced_coordination_tomato",
         "all",
     ]

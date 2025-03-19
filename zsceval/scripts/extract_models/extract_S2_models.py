@@ -203,6 +203,8 @@ if __name__ == "__main__":
             "hsp-S2-s12",
             "hsp-S2-s24",
             "hsp-S2-s36",
+            "hsp-S2-s75",
+            "hsp_plate-S2-s24",
         ],
         "traj": [
             "traj-S2-s24",

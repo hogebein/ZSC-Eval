@@ -3,6 +3,7 @@ import itertools
 import warnings
 from collections import Counter, defaultdict
 from functools import reduce
+from loguru import logger
 
 import numpy as np
 
@@ -51,8 +52,105 @@ SHAPED_INFOS = [
     "MOVEMENT",
     "IDLE_MOVEMENT",
     "IDLE_INTERACT",
+    "place_onion_on_X",
+    "place_tomato_on_X",
+    "place_dish_on_X",
+    "place_soup_on_X",
+    "recieve_onion_via_X",
+    "recieve_tomato_via_X",
+    "recieve_dish_via_X",
+    "recieve_soup_via_X",
+    "onion_placed_on_X",
+    "tomato_placed_on_X",
+    "dish_placed_on_X",
+    "soup_placed_on_X",
+    "integral_onion_placed_on_X",
+    "integral_tomato_placed_on_X",
+    "integral_dish_placed_on_X",
+    "integral_soup_placed_on_X",
+    "deliver_onion_order",
+    "deliver_tomato_order",
+    "onion_order_delivered",
+    "tomato_order_delivered",
 ]
 
+NO_REW_SHAPING_PARAMS = {
+    "PLACEMENT_IN_POT_REW": 0,
+    "DISH_PICKUP_REWARD": 0,
+    "SOUP_PICKUP_REWARD": 0,
+    "DISH_DISP_DISTANCE_REW": 0,
+    "POT_DISTANCE_REW": 0,
+    "SOUP_DISTANCE_REW": 0,
+}
+
+BASE_REW_SHAPING_PARAMS = {
+    "PLACEMENT_IN_POT_REW": 3,
+    "DISH_PICKUP_REWARD": 3,
+    "SOUP_PICKUP_REWARD": 5,
+    "DISH_DISP_DISTANCE_REW": 0,
+    "POT_DISTANCE_REW": 0,
+    "SOUP_DISTANCE_REW": 0,
+}
+
+EVENT_TYPES = [
+    # Tomato events
+    "tomato_pickup",
+    "useful_tomato_pickup",
+    "tomato_drop",
+    "useful_tomato_drop",
+    "potting_tomato",
+    "placing_tomato",
+    "recieve_tomato",
+    "placed_tomatoes",
+    # Onion events
+    "onion_pickup",
+    "useful_onion_pickup",
+    "onion_drop",
+    "useful_onion_drop",
+    "potting_onion",
+    "placing_onion",
+    "recieve_onion",
+    "placed_onions",
+    # Dish events
+    "dish_pickup",
+    "useful_dish_pickup",
+    "dish_drop",
+    "useful_dish_drop",
+    "placing_dish",
+    "recieve_dish",
+    "placed_dishes",
+    # Soup events
+    "soup_pickup",
+    "soup_delivery",
+    "soup_drop",
+    "placing_soup",
+    "recieve_soup",
+    "placed_soups",
+    # Potting events
+    "optimal_onion_potting",
+    "optimal_tomato_potting",
+    "viable_onion_potting",
+    "viable_tomato_potting",
+    "catastrophic_onion_potting",
+    "catastrophic_tomato_potting",
+    "useless_onion_potting",
+    "useless_tomato_potting",
+]
+
+POTENTIAL_CONSTANTS = {
+    "default": {
+        "max_delivery_steps": 10,
+        "max_pickup_steps": 10,
+        "pot_onion_steps": 10,
+        "pot_tomato_steps": 10,
+    },
+    "mdp_test_tomato": {
+        "max_delivery_steps": 4,
+        "max_pickup_steps": 4,
+        "pot_onion_steps": 5,
+        "pot_tomato_steps": 6,
+    },
+}
 
 class Recipe:
     MAX_NUM_INGREDIENTS = 3
@@ -327,13 +425,14 @@ class ObjectState(object):
     State of an object in OvercookedGridworld.
     """
 
-    def __init__(self, name, position, **kwargs):
+    def __init__(self, name, position, last_owner=None, **kwargs):
         """
         name (str): The name of the object
         position (int, int): Tuple for the current location of the object.
         """
         self.name = name
         self._position = tuple(position)
+        self._last_owner = last_owner
 
     @property
     def position(self):
@@ -343,23 +442,31 @@ class ObjectState(object):
     def position(self, new_pos):
         self._position = new_pos
 
+    @property
+    def last_owner(self):
+        return self._last_owner
+
+    @last_owner.setter
+    def last_owner(self, owner):
+        self._last_owner = owner
+
     def is_valid(self):
         return self.name in ["onion", "tomato", "dish"]
 
     def deepcopy(self):
-        return ObjectState(self.name, self.position)
+        return ObjectState(self.name, self.position, self.last_owner)
 
     def __eq__(self, other):
-        return isinstance(other, ObjectState) and self.name == other.name and self.position == other.position
+        return isinstance(other, ObjectState) and self.name == other.name and self.position == other.position and self.last_owner
 
     def __hash__(self):
         return hash((self.name, self.position))
 
     def __repr__(self):
-        return "{}@{}".format(self.name, self.position)
+        return "{}@{}, last_owner:{}".format(self.name, self.position, self.last_owner)
 
     def to_dict(self):
-        return {"name": self.name, "position": self.position}
+        return {"name": self.name, "position": self.position, "last_owner": self.last_owner}
 
     @classmethod
     def from_dict(cls, obj_dict):
@@ -368,7 +475,7 @@ class ObjectState(object):
 
 
 class SoupState(ObjectState):
-    def __init__(self, position, ingredients=[], cooking_tick=-1, cook_time=None, **kwargs):
+    def __init__(self, position, last_owner=None, ingredients=[], cooking_tick=-1, cook_time=None, **kwargs):
         """
         Represents a soup object. An object becomes a soup the instant it is placed in a pot. The
         soup's recipe is a list of ingredient names used to create it. A soup's recipe is undetermined
@@ -379,7 +486,8 @@ class SoupState(ObjectState):
         cooking (int): How long the soup has been cooking for. -1 means cooking hasn't started yet
         cook_time(int): How long soup needs to be cooked, used only mostly for getting soup from dict with supplied cook_time, if None self.recipe.time is used
         """
-        super(SoupState, self).__init__("soup", position)
+        super(SoupState, self).__init__("soup", position, last_owner)
+
         self._ingredients = ingredients
         self._cooking_tick = cooking_tick
         self._recipe = None
@@ -515,6 +623,7 @@ class SoupState(ObjectState):
     def deepcopy(self):
         return SoupState(
             self.position,
+            self.last_owner,
             [ingredient.deepcopy() for ingredient in self._ingredients],
             self._cooking_tick,
         )
@@ -785,6 +894,18 @@ class OvercookedState(object):
         del self.objects[pos]
         return obj
 
+    def count_obj_on_X(self, grid, obj_name):
+        
+        if obj_name == "onion":
+            return sum((obj.name == "onion" and grid[obj.position[1]][obj.position[0]] == "X" for obj in self.objects.values()))
+        elif obj_name == "tomato":
+            return sum((obj.name == "tomato" and grid[obj.position[1]][obj.position[0]] == "X" for obj in self.objects.values()))
+        elif obj_name == "dish":
+            return sum((obj.name == "dish" and grid[obj.position[1]][obj.position[0]] == "X" for obj in self.objects.values()))
+        elif obj_name == "soup":
+            return sum((obj.name == "soup" and grid[obj.position[1]][obj.position[0]] == "X" for obj in self.objects.values()))
+        
+        
     @classmethod
     def from_players_pos_and_or(
         cls,
@@ -870,62 +991,6 @@ class OvercookedState(object):
         return OvercookedState(**state_dict)
 
 
-BASE_REW_SHAPING_PARAMS = {
-    "PLACEMENT_IN_POT_REW": 3,
-    "DISH_PICKUP_REWARD": 3,
-    "SOUP_PICKUP_REWARD": 5,
-    "DISH_DISP_DISTANCE_REW": 0,
-    "POT_DISTANCE_REW": 0,
-    "SOUP_DISTANCE_REW": 0,
-}
-
-EVENT_TYPES = [
-    # Tomato events
-    "tomato_pickup",
-    "useful_tomato_pickup",
-    "tomato_drop",
-    "useful_tomato_drop",
-    "potting_tomato",
-    # Onion events
-    "onion_pickup",
-    "useful_onion_pickup",
-    "onion_drop",
-    "useful_onion_drop",
-    "potting_onion",
-    # Dish events
-    "dish_pickup",
-    "useful_dish_pickup",
-    "dish_drop",
-    "useful_dish_drop",
-    # Soup events
-    "soup_pickup",
-    "soup_delivery",
-    "soup_drop",
-    # Potting events
-    "optimal_onion_potting",
-    "optimal_tomato_potting",
-    "viable_onion_potting",
-    "viable_tomato_potting",
-    "catastrophic_onion_potting",
-    "catastrophic_tomato_potting",
-    "useless_onion_potting",
-    "useless_tomato_potting",
-]
-
-POTENTIAL_CONSTANTS = {
-    "default": {
-        "max_delivery_steps": 10,
-        "max_pickup_steps": 10,
-        "pot_onion_steps": 10,
-        "pot_tomato_steps": 10,
-    },
-    "mdp_test_tomato": {
-        "max_delivery_steps": 4,
-        "max_pickup_steps": 4,
-        "pot_onion_steps": 5,
-        "pot_tomato_steps": 6,
-    },
-}
 
 
 class OvercookedGridworld(object):
@@ -977,7 +1042,7 @@ class OvercookedGridworld(object):
         self.start_player_positions = start_player_positions
         self.num_players = len(start_player_positions)
         self.start_bonus_orders = start_bonus_orders
-        self.reward_shaping_params = BASE_REW_SHAPING_PARAMS if rew_shaping_params is None else rew_shaping_params
+        self.reward_shaping_params = NO_REW_SHAPING_PARAMS if rew_shaping_params==None else rew_shaping_params
         self.layout_name = layout_name
         self.order_bonus = order_bonus
         self.start_state = start_state
@@ -1041,7 +1106,7 @@ class OvercookedGridworld(object):
         # After removing player positions from grid we have a terrain mtx
         mdp_config["terrain"] = layout_grid
         mdp_config["start_player_positions"] = player_positions
-
+        
         for k, v in params_to_overwrite.items():
             curr_val = mdp_config.get(k, None)
             if debug:
@@ -1303,7 +1368,12 @@ class OvercookedGridworld(object):
         sparse_reward, shaped_reward = [0] * self.num_players, [0] * self.num_players
         # MARK
         shaped_info = [dict(zip(SHAPED_INFOS, [0 for _ in range(len(SHAPED_INFOS))])) for _ in range(self.num_players)]
+        
         for player_idx, (player, action) in enumerate(zip(new_state.players, joint_action)):
+            
+            for obj_name in ["onion", "tomato", "dish", "soup"]:
+                shaped_info[player_idx][f"integral_{obj_name}_placed_on_X"] += new_state.count_obj_on_X(self.terrain_mtx, obj_name)
+            
             if action != Action.INTERACT:
                 if action in Direction.ALL_DIRECTIONS:
                     shaped_info[player_idx]["MOVEMENT"] += 1
@@ -1322,18 +1392,31 @@ class OvercookedGridworld(object):
                     obj_name = player.get_object().name
                     self.log_object_drop(events_infos, new_state, obj_name, pot_states, player_idx)
                     shaped_info[player_idx][f"put_{obj_name}_on_X"] += 1
+                    shaped_info[player_idx][f"place_{obj_name}_on_X"] += 1
+                    for i in range(len(new_state.players)):
+                        shaped_info[i][f"{obj_name}_placed_on_X"] += 1
 
                     # Drop object on counter
                     obj = player.remove_object()
+                    obj.last_owner = player_idx
                     new_state.add_object(obj, i_pos)
+                    
                 elif not player.has_object() and new_state.has_object(i_pos):
                     obj_name = new_state.get_object(i_pos).name
                     self.log_object_pickup(events_infos, new_state, obj_name, pot_states, player_idx)
                     shaped_info[player_idx][f"pickup_{obj_name}_from_X"] += 1
+                    for i in range(len(new_state.players)):
+                        shaped_info[i][f"{obj_name}_placed_on_X"] -= 1
 
                     # Pick up object from counter
                     obj = new_state.remove_object(i_pos)
+                    if obj.last_owner == player_idx:
+                        shaped_info[player_idx][f"place_{obj_name}_on_X"] -= 1
+                    else:
+                        shaped_info[player_idx][f"recieve_{obj_name}_via_X"] += 1
+
                     player.set_object(obj)
+
                 else:
                     shaped_info[player_idx]["IDLE_INTERACT"] += 1
 
@@ -1437,11 +1520,23 @@ class OvercookedGridworld(object):
                         shaped_info[player_idx][f"deliver_size_{_map[len(obj.ingredients)]}_order"] += 1
                     if delivery_rew <= 0:
                         shaped_info[player_idx]["deliver_useless_order"] += 1
+                    if "onion" in obj.ingredients:
+                        shaped_info[player_idx]["deliver_onion_order"] += 1
+                        for i in range(len(new_state.players)):
+                            shaped_info[i]["onion_order_delivered"] += 1
+                    if "tomato" in obj.ingredients:
+                        shaped_info[player_idx]["deliver_tomato_order"] += 1
+                        for i in range(len(new_state.players)):
+                             shaped_info[i]["tomato_order_delivered"] += 1
+
 
                     # Log soup delivery
                     events_infos["soup_delivery"][player_idx] = True
             else:
                 shaped_info[player_idx]["IDLE_INTERACT"] += 1
+
+            
+
 
         return sparse_reward, shaped_reward, shaped_info
 

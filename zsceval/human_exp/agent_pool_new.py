@@ -15,6 +15,7 @@ from zsceval.algorithms.population.utils import EvalPolicy
 from zsceval.envs.overcooked_new.src.overcooked_ai_py.mdp.actions import Action, Direction
 from zsceval.envs.overcooked_new.src.overcooked_ai_py.mdp.overcooked_mdp import (
     ObjectState,
+    SoupState,
     OvercookedGridworld,
     OvercookedState,
     PlayerState,
@@ -104,16 +105,33 @@ class ZSCEvalAgentPool(AgentPool):
 
         def object_from_dict(object_dict: Dict):
             return ObjectState(**object_dict)
+        
+        def soup_from_dict(object_dict: Dict):
+            ingredients = []
+            for i in object_dict["ingredients"]:
+                ingredients.append(object_from_dict(i))
+            return SoupState(position=object_dict["position"], ingredients=ingredients,
+                             cooking_tick=object_dict["cooking_tick"], cooking_time=object_dict["cook_time"])
 
         def player_from_dict(player_dict: Dict):
+            
             held_obj = player_dict.get("held_object")
             if held_obj is not None:
-                player_dict["held_object"] = object_from_dict(held_obj)
+                if held_obj["name"] == "soup": 
+                    player_dict["held_object"] = soup_from_dict(held_obj)
+                else:
+                    player_dict["held_object"] = object_from_dict(held_obj)
+                    
             return PlayerState(**player_dict)
 
         def state_from_dict(state_dict: Dict):
             state_dict["players"] = [player_from_dict(p) for p in state_dict["players"]]
-            object_list = [object_from_dict(o) for _, o in state_dict["objects"].items()]
+            object_list = []
+            for _, o in state_dict["objects"].items():
+                if o["name"] == "soup":
+                    object_list.append(soup_from_dict(o))
+                else:
+                    object_list.append(object_from_dict(o))
             state_dict["objects"] = {ob.position: ob for ob in object_list}
             return OvercookedState(**state_dict)
 
@@ -149,7 +167,7 @@ class ZSCEvalAgentPool(AgentPool):
                 or (terrain_type in ["O", "T", "D"] and player.has_object())
                 or (
                     terrain_type == "P"
-                    and (not player.has_object() or player.get_object().name not in ["dish", "onion", "tomato"])
+                    and (player.has_object() and player.get_object().name not in ["dish", "onion", "tomato"])
                 )
                 or (terrain_type == "S" and (not player.has_object() or player.get_object().name not in ["soup"]))
             ):
@@ -160,6 +178,7 @@ class ZSCEvalAgentPool(AgentPool):
     def _get_action(self, policy: EvalPolicy, state: np.ndarray, available_actions: np.ndarray = None) -> int:
         policy.prep_rollout()
         epsilon = random.random()
+        # print(available_actions)
         if not self.deterministic or epsilon < self.epsilon:
             return policy.step(
                 np.array([state]),
